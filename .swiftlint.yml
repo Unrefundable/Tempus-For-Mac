@@ -1,0 +1,34 @@
+included:
+  - TempusMac
+excluded:
+  - reference
+  - TempusMac/Packages/TempusKit/.build
+  - TempusMac/Spike # throwaway experiments, not shipped
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - sorted_imports
+
+disabled_rules:
+  - trailing_comma # SwiftFormat owns trailing commas
+
+custom_rules:
+  no_print:
+    name: "No print()"
+    regex: '(?<![\w.])print\('
+    message: "Use os.Logger instead of print()"
+    severity: error
+
+line_length:
+  warning: 120
+  error: 160
+function_body_length:
+  warning: 50
+file_length:
+  warning: 400
+  error: 800
+identifier_name:
+  excluded: [id]

@@ -1,0 +1,279 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7E5A00000000000000000001 /* SubsonicAPI in Frameworks */ = {isa = PBXBuildFile; productRef = 7E5A00000000000000000020 /* SubsonicAPI */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		7E5A00000000000000000002 /* Tempus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tempus.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7E5A00000000000000000003 /* Tempus.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tempus.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		7E5A00000000000000000004 /* Tempus */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tempus;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		7E5A00000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7E5A00000000000000000001 /* SubsonicAPI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		7E5A00000000000000000006 = {
+			isa = PBXGroup;
+			children = (
+				7E5A00000000000000000004 /* Tempus */,
+				7E5A00000000000000000007 /* Config */,
+				7E5A00000000000000000008 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7E5A00000000000000000007 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				7E5A00000000000000000003 /* Tempus.entitlements */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		7E5A00000000000000000008 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7E5A00000000000000000002 /* Tempus.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		7E5A00000000000000000009 /* Tempus */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7E5A0000000000000000000A /* Build configuration list for PBXNativeTarget "Tempus" */;
+			buildPhases = (
+				7E5A0000000000000000000B /* Sources */,
+				7E5A00000000000000000005 /* Frameworks */,
+				7E5A0000000000000000000C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7E5A00000000000000000004 /* Tempus */,
+			);
+			name = Tempus;
+			packageProductDependencies = (
+				7E5A00000000000000000020 /* SubsonicAPI */,
+			);
+			productName = Tempus;
+			productReference = 7E5A00000000000000000002 /* Tempus.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7E5A0000000000000000000D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2710;
+				LastUpgradeCheck = 2710;
+				TargetAttributes = {
+					7E5A00000000000000000009 = {
+						CreatedOnToolsVersion = 27.1;
+					};
+				};
+			};
+			buildConfigurationList = 7E5A0000000000000000000E /* Build configuration list for PBXProject "TempusMac" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 7E5A00000000000000000006;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7E5A00000000000000000021 /* XCLocalSwiftPackageReference "Packages/TempusKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7E5A00000000000000000008 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7E5A00000000000000000009 /* Tempus */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7E5A0000000000000000000C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		7E5A0000000000000000000B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		7E5A0000000000000000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		7E5A00000000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		7E5A00000000000000000011 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/Tempus.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Tempus;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "GPL-3.0. Based on Tempus by eddyizm and Tempo by CappielloAntonio.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.unrefundable.TempusMac;
+				PRODUCT_NAME = Tempus;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		7E5A00000000000000000012 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/Tempus.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Tempus;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "GPL-3.0. Based on Tempus by eddyizm and Tempo by CappielloAntonio.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.unrefundable.TempusMac;
+				PRODUCT_NAME = Tempus;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7E5A0000000000000000000A /* Build configuration list for PBXNativeTarget "Tempus" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E5A00000000000000000011 /* Debug */,
+				7E5A00000000000000000012 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7E5A0000000000000000000E /* Build configuration list for PBXProject "TempusMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7E5A0000000000000000000F /* Debug */,
+				7E5A00000000000000000010 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		7E5A00000000000000000021 /* XCLocalSwiftPackageReference "Packages/TempusKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/TempusKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7E5A00000000000000000020 /* SubsonicAPI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7E5A00000000000000000021 /* XCLocalSwiftPackageReference "Packages/TempusKit" */;
+			productName = SubsonicAPI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 7E5A0000000000000000000D /* Project object */;
+}

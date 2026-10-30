@@ -1,0 +1,9 @@
+--swiftversion 6.0
+--exclude reference,TempusMac/Spike,**/.build,**/DerivedData
+--indent 4
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--self remove
+--importgrouping alpha
