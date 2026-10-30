@@ -13,7 +13,7 @@ public struct Lyrics: Decodable, Sendable, Hashable {
 }
 
 /// OpenSubsonic `getLyricsBySongId` lyrics, synced or not, one entry per language.
-public struct StructuredLyrics: Decodable, Sendable, Hashable {
+public struct StructuredLyrics: Codable, Sendable, Hashable {
     public let displayArtist: String?
     public let displayTitle: String?
     /// ISO 639 code, or `xxx` when unknown.
@@ -30,7 +30,7 @@ public struct StructuredLyrics: Decodable, Sendable, Hashable {
     }
 }
 
-public struct LyricLine: Decodable, Sendable, Hashable {
+public struct LyricLine: Codable, Sendable, Hashable {
     /// Milliseconds; nil for unsynced lyrics.
     public let start: Int?
     public let value: String

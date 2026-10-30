@@ -88,6 +88,13 @@ extension CustomHeaders: CustomStringConvertible, CustomDebugStringConvertible {
 }
 
 public extension ServerAddress {
+    /// `scheme://host:port` with the port always written, for binding stored secrets to it.
+    var origin: String {
+        guard let origin = Origin(url: url) else { return url.absoluteString }
+        let host = origin.host.contains(":") ? "[\(origin.host)]" : origin.host // IPv6 literals
+        return "\(origin.scheme)://\(host):\(origin.port)"
+    }
+
     /// True when `url` has this server's scheme, host and port (default ports made explicit).
     func isSameOrigin(as url: URL) -> Bool {
         guard let mine = Origin(url: self.url), let theirs = Origin(url: url) else { return false }

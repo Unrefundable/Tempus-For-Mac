@@ -8,6 +8,8 @@ public enum SecretStoreError: Error, Sendable, Equatable {
     case unexpectedData
     case encodingFailed
     case decodingFailed
+    /// The secrets were saved for a different server address; ask the user again.
+    case originChanged
 }
 
 /// Somewhere to keep secrets. `KeychainStore` in the app, an in-memory store in tests.

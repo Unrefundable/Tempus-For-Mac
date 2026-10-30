@@ -13,6 +13,11 @@ public struct SubsonicRequest<Response: Decodable & Sendable>: Sendable {
         self.parameters = parameters
         self.elementPath = elementPath
     }
+
+    /// Identifies this request's response in a local cache: method and parameters, never credentials.
+    public var cacheKey: String {
+        parameters.isEmpty ? method : method + "?" + SubsonicURLBuilder.query(parameters)
+    }
 }
 
 /// Who the server says it is. Classic servers send only `version`.

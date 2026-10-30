@@ -1,15 +1,20 @@
 import Foundation
 
 /// What upstream kept "the same way as your password": the password itself and the raw
-/// custom-header text (which may hold proxy service tokens).
+/// custom-header text (which may hold proxy service tokens), bound to the server origins they
+/// were entered for.
 public struct ServerSecrets: Codable, Sendable, Equatable {
     public let password: String
     /// One `Name: Value` per line, as typed. Parse with `SubsonicAPI.CustomHeaders`.
     public let customHeaders: String
+    /// `scheme://host:port` of each address these secrets may be sent to (public and local),
+    /// as `SubsonicAPI.ServerAddress.origin` writes them.
+    public let origins: Set<String>
 
-    public init(password: String, customHeaders: String = "") {
+    public init(password: String, customHeaders: String = "", origins: Set<String>) {
         self.password = password
         self.customHeaders = customHeaders
+        self.origins = origins
     }
 }
 
@@ -31,13 +36,19 @@ public struct ServerSecretStore: Sendable {
         self.store = store
     }
 
-    public func secrets(forServer id: String) throws(SecretStoreError) -> ServerSecrets? {
+    /// The server's secrets, for sending to `origin`. Throws `originChanged` when they were saved
+    /// for other addresses (the server's address was edited, or a record was imported), so the
+    /// password is asked for again instead of being sent to a new host.
+    public func secrets(forServer id: String, origin: String) throws(SecretStoreError) -> ServerSecrets? {
         guard let data = try store.data(for: key(id)) else { return nil }
+        let secrets: ServerSecrets
         do {
-            return try JSONDecoder().decode(ServerSecrets.self, from: data)
+            secrets = try JSONDecoder().decode(ServerSecrets.self, from: data)
         } catch {
             throw .decodingFailed
         }
+        guard secrets.origins.contains(origin) else { throw .originChanged }
+        return secrets
     }
 
     public func save(_ secrets: ServerSecrets, forServer id: String) throws(SecretStoreError) {

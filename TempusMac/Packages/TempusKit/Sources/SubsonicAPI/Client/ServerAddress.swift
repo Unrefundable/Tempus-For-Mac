@@ -14,7 +14,8 @@ public struct ServerAddress: Sendable, Hashable {
               let scheme = components.scheme?.lowercased(), ["http", "https"].contains(scheme),
               let host = components.host?.lowercased(), !host.isEmpty,
               components.user == nil, components.password == nil,
-              components.query == nil, components.fragment == nil
+              components.query == nil, components.fragment == nil,
+              components.port.map({ (1 ... 65535).contains($0) }) ?? true
         else {
             throw .invalidServerAddress
         }

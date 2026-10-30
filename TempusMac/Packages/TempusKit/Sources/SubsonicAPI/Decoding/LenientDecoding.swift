@@ -97,6 +97,37 @@ public struct OneOrMany<Element: Decodable>: Decodable {
     }
 }
 
+// Encoding writes the canonical form (string ids, ISO 8601 dates with milliseconds, plain
+// arrays), so values stored locally decode back through the same lenient path.
+
+extension LenientString: Encodable {
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(wrappedValue)
+    }
+}
+
+extension LenientOptionalString: Encodable {
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(wrappedValue)
+    }
+}
+
+extension LenientDate: Encodable {
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(wrappedValue.map { Date.ISO8601FormatStyle(includingFractionalSeconds: true).format($0) })
+    }
+}
+
+extension OneOrMany: Encodable where Element: Encodable {
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(wrappedValue)
+    }
+}
+
 extension OneOrMany: Sendable where Element: Sendable {}
 extension OneOrMany: Equatable where Element: Equatable {}
 extension OneOrMany: Hashable where Element: Hashable {}

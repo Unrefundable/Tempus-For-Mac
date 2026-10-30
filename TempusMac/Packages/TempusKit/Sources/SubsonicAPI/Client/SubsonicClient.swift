@@ -82,6 +82,14 @@ public struct SubsonicClient: Sendable {
     }
 
     public func send<Response>(_ request: SubsonicRequest<Response>) async throws(SubsonicError) -> Response {
+        try await fetch(request).value
+    }
+
+    /// Like `send`, but also returns the raw response body so it can be cached and later read
+    /// back with `decode(_:from:)`. Only successful responses are returned.
+    public func fetch<Response>(
+        _ request: SubsonicRequest<Response>
+    ) async throws(SubsonicError) -> (value: Response, data: Data) {
         var urlRequest = try URLRequest(url: url(for: request), timeoutInterval: timeout)
         for field in headers.fields {
             urlRequest.setValue(field.value, forHTTPHeaderField: field.name)
@@ -92,20 +100,28 @@ public struct SubsonicClient: Sendable {
             // Some servers explain the failure in a Subsonic body; prefer their code and message.
             let envelope = try? JSONDecoder().decode(ResponseEnvelope<EmptyResponse>.self, from: data)
             if case let .failed(code, message) = envelope?.body {
-                throw serverError(code: code, message: message, method: request.method)
+                throw Self.serverError(code: code, message: message, method: request.method)
             }
             Self.logger.error("\(request.method, privacy: .public) failed with HTTP \(http.statusCode)")
             throw .httpStatus(http.statusCode)
         }
 
+        return try (Self.decode(request, from: data), data)
+    }
+
+    /// Reads a response body, fresh or cached, through the same lenient decoding as `send`.
+    public static func decode<Response>(
+        _ request: SubsonicRequest<Response>,
+        from data: Data
+    ) throws(SubsonicError) -> Response {
         let decoder = JSONDecoder()
         decoder.userInfo[.subsonicElementPath] = request.elementPath
         let body: ResponseBody<Response>
         do {
             body = try decoder.decode(ResponseEnvelope<Response>.self, from: data).body
         } catch {
-            Self.logger.error("\(request.method, privacy: .public) returned an unreadable response: \(error)")
-            throw .decoding(String(String(describing: error).prefix(Self.maxMessageLength)))
+            logger.error("\(request.method, privacy: .public) returned an unreadable response: \(error)")
+            throw .decoding(String(String(describing: error).prefix(maxMessageLength)))
         }
 
         switch body {
@@ -116,9 +132,9 @@ public struct SubsonicClient: Sendable {
         }
     }
 
-    private func serverError(code: SubsonicErrorCode, message: String?, method: String) -> SubsonicError {
-        Self.logger.error("\(method, privacy: .public) failed with Subsonic error \(code.rawValue)")
-        return .server(code: code, message: message.map { String($0.prefix(Self.maxMessageLength)) })
+    private static func serverError(code: SubsonicErrorCode, message: String?, method: String) -> SubsonicError {
+        logger.error("\(method, privacy: .public) failed with Subsonic error \(code.rawValue)")
+        return .server(code: code, message: message.map { String($0.prefix(maxMessageLength)) })
     }
 
     private func perform(_ request: URLRequest, method: String) async throws(SubsonicError) -> (Data, URLResponse) {

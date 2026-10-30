@@ -1,7 +1,7 @@
 import Foundation
 
 /// A track or directory entry (Subsonic `Child`).
-public struct Song: Decodable, Sendable, Hashable, Identifiable {
+public struct Song: Codable, Sendable, Hashable, Identifiable {
     @LenientString public var id: String
     @LenientOptionalString public var parentID: String?
     public let isDir: Bool?
@@ -61,7 +61,7 @@ public struct Song: Decodable, Sendable, Hashable, Identifiable {
 }
 
 /// Loudness values in dB (gains) and linear amplitude (peaks).
-public struct ReplayGain: Decodable, Sendable, Hashable {
+public struct ReplayGain: Codable, Sendable, Hashable {
     public let trackGain: Double?
     public let albumGain: Double?
     public let trackPeak: Double?

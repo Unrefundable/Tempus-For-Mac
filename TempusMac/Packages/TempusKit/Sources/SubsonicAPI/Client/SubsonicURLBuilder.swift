@@ -22,11 +22,14 @@ enum SubsonicURLBuilder {
         }
         let basePath = components.path.hasSuffix("/") ? String(components.path.dropLast()) : components.path
         components.path = basePath + "/rest/" + method
-        components.percentEncodedQuery = (auth.queryItems + parameters)
-            .map { encode($0.name) + "=" + encode($0.value ?? "") }
-            .joined(separator: "&")
+        components.percentEncodedQuery = query(auth.queryItems + parameters)
         guard let url = components.url else { throw .invalidServerAddress }
         return url
+    }
+
+    /// `name=value&...`, every name and value percent-encoded.
+    static func query(_ items: [URLQueryItem]) -> String {
+        items.map { encode($0.name) + "=" + encode($0.value ?? "") }.joined(separator: "&")
     }
 
     private static func encode(_ text: String) -> String {

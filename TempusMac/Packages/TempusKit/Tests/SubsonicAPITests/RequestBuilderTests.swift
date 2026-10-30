@@ -26,6 +26,7 @@ struct RequestBuilderTests {
         "https://music.example.com.evil.org@music.example.com",
         "https://music.example.com/?a=1",
         "https://music.example.com/#top",
+        "http://music.example.com:0",
     ])
     func invalidAddresses(input: String) {
         #expect(throws: SubsonicError.invalidServerAddress) { try ServerAddress(input) }

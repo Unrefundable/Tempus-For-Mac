@@ -22,23 +22,40 @@ private final class MemoryStore: SecretStore {
 
 @Suite("Server secrets")
 struct ServerSecretStoreTests {
+    private let origins: Set = ["https://music.example.com:443", "http://192.168.1.5:4533"]
+
     @Test("Secrets round-trip per server and can be removed")
     func roundTrip() throws {
         let store = ServerSecretStore(store: MemoryStore())
-        let secrets = ServerSecrets(password: "p@ss+word é", customHeaders: "CF-Access-Client-Id: abc")
+        let secrets = ServerSecrets(
+            password: "p@ss+word é",
+            customHeaders: "CF-Access-Client-Id: abc",
+            origins: origins
+        )
 
         try store.save(secrets, forServer: "srv-1")
 
-        #expect(try store.secrets(forServer: "srv-1") == secrets)
-        #expect(try store.secrets(forServer: "srv-2") == nil)
+        #expect(try store.secrets(forServer: "srv-1", origin: "https://music.example.com:443") == secrets)
+        #expect(try store.secrets(forServer: "srv-1", origin: "http://192.168.1.5:4533") == secrets)
+        #expect(try store.secrets(forServer: "srv-2", origin: "https://music.example.com:443") == nil)
 
         try store.remove(forServer: "srv-1")
-        #expect(try store.secrets(forServer: "srv-1") == nil)
+        #expect(try store.secrets(forServer: "srv-1", origin: "https://music.example.com:443") == nil)
+    }
+
+    @Test("Secrets are refused for an origin they were not saved for, so an edited address asks again")
+    func originChanged() throws {
+        let store = ServerSecretStore(store: MemoryStore())
+        try store.save(ServerSecrets(password: "pw", origins: origins), forServer: "srv-1")
+
+        #expect(throws: SecretStoreError.originChanged) {
+            try store.secrets(forServer: "srv-1", origin: "https://evil.example.org:443")
+        }
     }
 
     @Test("Descriptions never reveal the password or header values")
     func redactedDescription() {
-        let secrets = ServerSecrets(password: "hunter2", customHeaders: "X-Token: hunter3")
+        let secrets = ServerSecrets(password: "hunter2", customHeaders: "X-Token: hunter3", origins: origins)
 
         #expect(!String(describing: secrets).contains("hunter"))
         #expect(!String(reflecting: secrets).contains("hunter"))
@@ -50,7 +67,7 @@ struct ServerSecretStoreTests {
         try memory.set(Data("not json".utf8), for: "server.srv-1")
 
         #expect(throws: SecretStoreError.decodingFailed) {
-            try ServerSecretStore(store: memory).secrets(forServer: "srv-1")
+            try ServerSecretStore(store: memory).secrets(forServer: "srv-1", origin: "https://music.example.com:443")
         }
     }
 }

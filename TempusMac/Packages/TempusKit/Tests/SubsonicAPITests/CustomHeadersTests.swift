@@ -97,6 +97,16 @@ struct CustomHeadersTests {
         #expect(try server.isSameOrigin(as: #require(URL(string: url))) == expected)
     }
 
+    @Test("Origins are written with an explicit port, for binding stored secrets", arguments: [
+        ("https://music.example.com/navidrome", "https://music.example.com:443"),
+        ("http://192.168.1.5:4533", "http://192.168.1.5:4533"),
+        ("http://music.example.com", "http://music.example.com:80"),
+        ("http://[::1]:4533", "http://[::1]:4533"),
+    ])
+    func originText(address: String, expected: String) throws {
+        #expect(try ServerAddress(address).origin == expected)
+    }
+
     @Test("Origin matching with explicit ports and sub-paths")
     func originPortsAndPaths() throws {
         let lan = try ServerAddress("http://192.168.1.5:4533")
