@@ -1,0 +1,21 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "playlists": {
+      "playlist": {
+        "id": 15,
+        "name": "Late Night",
+        "comment": "Quiet stuff",
+        "owner": "alice",
+        "public": true,
+        "songCount": 2,
+        "duration": 1104,
+        "created": "2024-04-01T22:00:00Z",
+        "changed": "2024-04-02T22:00:00Z",
+        "coverArt": "pl-15",
+        "allowedUser": "bob"
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.53.3",
+    "openSubsonic": true,
+    "podcasts": {
+      "channel": [
+        {
+          "id": "pc-1",
+          "url": "https://podcasts.example.com/feed.xml",
+          "title": "Jazz History",
+          "description": "Stories behind the records",
+          "coverArt": "pc-1",
+          "originalImageUrl": "https://podcasts.example.com/cover.jpg",
+          "status": "completed",
+          "episode": [
+            {
+              "id": "pe-1",
+              "streamId": "pe-1-stream",
+              "channelId": "pc-1",
+              "title": "Episode 1: Blue Note",
+              "description": "The label that defined a sound",
+              "publishDate": "2024-09-01T06:00:00Z",
+              "status": "completed",
+              "parent": "pc-1",
+              "isDir": false,
+              "duration": 2700,
+              "suffix": "mp3",
+              "contentType": "audio/mpeg",
+              "size": 43200000,
+              "coverArt": "pe-1"
+            },
+            {
+              "id": "pe-2",
+              "channelId": "pc-1",
+              "title": "Episode 2: Impulse!",
+              "publishDate": "2024-09-08T06:00:00Z",
+              "status": "skipped"
+            }
+          ]
+        },
+        {
+          "id": "pc-2",
+          "url": "https://broken.example.com/feed.xml",
+          "status": "error",
+          "errorMessage": "Feed not found"
+        }
+      ]
+    }
+  }
+}

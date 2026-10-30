@@ -1,0 +1,24 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.53.3",
+    "openSubsonic": true,
+    "playlist": {
+      "id": "pl-late-night",
+      "name": "Late Night",
+      "owner": "alice",
+      "public": false,
+      "songCount": 2,
+      "duration": 1104,
+      "created": "2024-04-01T22:00:00Z",
+      "changed": "2024-04-02T22:00:00Z",
+      "coverArt": "pl-late-night_0",
+      "entry": [
+        { "id": "s-blue-train", "title": "Blue Train", "artist": "John Coltrane", "album": "Blue Train", "duration": 643, "albumId": "al-blue-train", "isDir": false },
+        { "id": "s-blue-train", "title": "Blue Train", "artist": "John Coltrane", "album": "Blue Train", "duration": 643, "albumId": "al-blue-train", "isDir": false }
+      ]
+    }
+  }
+}

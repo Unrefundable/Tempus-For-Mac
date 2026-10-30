@@ -1,0 +1,12 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "internetRadioStations": {
+      "internetRadioStation": [
+        { "id": "1", "name": "Jazz FM", "streamUrl": "https://stream.example.com/jazz.mp3", "homePageUrl": "https://jazz.example.com" },
+        { "id": 2, "name": "No Homepage", "streamUrl": "http://stream.example.com/other.aac" }
+      ]
+    }
+  }
+}

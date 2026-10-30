@@ -1,0 +1,16 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "bookmarks": {
+      "bookmark": {
+        "position": 5000,
+        "username": "alice",
+        "comment": "",
+        "created": "2024-10-01T08:00:00Z",
+        "changed": "2024-10-02T08:00:00Z",
+        "entry": { "id": "9", "title": "C", "isDir": false, "duration": 1200, "type": "podcast" }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.53.3",
+    "openSubsonic": true,
+    "artistInfo2": {
+      "biography": "John William Coltrane was an American jazz saxophonist and composer.",
+      "musicBrainzId": "b625448e-bf4a-41c3-a421-72ad46cdb831",
+      "lastFmUrl": "https://www.last.fm/music/John+Coltrane",
+      "smallImageUrl": "https://images.example.com/small.jpg",
+      "mediumImageUrl": "https://images.example.com/medium.jpg",
+      "largeImageUrl": "https://images.example.com/large.jpg",
+      "similarArtist": [
+        { "id": "ar-davis", "name": "Miles Davis", "albumCount": 2 },
+        { "id": "ar-rollins", "name": "Sonny Rollins", "albumCount": 0 }
+      ]
+    }
+  }
+}

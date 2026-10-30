@@ -31,4 +31,4 @@ file_length:
   warning: 400
   error: 800
 identifier_name:
-  excluded: [id]
+  excluded: [id, ok, to]

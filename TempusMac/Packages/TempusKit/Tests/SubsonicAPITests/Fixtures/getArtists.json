@@ -1,0 +1,25 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.53.3",
+    "openSubsonic": true,
+    "artists": {
+      "ignoredArticles": "The El La Los Las Le Les",
+      "index": [
+        {
+          "name": "C",
+          "artist": [
+            { "id": "ar-coltrane", "name": "John Coltrane", "coverArt": "ar-coltrane_0", "albumCount": 3, "artistImageUrl": "https://music.example.com/share/img/ar-coltrane" },
+            { "id": "ar-corea", "name": "Chick Corea", "albumCount": 1, "starred": "2023-05-05T05:05:05Z" }
+          ]
+        },
+        {
+          "name": "M",
+          "artist": { "id": "ar-davis", "name": "Miles Davis", "albumCount": 2 }
+        }
+      ]
+    }
+  }
+}

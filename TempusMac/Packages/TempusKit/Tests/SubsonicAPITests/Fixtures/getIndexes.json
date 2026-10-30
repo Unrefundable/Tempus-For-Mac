@@ -1,0 +1,16 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "indexes": {
+      "lastModified": 1730000000000,
+      "ignoredArticles": "The",
+      "shortcut": { "id": "dir-podcasts", "name": "Podcasts" },
+      "index": [
+        { "name": "C", "artist": [{ "id": "dir-coltrane", "name": "John Coltrane" }] },
+        { "name": "M", "artist": { "id": "dir-davis", "name": "Miles Davis", "starred": "2024-01-01T00:00:00Z" } }
+      ],
+      "child": { "id": "s-loose", "title": "Loose track.mp3", "isDir": false, "parent": "root" }
+    }
+  }
+}

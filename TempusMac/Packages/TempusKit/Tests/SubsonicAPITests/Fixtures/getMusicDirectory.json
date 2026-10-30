@@ -1,0 +1,16 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "directory": {
+      "id": "dir-coltrane",
+      "parent": "root",
+      "name": "John Coltrane",
+      "playCount": 30,
+      "child": [
+        { "id": "dir-blue-train", "parent": "dir-coltrane", "isDir": true, "title": "Blue Train", "coverArt": "dir-blue-train" },
+        { "id": "s-interview", "parent": "dir-coltrane", "isDir": false, "title": "Interview", "suffix": "mp3" }
+      ]
+    }
+  }
+}

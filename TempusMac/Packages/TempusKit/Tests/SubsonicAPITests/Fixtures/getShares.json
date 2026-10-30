@@ -1,0 +1,24 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.53.3",
+    "openSubsonic": true,
+    "shares": {
+      "share": [
+        {
+          "id": "sh-1",
+          "url": "https://music.example.com/share/sh-1",
+          "description": "For Bob",
+          "username": "alice",
+          "created": "2024-10-01T12:00:00Z",
+          "expires": "2024-11-01T12:00:00Z",
+          "lastVisited": "2024-10-05T12:00:00Z",
+          "visitCount": 3,
+          "entry": [{ "id": "s-blue-train", "title": "Blue Train", "isDir": false }]
+        }
+      ]
+    }
+  }
+}

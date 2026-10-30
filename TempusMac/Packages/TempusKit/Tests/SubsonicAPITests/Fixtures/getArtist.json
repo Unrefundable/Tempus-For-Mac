@@ -1,0 +1,20 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.53.3",
+    "openSubsonic": true,
+    "artist": {
+      "id": "ar-coltrane",
+      "name": "John Coltrane",
+      "coverArt": "ar-coltrane_0",
+      "albumCount": 2,
+      "userRating": 4,
+      "album": [
+        { "id": "al-blue-train", "name": "Blue Train", "artist": "John Coltrane", "artistId": "ar-coltrane", "year": 1957, "songCount": 5 },
+        { "id": "al-giant-steps", "name": "Giant Steps", "artist": "John Coltrane", "artistId": "ar-coltrane", "year": 1960, "songCount": 7 }
+      ]
+    }
+  }
+}

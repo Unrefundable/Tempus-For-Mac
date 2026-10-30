@@ -1,0 +1,20 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.53.3",
+    "openSubsonic": true,
+    "playQueue": {
+      "current": "s-moments-notice",
+      "position": 120500,
+      "username": "alice",
+      "changed": "2024-10-28T21:00:00Z",
+      "changedBy": "Tempus",
+      "entry": [
+        { "id": "s-blue-train", "title": "Blue Train", "isDir": false },
+        { "id": "s-moments-notice", "title": "Moment's Notice", "isDir": false }
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.53.3",
+    "openSubsonic": true,
+    "lyricsList": {
+      "structuredLyrics": [
+        {
+          "displayArtist": "Example Artist",
+          "displayTitle": "Example Song",
+          "lang": "eng",
+          "offset": -100,
+          "synced": true,
+          "line": [
+            { "start": 0, "value": "First line" },
+            { "start": 2500, "value": "Second line" }
+          ]
+        },
+        {
+          "lang": "xxx",
+          "synced": false,
+          "line": [{ "value": "Unsynced text" }]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.15.0",
+    "album": {
+      "id": 1042,
+      "name": "Kind of Blue",
+      "artist": "Miles Davis",
+      "artistId": 77,
+      "coverArt": "al-1042",
+      "songCount": 1,
+      "duration": 562,
+      "created": "2019-06-01T10:00:00",
+      "year": 1959,
+      "song": {
+        "id": 99001,
+        "parent": 1042,
+        "isDir": false,
+        "title": "So What",
+        "album": "Kind of Blue",
+        "artist": "Miles Davis",
+        "albumArtist": "Miles Davis",
+        "track": 1,
+        "duration": 562,
+        "bitRate": 320,
+        "suffix": "mp3",
+        "contentType": "audio/mpeg",
+        "transcodedSuffix": "opus",
+        "transcodedContentType": "audio/ogg",
+        "albumId": 1042,
+        "artistId": 77,
+        "type": "music",
+        "created": "2019-06-01T10:00:00.000Z"
+      }
+    }
+  }
+}
