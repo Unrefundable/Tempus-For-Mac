@@ -42,7 +42,7 @@ struct TransportPolicyTests {
         var request = try URLRequest(url: #require(URL(string: "https://music.example.com/rest/stream2")))
         request.setValue("abc", forHTTPHeaderField: "CF-Access-Client-Id")
 
-        let followed = RedirectPolicy.request(following: request, server: server, headerNames: ["CF-Access-Client-Id"])
+        let followed = RedirectPolicy.request(following: request, server: server)
 
         #expect(followed.value(forHTTPHeaderField: "CF-Access-Client-Id") == "abc")
     }
@@ -54,7 +54,7 @@ struct TransportPolicyTests {
         request.setValue("abc", forHTTPHeaderField: "CF-Access-Client-Id")
         request.setValue("bytes=0-", forHTTPHeaderField: "Range")
 
-        let followed = RedirectPolicy.request(following: request, server: server, headerNames: ["cf-access-client-id"])
+        let followed = RedirectPolicy.request(following: request, server: server)
 
         #expect(followed.value(forHTTPHeaderField: "CF-Access-Client-Id") == nil)
         #expect(followed.value(forHTTPHeaderField: "Range") == "bytes=0-")
@@ -78,6 +78,44 @@ struct TransportPolicyTests {
         )
 
         #expect(ClientCertificate.isRequested(by: space, from: server) == expected)
+    }
+
+    @Test("Leaving the server keeps only safe headers, even ones no policy knows about, and with no policy at all")
+    func redirectsFailClosed() throws {
+        let server = try ServerAddress("https://music.example.com")
+        var request = try URLRequest(url: #require(URL(string: "http://music.example.com/rest/stream")))
+        request.setValue("old-server-secret", forHTTPHeaderField: "X-Other-Server-Token")
+        request.setValue("Bearer x", forHTTPHeaderField: "Authorization")
+        request.setValue("bytes=0-", forHTTPHeaderField: "Range")
+
+        for followed in [
+            RedirectPolicy.request(following: request, server: server), // https → http counts as leaving
+            MediaRequestPolicy.requestWithoutPolicy(followingRedirectTo: request),
+        ] {
+            #expect(followed.allHTTPHeaderFields == ["Range": "bytes=0-"])
+        }
+    }
+
+    @Test("The media policy gives the player the client's header and redirect rules")
+    func mediaPolicy() throws {
+        let policy = try client(StubTransport()).mediaRequestPolicy
+        let onServer = try #require(URL(string: "https://music.example.com/rest/stream"))
+        let elsewhere = try #require(URL(string: "https://cdn.example.net/file.flac"))
+        var redirect = URLRequest(url: elsewhere)
+        redirect.setValue("abc", forHTTPHeaderField: "CF-Access-Client-Id")
+        redirect.setValue("xyz", forHTTPHeaderField: "CF-Access-Client-Secret")
+        var internalRedirect = URLRequest(url: onServer)
+        internalRedirect.setValue("abc", forHTTPHeaderField: "CF-Access-Client-Id")
+
+        #expect(policy.headers(for: onServer).count == 2)
+        #expect(policy.headers(for: elsewhere).isEmpty)
+        #expect(policy.request(followingRedirectTo: redirect).allHTTPHeaderFields?.isEmpty ?? true)
+        #expect(policy.request(followingRedirectTo: internalRedirect) == internalRedirect)
+        let space = URLProtectionSpace(
+            host: "music.example.com", port: 443, protocol: "https", realm: nil,
+            authenticationMethod: NSURLAuthenticationMethodClientCertificate
+        )
+        #expect(policy.credential(for: space) == nil)
     }
 
     @Test("Only client-certificate challenges are answered, and only with a certificate", arguments: [

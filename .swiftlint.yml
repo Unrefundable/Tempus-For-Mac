@@ -4,6 +4,7 @@ excluded:
   - reference
   - TempusMac/Packages/TempusKit/.build
   - TempusMac/Spike # throwaway experiments, not shipped
+  - TempusMac/Vendor # third-party code, kept close to upstream
 
 opt_in_rules:
   - empty_count
@@ -31,4 +32,4 @@ file_length:
   warning: 400
   error: 800
 identifier_name:
-  excluded: [db, id, ok, to]
+  excluded: [at, db, id, ok, q, to] # q: a filter's Q factor

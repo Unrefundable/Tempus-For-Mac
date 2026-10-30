@@ -40,26 +40,63 @@ public struct ClientCertificate: @unchecked Sendable {
 }
 
 /// Upstream checks every redirect hop: custom headers must never follow a redirect off the server.
+/// A redirect that leaves it keeps only headers that can't carry secrets, whatever the others are
+/// called, so a header set by anyone (or a policy that is missing) fails closed.
 enum RedirectPolicy {
-    static func request(following request: URLRequest, server: ServerAddress, headerNames: [String]) -> URLRequest {
-        guard let url = request.url, !server.isSameOrigin(as: url) else { return request }
+    static let headersSafeOffOrigin: Set = [
+        "accept", "accept-encoding", "accept-language", "icy-metadata", "if-range", "range", "user-agent",
+    ]
+
+    /// - Parameter server: nil when the origin is unknown; every redirect then counts as leaving it.
+    static func request(following request: URLRequest, server: ServerAddress?) -> URLRequest {
+        if let server, let url = request.url, server.isSameOrigin(as: url) {
+            return request
+        }
         var stripped = request
-        for name in headerNames {
+        for name in (request.allHTTPHeaderFields ?? [:]).keys where !headersSafeOffOrigin.contains(name.lowercased()) {
             stripped.setValue(nil, forHTTPHeaderField: name)
         }
         return stripped
     }
 }
 
+/// The rules `SubsonicClient` applies to its own requests, for media fetched outside it (the audio
+/// player): custom headers only on the server's origin, stripped on redirects that leave it, and the
+/// client certificate only for the server's own challenge.
+public struct MediaRequestPolicy: Sendable {
+    let server: ServerAddress
+    let headers: CustomHeaders
+    let certificate: ClientCertificate?
+
+    /// The custom headers to send with `url`: all of them on the server's origin, none elsewhere.
+    public func headers(for url: URL) -> [String: String] {
+        server.isSameOrigin(as: url) ? headers.dictionary : [:]
+    }
+
+    /// The request to send when following a redirect.
+    public func request(followingRedirectTo request: URLRequest) -> URLRequest {
+        RedirectPolicy.request(following: request, server: server)
+    }
+
+    /// For a redirect when no server's policy applies: only the safe headers follow it.
+    public static func requestWithoutPolicy(followingRedirectTo request: URLRequest) -> URLRequest {
+        RedirectPolicy.request(following: request, server: nil)
+    }
+
+    /// The credential for a client-certificate challenge, or nil for default handling.
+    public func credential(for space: URLProtectionSpace) -> URLCredential? {
+        let (disposition, credential) = ClientCertificate.response(to: space, certificate: certificate, server: server)
+        return disposition == .useCredential ? credential : nil
+    }
+}
+
 /// Per-task URLSession delegate applying the redirect and client-certificate rules.
 final class SessionGuard: NSObject, URLSessionTaskDelegate, Sendable {
     private let server: ServerAddress
-    private let headerNames: [String]
     private let certificate: ClientCertificate?
 
-    init(server: ServerAddress, headerNames: [String], certificate: ClientCertificate?) {
+    init(server: ServerAddress, certificate: ClientCertificate?) {
         self.server = server
-        self.headerNames = headerNames
         self.certificate = certificate
     }
 
@@ -69,7 +106,7 @@ final class SessionGuard: NSObject, URLSessionTaskDelegate, Sendable {
         willPerformHTTPRedirection _: HTTPURLResponse,
         newRequest request: URLRequest
     ) async -> URLRequest? {
-        RedirectPolicy.request(following: request, server: server, headerNames: headerNames)
+        RedirectPolicy.request(following: request, server: server)
     }
 
     func urlSession(

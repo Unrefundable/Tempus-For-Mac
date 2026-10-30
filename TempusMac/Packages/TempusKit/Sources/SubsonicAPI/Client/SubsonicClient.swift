@@ -42,6 +42,8 @@ public struct SubsonicClient: Sendable {
     public let server: ServerAddress
     public let auth: SubsonicAuth
     public let headers: CustomHeaders
+    /// The same header, redirect and certificate rules, for media the player fetches itself.
+    public let mediaRequestPolicy: MediaRequestPolicy
     private let timeout: TimeInterval
     private let transport: any HTTPTransport
 
@@ -60,11 +62,11 @@ public struct SubsonicClient: Sendable {
         self.server = server
         self.auth = auth
         self.headers = headers
+        mediaRequestPolicy = MediaRequestPolicy(server: server, headers: headers, certificate: clientCertificate)
         self.timeout = timeout
         self.transport = transport ?? URLSessionTransport(
             policy: SessionGuard(
                 server: server,
-                headerNames: headers.fields.map(\.name),
                 certificate: clientCertificate
             )
         )
@@ -73,7 +75,7 @@ public struct SubsonicClient: Sendable {
     /// The custom headers to send with `url`: all of them on this server's origin, none elsewhere.
     /// Use it for media requests made outside this client (player, image loader).
     public func headers(for url: URL) -> [String: String] {
-        server.isSameOrigin(as: url) ? headers.dictionary : [:]
+        mediaRequestPolicy.headers(for: url)
     }
 
     /// The full URL for a request, credentials included. Treat it as a secret.

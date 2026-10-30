@@ -36,4 +36,4 @@ Tempus for macOS is released under the [GNU General Public License v3.0](LICENSE
 - [Tempo](https://github.com/CappielloAntonio/tempo) by [CappielloAntonio](https://github.com/CappielloAntonio), the project Tempus was forked from.
 - [SeattleGuy](https://github.com/SeattleGuy) for the Tempus logo design.
 - [Amperfy](https://github.com/BLeeEZ/amperfy) (GPL-3.0), whose player served as a reference for wiring AudioStreaming, the equalizer and ReplayGain.
-- [AudioStreaming](https://github.com/dimitris-c/AudioStreaming) (MIT) for audio playback.
+- [AudioStreaming](https://github.com/dimitris-c/AudioStreaming) (MIT) for audio playback. A patched copy lives in `TempusMac/Vendor/AudioStreaming`; its `TEMPUS-PATCHES.md` lists the changes.

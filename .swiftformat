@@ -1,5 +1,5 @@
 --swiftversion 6.0
---exclude reference,TempusMac/Spike,**/.build,**/DerivedData
+--exclude reference,TempusMac/Spike,TempusMac/Vendor,**/.build,**/DerivedData
 --indent 4
 --maxwidth 120
 --wraparguments before-first

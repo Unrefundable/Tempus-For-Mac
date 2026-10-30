@@ -1,6 +1,6 @@
 # ADR 0001: Foundation decisions
 
-- **Status:** Accepted. Decision 3 is accepted with one follow-up patch (see Spike result).
+- **Status:** Accepted. Decision 3's follow-up patch is done: MP3 and AAC now join with 0 ms of silence (see `TempusMac/Vendor/AudioStreaming/TEMPUS-PATCHES.md` and ADR 0003).
 - **Date:** 2026-10-29
 
 ## Context

@@ -1,5 +1,6 @@
 #!/bin/sh
-# Runs the read-only live-server tests (Tests/SubsonicAPITests/LiveServerTests.swift) against
+# Runs the read-only live-server tests (Tests/SubsonicAPITests/LiveServerTests.swift) and the
+# silent live playback test (Tests/PlaybackTests/LivePlaybackTests.swift) against
 # your own Subsonic or Navidrome server. Nothing on the server is changed.
 #
 # Credentials are typed here, handed to the test process through its environment only, and
@@ -28,4 +29,4 @@ case "$plain" in [yY]*) TEMPUS_LIVE_PLAINTEXT=1 ;; *) TEMPUS_LIVE_PLAINTEXT=0 ;;
 export TEMPUS_LIVE_SERVER TEMPUS_LIVE_LOCAL TEMPUS_LIVE_USER TEMPUS_LIVE_PASSWORD TEMPUS_LIVE_PLAINTEXT
 
 printf '\nRunning read-only tests against your server...\n\n'
-swift test --filter LiveServerTests 2>&1 | grep -vE '^\[[0-9]+/[0-9]+\]|^(Building|Build complete|Compiling|Write|Emitting)'
+swift test --filter "LiveServerTests|LivePlaybackTests" 2>&1 | grep -vE '^\[[0-9]+/[0-9]+\]|^(Building|Build complete|Compiling|Write|Emitting)'
