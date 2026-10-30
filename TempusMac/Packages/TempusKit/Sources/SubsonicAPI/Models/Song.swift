@@ -46,6 +46,67 @@ public struct Song: Codable, Sendable, Hashable, Identifiable {
         displayAlbumArtist ?? legacyAlbumArtist
     }
 
+    /// For previews, tests and locally built entries. Servers' songs come from decoding.
+    public init(
+        id: String,
+        title: String? = nil,
+        album: String? = nil,
+        artist: String? = nil,
+        albumArtist: String? = nil,
+        track: Int? = nil,
+        year: Int? = nil,
+        genre: String? = nil,
+        coverArtID: String? = nil,
+        suffix: String? = nil,
+        contentType: String? = nil,
+        duration: Int? = nil,
+        bitrate: Int? = nil,
+        samplingRate: Int? = nil,
+        bitDepth: Int? = nil,
+        discNumber: Int? = nil,
+        starred: Date? = nil,
+        userRating: Int? = nil,
+        albumID: String? = nil,
+        artistID: String? = nil,
+        type: String? = "music",
+        replayGain: ReplayGain? = nil
+    ) {
+        _id = LenientString(wrappedValue: id)
+        _parentID = LenientOptionalString(wrappedValue: albumID)
+        isDir = false
+        self.title = title
+        self.album = album
+        self.artist = artist
+        self.track = track
+        self.year = year
+        self.genre = genre
+        _coverArtID = LenientOptionalString(wrappedValue: coverArtID)
+        size = nil
+        self.contentType = contentType
+        self.suffix = suffix
+        transcodedContentType = nil
+        transcodedSuffix = nil
+        self.duration = duration
+        self.bitrate = bitrate
+        self.samplingRate = samplingRate
+        self.bitDepth = bitDepth
+        path = nil
+        isVideo = false
+        self.userRating = userRating
+        averageRating = nil
+        playCount = nil
+        self.discNumber = discNumber
+        _created = LenientDate(wrappedValue: nil)
+        _starred = LenientDate(wrappedValue: starred)
+        _albumID = LenientOptionalString(wrappedValue: albumID)
+        _artistID = LenientOptionalString(wrappedValue: artistID)
+        self.type = type
+        bookmarkPosition = nil
+        self.replayGain = replayGain
+        displayAlbumArtist = albumArtist
+        legacyAlbumArtist = nil
+    }
+
     private enum CodingKeys: String, CodingKey {
         case id, isDir, title, album, artist, track, year, genre, size, contentType, suffix
         case transcodedContentType, transcodedSuffix, duration, samplingRate, bitDepth, path, isVideo

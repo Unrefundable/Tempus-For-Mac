@@ -300,8 +300,16 @@ extension PlayerController {
         }
     }
 
-    /// Waits for pending saves and any fade. For tests.
-    func settled() async {
+    /// Saves the current track and position now, then waits for every pending save. Call it before
+    /// quitting or handing the engine to another server, so the saved position isn't up to 15 s stale.
+    public func savePosition() async {
+        tick()
+        saveProgress()
+        await persistence?.value
+    }
+
+    /// Waits for pending saves and any fade.
+    public func settled() async {
         await fade?.value
         await persistence?.value
     }

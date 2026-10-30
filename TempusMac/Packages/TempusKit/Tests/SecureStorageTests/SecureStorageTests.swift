@@ -61,6 +61,33 @@ struct ServerSecretStoreTests {
         #expect(!String(reflecting: secrets).contains("hunter"))
     }
 
+    @Test("Secrets saved before client certificates existed still load, without one")
+    func backwardCompatible() throws {
+        let memory = MemoryStore()
+        let phase2 = #"{"password":"pw","customHeaders":"","origins":["https://music.example.com:443"]}"#
+        try memory.set(Data(phase2.utf8), for: "server.srv-1")
+
+        let secrets = try ServerSecretStore(store: memory)
+            .secrets(forServer: "srv-1", origin: "https://music.example.com:443")
+
+        #expect(secrets?.password == "pw")
+        #expect(secrets?.clientCertificate == nil)
+        #expect(secrets?.clientCertificatePassphrase == nil)
+    }
+
+    @Test("A client certificate and its passphrase round-trip and stay out of descriptions")
+    func clientCertificate() throws {
+        let store = ServerSecretStore(store: MemoryStore())
+        let secrets = ServerSecrets(
+            password: "pw", origins: origins,
+            clientCertificate: Data([1, 2, 3]), clientCertificatePassphrase: "hunter4"
+        )
+        try store.save(secrets, forServer: "srv-1")
+
+        #expect(try store.secrets(forServer: "srv-1", origin: "https://music.example.com:443") == secrets)
+        #expect(!String(describing: secrets).contains("hunter"))
+    }
+
     @Test("Unreadable stored data is reported, not silently dropped")
     func corruptData() throws {
         let memory = MemoryStore()

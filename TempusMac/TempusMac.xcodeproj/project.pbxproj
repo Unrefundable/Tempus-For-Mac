@@ -7,12 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7E5A00000000000000000001 /* SubsonicAPI in Frameworks */ = {isa = PBXBuildFile; productRef = 7E5A00000000000000000020 /* SubsonicAPI */; };
+		7E5A00000000000000000001 /* TempusUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7E5A00000000000000000020 /* TempusUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		7E5A00000000000000000002 /* Tempus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tempus.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E5A00000000000000000003 /* Tempus.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Tempus.entitlements; sourceTree = "<group>"; };
+		7E5A00000000000000000013 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -28,7 +29,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7E5A00000000000000000001 /* SubsonicAPI in Frameworks */,
+				7E5A00000000000000000001 /* TempusUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -48,6 +49,7 @@
 			isa = PBXGroup;
 			children = (
 				7E5A00000000000000000003 /* Tempus.entitlements */,
+				7E5A00000000000000000013 /* Info.plist */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -80,7 +82,7 @@
 			);
 			name = Tempus;
 			packageProductDependencies = (
-				7E5A00000000000000000020 /* SubsonicAPI */,
+				7E5A00000000000000000020 /* TempusUI */,
 			);
 			productName = Tempus;
 			productReference = 7E5A00000000000000000002 /* Tempus.app */;
@@ -199,6 +201,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tempus;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "GPL-3.0. Based on Tempus by eddyizm and Tempo by CappielloAntonio.";
@@ -223,6 +226,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tempus;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "GPL-3.0. Based on Tempus by eddyizm and Tempo by CappielloAntonio.";
@@ -268,10 +272,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		7E5A00000000000000000020 /* SubsonicAPI */ = {
+		7E5A00000000000000000020 /* TempusUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 7E5A00000000000000000021 /* XCLocalSwiftPackageReference "Packages/TempusKit" */;
-			productName = SubsonicAPI;
+			productName = TempusUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

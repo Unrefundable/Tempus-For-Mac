@@ -10,11 +10,14 @@ let package = Package(
         .library(name: "Persistence", targets: ["Persistence"]),
         .library(name: "Library", targets: ["Library"]),
         .library(name: "Playback", targets: ["Playback"]),
+        .library(name: "AppCore", targets: ["AppCore"]),
+        .library(name: "TempusUI", targets: ["TempusUI"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.11.1"),
         // Patched for gapless MP3/AAC, redirects and pitch; see Vendor/AudioStreaming/TEMPUS-PATCHES.md.
         .package(path: "../../Vendor/AudioStreaming"),
+        .package(url: "https://github.com/kean/Nuke", from: "13.2.0"),
     ],
     targets: [
         .target(name: "SubsonicAPI"),
@@ -28,6 +31,20 @@ let package = Package(
             name: "Playback",
             dependencies: ["SubsonicAPI", "Persistence", .product(name: "AudioStreaming", package: "AudioStreaming")]
         ),
+        .target(
+            name: "AppCore",
+            dependencies: [
+                "SubsonicAPI", "SecureStorage", "Persistence", "Library", "Playback",
+                .product(name: "Nuke", package: "Nuke"),
+            ]
+        ),
+        .target(
+            name: "TempusUI",
+            dependencies: [
+                "AppCore", "Persistence", "Playback", "SecureStorage", "SubsonicAPI",
+                .product(name: "NukeUI", package: "Nuke"),
+            ]
+        ),
         .testTarget(name: "SecureStorageTests", dependencies: ["SecureStorage"]),
         .testTarget(
             name: "SubsonicAPITests",
@@ -37,5 +54,10 @@ let package = Package(
         .testTarget(name: "PersistenceTests", dependencies: ["Persistence", "SubsonicAPI"]),
         .testTarget(name: "LibraryTests", dependencies: ["Library", "Persistence", "SubsonicAPI"]),
         .testTarget(name: "PlaybackTests", dependencies: ["Playback", "Persistence", "SubsonicAPI"]),
+        .testTarget(
+            name: "AppCoreTests",
+            dependencies: ["AppCore", "SecureStorage", "Persistence", "Playback", "SubsonicAPI"],
+            resources: [.copy("Fixtures")]
+        ),
     ]
 )

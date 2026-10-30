@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import MediaPlayer
 import SubsonicAPI
@@ -26,20 +27,66 @@ public protocol NowPlayingPublishing: AnyObject {
 public final class SystemNowPlaying: NowPlayingPublishing {
     private let center = MPNowPlayingInfoCenter.default()
     private weak var player: PlayerController?
+    private var artwork: (songID: String, artwork: MPMediaItemArtwork)?
+    private var lastSongID: String?
 
-    public init(player: PlayerController) {
-        self.player = player
+    /// Registers the remote commands once. Create one for the life of the app and `attach` each
+    /// player to it, since the command center keeps every handler ever added.
+    public init() {
         registerCommands()
+    }
+
+    public convenience init(player: PlayerController) {
+        self.init()
+        attach(to: player)
+    }
+
+    /// Routes the media keys to `player` and publishes its state, replacing any earlier player.
+    public func attach(to player: PlayerController) {
+        self.player?.setNowPlaying(nil)
+        artwork = nil // song ids repeat across servers
+        self.player = player
         player.setNowPlaying(self)
+    }
+
+    /// Stops routing commands and clears the system's Now Playing.
+    public func detach() {
+        player?.setNowPlaying(nil)
+        player = nil
+        artwork = nil
+        publish(nil)
+    }
+
+    /// The cover for `songID`, shown while that song is current. Artwork loads after the track
+    /// starts, so it is kept and merged into every later publish.
+    public func setArtwork(_ image: NSImage?, forSongID songID: String) {
+        guard let image else {
+            if artwork?.songID == songID {
+                artwork = nil
+            }
+            return
+        }
+        let box = ImageBox(image: image)
+        artwork = (songID, MPMediaItemArtwork(boundsSize: image.size) { @Sendable _ in box.image })
+        if lastSongID == songID, var info = center.nowPlayingInfo {
+            info[MPMediaItemPropertyArtwork] = artwork?.artwork
+            center.nowPlayingInfo = info
+        }
     }
 
     public func publish(_ snapshot: NowPlayingSnapshot?) {
         guard let snapshot else {
+            lastSongID = nil
             center.nowPlayingInfo = nil
             center.playbackState = .stopped
             return
         }
-        center.nowPlayingInfo = Self.info(for: snapshot)
+        lastSongID = snapshot.song.id
+        var info = Self.info(for: snapshot)
+        if let artwork, artwork.songID == snapshot.song.id {
+            info[MPMediaItemPropertyArtwork] = artwork.artwork
+        }
+        center.nowPlayingInfo = info
         center.playbackState = switch snapshot.status {
         case .playing, .buffering: .playing
         case .paused: .paused
@@ -131,4 +178,10 @@ public final class SystemNowPlaying: NowPlayingPublishing {
         }
         return .success
     }
+}
+
+/// `MPMediaItemArtwork` may ask for the image on any thread. The image is never changed after it
+/// is handed over, so sharing it is safe.
+private struct ImageBox: @unchecked Sendable {
+    let image: NSImage
 }

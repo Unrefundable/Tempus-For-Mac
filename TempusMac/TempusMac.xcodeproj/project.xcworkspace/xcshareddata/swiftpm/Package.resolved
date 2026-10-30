@@ -11,6 +11,15 @@
       }
     },
     {
+      "identity" : "nuke",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kean/Nuke",
+      "state" : {
+        "revision" : "30f7a7e72e0607d304fbf69c799474bd5fb6d1ce",
+        "version" : "13.2.0"
+      }
+    },
+    {
       "identity" : "ogg-binary-xcframework",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sbooth/ogg-binary-xcframework",

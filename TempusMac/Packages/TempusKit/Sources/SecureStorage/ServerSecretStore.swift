@@ -1,8 +1,8 @@
 import Foundation
 
-/// What upstream kept "the same way as your password": the password itself and the raw
-/// custom-header text (which may hold proxy service tokens), bound to the server origins they
-/// were entered for.
+/// What upstream kept "the same way as your password": the password itself, the raw
+/// custom-header text (which may hold proxy service tokens) and the mTLS client identity, bound
+/// to the server origins they were entered for.
 public struct ServerSecrets: Codable, Sendable, Equatable {
     public let password: String
     /// One `Name: Value` per line, as typed. Parse with `SubsonicAPI.CustomHeaders`.
@@ -10,17 +10,30 @@ public struct ServerSecrets: Codable, Sendable, Equatable {
     /// `scheme://host:port` of each address these secrets may be sent to (public and local),
     /// as `SubsonicAPI.ServerAddress.origin` writes them.
     public let origins: Set<String>
+    /// A PKCS#12 (`.p12`) client identity for servers behind mutual TLS, as imported. Optional,
+    /// so secrets saved before certificates were supported still decode.
+    public let clientCertificate: Data?
+    public let clientCertificatePassphrase: String?
 
-    public init(password: String, customHeaders: String = "", origins: Set<String>) {
+    public init(
+        password: String,
+        customHeaders: String = "",
+        origins: Set<String>,
+        clientCertificate: Data? = nil,
+        clientCertificatePassphrase: String? = nil
+    ) {
         self.password = password
         self.customHeaders = customHeaders
         self.origins = origins
+        self.clientCertificate = clientCertificate
+        self.clientCertificatePassphrase = clientCertificatePassphrase
     }
 }
 
 extension ServerSecrets: CustomStringConvertible, CustomDebugStringConvertible {
     public var description: String {
-        "ServerSecrets(password: <redacted>, customHeaders: <redacted>)"
+        let certificate = clientCertificate == nil ? "none" : "<redacted>"
+        return "ServerSecrets(password: <redacted>, customHeaders: <redacted>, clientCertificate: \(certificate))"
     }
 
     public var debugDescription: String {
