@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Playback
 import SubsonicAPI
 import SwiftUI
@@ -45,17 +46,17 @@ struct QueuePanel: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.small) {
             HStack {
                 VStack(alignment: .leading) {
-                    Text("Playing Next").font(.headline)
+                    Text("Playing Next").font(.inter(.headline))
                     Text(TrackFormatting.queueSummary(player.queue.items.map(\.song)))
-                        .font(.caption)
+                        .font(.inter(.caption))
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Shuffle Upcoming", systemImage: "shuffle") { player.shuffleUpcoming() }
+                Button("Shuffle Upcoming", tempus: .shuffle) { player.shuffleUpcoming() }
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
                     .disabled(player.queue.items.count < 3)
-                Menu("Queue", systemImage: "ellipsis.circle") {
+                Menu("Queue", tempus: .moreVert) {
                     Button("Save as Playlist…") { sheets.present(.newPlaylist(player.queue.items.map(\.song))) }
                         .disabled(player.queue.isEmpty)
                     if session.settings.syncsPlayQueue {
@@ -71,14 +72,17 @@ struct QueuePanel: View {
             }
             .padding(.horizontal, Theme.Spacing.medium)
             if let errorMessage {
-                Text(errorMessage).font(.caption).foregroundStyle(.red).padding(.horizontal, Theme.Spacing.medium)
+                Text(errorMessage).font(.inter(.caption)).foregroundStyle(.red).padding(
+                    .horizontal,
+                    Theme.Spacing.medium
+                )
             }
             Group {
                 if player.queue.isEmpty {
-                    ContentUnavailableView(
-                        "Queue is empty",
-                        systemImage: "music.note.list",
-                        description: Text("Drag songs here to add them.")
+                    EmptyState(
+                        art: .icon(.queue),
+                        title: "Queue is empty",
+                        message: Text("Drag songs here to add them.")
                     )
                 } else {
                     list
@@ -135,23 +139,27 @@ private struct QueueRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.medium) {
-            ArtworkView(coverArtID: song.coverArtID, size: .thumbnail, cornerRadius: Theme.Radius.artworkSmall)
-                .frame(width: Theme.Size.queueCover, height: Theme.Size.queueCover)
+            ArtworkView(
+                coverArtID: song.coverArtID,
+                size: .thumbnail,
+                cornerRadius: Theme.Radius.artworkSmall,
+                placeholder: .song
+            )
+            .frame(width: Theme.Size.queueCover, height: Theme.Size.queueCover)
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title ?? "Untitled")
-                    .font(.callout.weight(isCurrent ? .bold : .regular))
+                    .font(.inter(.callout, weight: isCurrent ? .bold : .regular))
                     .foregroundStyle(isCurrent ? Theme.accent : .primary)
                 Text([song.artist, song.duration.map { TrackFormatting.time(TimeInterval($0)) }]
                     .compactMap(\.self).joined(separator: "  •  "))
-                    .font(.caption)
+                    .font(.inter(.caption))
                     .foregroundStyle(.secondary)
             }
             .lineLimit(1)
             Spacer(minLength: 0)
             if isCurrent {
-                Image(systemName: "speaker.wave.2.fill")
+                TempusIconImage(.equalizer, accessibilityName: Text("Now playing"))
                     .foregroundStyle(Theme.accent)
-                    .accessibilityLabel("Now playing")
             }
         }
         .padding(.vertical, 2)

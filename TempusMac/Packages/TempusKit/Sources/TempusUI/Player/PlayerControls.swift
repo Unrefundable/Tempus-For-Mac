@@ -1,29 +1,39 @@
 import AppCore
 import AVKit
+import DesignSystem
 import Playback
 import SwiftUI
 
 /// Shuffle, previous, play/pause, next and repeat, shared by the player bar and Now Playing.
 struct TransportControls: View {
+    /// Icon sizes standing in for the symbol fonts these controls used: body and title2 for the
+    /// player bar, title2 and 34 pt in Now Playing.
+    private enum IconSize {
+        static let control: CGFloat = 18
+        static let largeControl: CGFloat = 24
+        static let playPause: CGFloat = 28
+        static let largePlayPause: CGFloat = 40
+    }
+
     let player: PlayerController
     var large = false
 
     var body: some View {
         HStack(spacing: large ? Theme.Spacing.xLarge : Theme.Spacing.large) {
-            Button("Shuffle", systemImage: "shuffle") { player.toggleShuffle() }
+            Button("Shuffle", tempus: .shuffle) { player.toggleShuffle() }
                 .foregroundStyle(player.queue.isShuffled ? Theme.accent : .secondary)
                 .help(player.queue.isShuffled ? "Turn shuffle off" : "Turn shuffle on")
-            Button("Previous", systemImage: "backward.fill") { player.previous() }
+            Button("Previous", tempus: .skipPrevious) { player.previous() }
                 .disabled(player.queue.isEmpty)
             Button(
                 player.status.isActive ? "Pause" : "Play",
-                systemImage: player.status.isActive ? "pause.fill" : "play.fill"
+                tempus: player.status.isActive ? .pause : .play
             ) { player.togglePlayPause() }
-                .font(large ? .system(size: 34) : .title2)
+                .tempusIconSize(large ? IconSize.largePlayPause : IconSize.playPause)
                 .disabled(player.queue.isEmpty)
-            Button("Next", systemImage: "forward.fill") { player.next() }
+            Button("Next", tempus: .skipNext) { player.next() }
                 .disabled(player.queue.nextItem(afterTrackEnded: false) == nil)
-            Button("Repeat", systemImage: player.queue.repeatMode == .one ? "repeat.1" : "repeat") {
+            Button("Repeat", tempus: player.queue.repeatMode == .one ? .repeatOne : .repeat) {
                 player.cycleRepeatMode()
             }
             .foregroundStyle(player.queue.repeatMode == .off ? .secondary : Theme.accent)
@@ -31,7 +41,7 @@ struct TransportControls: View {
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
-        .font(large ? .title2 : .body)
+        .tempusIconSize(large ? IconSize.largeControl : IconSize.control)
     }
 }
 
@@ -73,7 +83,7 @@ struct SeekBar: View {
             Text(player.duration > 0 ? TrackFormatting.time(player.duration) : "--")
                 .frame(minWidth: 40, alignment: .leading)
         }
-        .font(.caption.monospacedDigit())
+        .font(.inter(.caption).monospacedDigit())
         .foregroundStyle(.secondary)
     }
 }

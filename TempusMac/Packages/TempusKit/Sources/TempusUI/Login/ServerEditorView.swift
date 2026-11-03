@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Persistence
 import SwiftUI
 
@@ -117,7 +118,7 @@ struct ServerEditorView: View {
                     .frame(minHeight: 48)
                     .autocorrectionDisabled()
                 Text("One per line, e.g. CF-Access-Client-Id: value")
-                    .font(.caption)
+                    .font(.inter(.caption))
                     .foregroundStyle(.secondary)
                 issueText(for: .customHeaders)
             }
@@ -131,7 +132,7 @@ struct ServerEditorView: View {
                 ForEach(warnings, id: \.self) { warning in
                     Label(warning.message, systemImage: "exclamationmark.shield")
                         .foregroundStyle(.orange)
-                        .font(.callout)
+                        .font(.inter(.callout))
                 }
             }
         }
@@ -139,7 +140,7 @@ struct ServerEditorView: View {
 
     @ViewBuilder private var outcomeLabel: some View {
         if let outcome {
-            Label(outcome.message, systemImage: outcome.isSuccess ? "checkmark.circle.fill" : "xmark.octagon.fill")
+            Label(outcome.message, tempus: outcome.isSuccess ? .checkCircle : .error)
                 .foregroundStyle(outcome.isSuccess ? .green : .red)
                 .padding(.horizontal, Theme.Spacing.small)
         }
@@ -186,7 +187,7 @@ struct ServerEditorView: View {
     @ViewBuilder
     private func issueText(for field: ServerForm.Field) -> some View {
         if let issue, issue.field == field {
-            Text(issue.message).font(.caption).foregroundStyle(.red)
+            Text(issue.message).font(.inter(.caption)).foregroundStyle(.red)
         }
     }
 

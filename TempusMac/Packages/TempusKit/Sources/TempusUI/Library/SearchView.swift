@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import SubsonicAPI
 import SwiftUI
 
@@ -19,11 +20,7 @@ struct SearchView: View {
             } else if let result {
                 results(result)
             } else if let errorMessage {
-                ContentUnavailableView(
-                    "Search failed",
-                    systemImage: "exclamationmark.magnifyingglass",
-                    description: Text(errorMessage)
-                )
+                EmptyState(art: .illustration(.emptyResponse), title: "Search failed", message: Text(errorMessage))
             } else {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -76,7 +73,7 @@ struct SearchView: View {
                         CoverRow(title: "Albums", items: result.albums) { AlbumTile(album: $0) }
                     }
                     if !result.songs.isEmpty {
-                        Text("Songs").font(.title2.bold()).padding(.horizontal, Theme.Spacing.xLarge)
+                        Text("Songs").font(.inter(.title2, weight: .bold)).padding(.horizontal, Theme.Spacing.xLarge)
                         TrackTable(songs: result.songs)
                             .frame(height: CGFloat(result.songs.count) * Theme.Size.tableRow + Theme.Size.tableHeader)
                             .padding(.horizontal, Theme.Spacing.large)

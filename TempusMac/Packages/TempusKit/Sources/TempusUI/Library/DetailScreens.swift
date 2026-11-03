@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import SubsonicAPI
 import SwiftUI
 
@@ -22,11 +23,11 @@ struct AlbumDetailView: View {
                     PlayButtons { album.songs }
                     Button(
                         session.stars.isStarred(album) ? "Starred" : "Star",
-                        systemImage: session.stars.isStarred(album) ? "heart.fill" : "heart"
+                        tempus: session.stars.isStarred(album) ? .favorite : .favoritesOutlined
                     ) {
                         Task { await session.stars.toggle(album) }
                     }
-                    Menu("More", systemImage: "ellipsis.circle") {
+                    Menu("More", tempus: .moreVert) {
                         AlbumMenu(album: album)
                         if let artistID = album.artistID {
                             Divider()
@@ -75,7 +76,7 @@ struct ArtistDetailView: View {
                         round: true
                     ) {
                         PlayButtons { try await session.sources.songs(ofArtist: artist.id) }
-                        Button("Radio", systemImage: "dot.radiowaves.left.and.right") {
+                        Button("Radio", tempus: .feed) {
                             Task {
                                 if let mix = try? await session.sources.artistMix(artist), !mix.isEmpty {
                                     session.player.play(mix)
@@ -84,28 +85,31 @@ struct ArtistDetailView: View {
                         }
                         Button(
                             session.stars.isStarred(artist) ? "Starred" : "Star",
-                            systemImage: session.stars.isStarred(artist) ? "heart.fill" : "heart"
+                            tempus: session.stars.isStarred(artist) ? .favorite : .favoritesOutlined
                         ) {
                             Task { await session.stars.toggle(artist) }
                         }
                     }
                     if let biography = info?.biography.map(Self.plainText), !biography.isEmpty {
                         Text(biography)
-                            .font(.callout)
+                            .font(.inter(.callout))
                             .foregroundStyle(.secondary)
                             .lineLimit(6)
                             .textSelection(.enabled)
                             .padding(.horizontal, Theme.Spacing.xLarge)
                     }
                     if !topSongs.isEmpty {
-                        Text("Top Songs").font(.title2.bold()).padding(.horizontal, Theme.Spacing.xLarge)
+                        Text("Top Songs").font(.inter(.title2, weight: .bold)).padding(
+                            .horizontal,
+                            Theme.Spacing.xLarge
+                        )
                         TrackTable(songs: topSongs)
                             .frame(height: CGFloat(min(topSongs.count, 10)) * Theme.Size.tableRow + Theme.Size
                                 .tableHeader)
                             .padding(.horizontal, Theme.Spacing.large)
                     }
                     if !artist.albums.isEmpty {
-                        Text("Albums").font(.title2.bold()).padding(.horizontal, Theme.Spacing.xLarge)
+                        Text("Albums").font(.inter(.title2, weight: .bold)).padding(.horizontal, Theme.Spacing.xLarge)
                         AlbumGrid(albums: artist.albums.sorted { ($0.year ?? 0) > ($1.year ?? 0) })
                     }
                     if !artist.appearsOn.isEmpty {
@@ -144,7 +148,7 @@ struct GenreDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.large) {
                 HStack {
-                    Text(genre).font(.largeTitle.bold())
+                    Text(genre).font(.inter(.largeTitle, weight: .bold))
                     Spacer()
                     PlayButtons {
                         try await session.client.send(.songsByGenre(
@@ -182,7 +186,9 @@ struct FolderDetailView: View {
             let tracks = directory.children.filter { $0.isDir != true && $0.isVideo != true }
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Label(directory.name ?? name, systemImage: "folder").font(.title.bold())
+                    Label(directory.name ?? name, tempus: .folder)
+                        .font(.inter(.title, weight: .bold))
+                        .tempusIconSize(Theme.Size.titleIcon)
                     Spacer()
                     // Upstream: inner folders play every track inside, subfolders included.
                     PlayButtons { try await session.sources.songs(inFolder: folderID) }
@@ -195,12 +201,13 @@ struct FolderDetailView: View {
                                 ArtworkView(
                                     coverArtID: folder.coverArtID,
                                     size: .thumbnail,
-                                    cornerRadius: Theme.Radius.artworkSmall
+                                    cornerRadius: Theme.Radius.artworkSmall,
+                                    placeholder: .folder
                                 )
                                 .frame(width: Theme.Size.trackCover, height: Theme.Size.trackCover)
                                 Text(folder.title ?? "Folder")
                                 Spacer()
-                                Image(systemName: "chevron.right").foregroundStyle(.tertiary)
+                                TempusIconImage(.navigateNext).foregroundStyle(.tertiary)
                             }
                             .contentShape(.rect)
                         }

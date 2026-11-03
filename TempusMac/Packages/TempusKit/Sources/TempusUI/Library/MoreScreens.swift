@@ -1,5 +1,6 @@
 import AppCore
 import AppKit
+import DesignSystem
 import Persistence
 import SubsonicAPI
 import SwiftUI
@@ -22,10 +23,10 @@ struct DownloadsView: View {
         VStack(spacing: 0) {
             status
             if downloads.records.isEmpty {
-                ContentUnavailableView(
-                    "No downloads",
-                    systemImage: "arrow.down.circle",
-                    description: Text("Download tracks, albums or playlists to play them offline.")
+                EmptyState(
+                    art: .illustration(.emptyList),
+                    title: "No downloads",
+                    message: Text("Download tracks, albums or playlists to play them offline.")
                 )
             } else if settings.downloadGrouping == .track {
                 TrackTable(songs: Self.ordered(downloads.downloads).map(\.song))
@@ -46,10 +47,10 @@ struct DownloadsView: View {
                         }
                     } label: {
                         HStack {
-                            Text(group.title).font(.callout.weight(.medium))
+                            Text(group.title).font(.inter(.callout, weight: .medium))
                             Text("\(group.songs.count)").foregroundStyle(.secondary)
                             Spacer()
-                            Button("Play", systemImage: "play.fill") { session.player.play(group.songs) }
+                            Button("Play", tempus: .play) { session.player.play(group.songs) }
                                 .labelStyle(.iconOnly).buttonStyle(.borderless)
                         }
                         .contextMenu {
@@ -66,7 +67,7 @@ struct DownloadsView: View {
             Picker("Group by", selection: $settings.downloadGrouping) {
                 ForEach(DownloadGrouping.allCases) { Text($0.title).tag($0) }
             }
-            Button("Remove All Downloads", systemImage: "trash") { confirmsDeleteAll = true }
+            Button("Remove All Downloads", tempus: .delete) { confirmsDeleteAll = true }
                 .disabled(downloads.records.isEmpty)
         }
         .confirmationDialog("Remove all downloads for \(session.profile.name)?", isPresented: $confirmsDeleteAll) {
@@ -94,7 +95,7 @@ struct DownloadsView: View {
                 Text(message).foregroundStyle(.red).lineLimit(1)
             }
         }
-        .font(.caption)
+        .font(.inter(.caption))
         .foregroundStyle(.secondary)
         .padding(.horizontal, Theme.Spacing.large)
         .padding(.vertical, Theme.Spacing.small)
@@ -151,22 +152,25 @@ struct SharesView: View {
     var body: some View {
         SnapshotView(request: .shares, reloadKey: revision) { shares in
             if shares.isEmpty {
-                ContentUnavailableView(
-                    "No shares",
-                    systemImage: "square.and.arrow.up",
-                    description: Text("Share an album, playlist or track from its menu.")
+                EmptyState(
+                    art: .illustration(.share),
+                    title: "No shares",
+                    message: Text("Share an album, playlist or track from its menu.")
                 )
             } else {
                 List(shares) { share in
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(share.description ?? share.entries.first?.album ?? "Share").font(.callout.weight(.medium))
-                        Text(share.url?.absoluteString ?? "").font(.caption).textSelection(.enabled)
+                        Text(share.description ?? share.entries.first?.album ?? "Share").font(.inter(
+                            .callout,
+                            weight: .medium
+                        ))
+                        Text(share.url?.absoluteString ?? "").font(.inter(.caption)).textSelection(.enabled)
                         Text([
                             "\(share.entries.count) items",
                             share.expires.map { "expires \($0.formatted(date: .abbreviated, time: .omitted))" },
                             share.visitCount.map { "\($0) visits" },
                         ].compactMap(\.self).joined(separator: " • "))
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.inter(.caption)).foregroundStyle(.secondary)
                     }
                     .contextMenu {
                         if let url = share.url {
@@ -196,9 +200,9 @@ struct SharesView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if let errorMessage {
-                Text(errorMessage).font(.callout).foregroundStyle(.red).padding(Theme.Spacing.small)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red).padding(Theme.Spacing.small)
             }
         }
-        .toolbar { Button("Refresh", systemImage: "arrow.clockwise") { revision += 1 } }
+        .toolbar { Button("Refresh", tempus: .refresh) { revision += 1 } }
     }
 }

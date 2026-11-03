@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Playback
 import SubsonicAPI
 import SwiftUI
@@ -23,13 +24,13 @@ struct LyricsPanel: View {
             case .loading:
                 ProgressView().frame(maxHeight: .infinity)
             case let .failed(message):
-                ContentUnavailableView("Lyrics unavailable", systemImage: "wifi.slash", description: Text(message))
+                EmptyState(art: .illustration(.emptyDescription), title: "Lyrics unavailable", message: Text(message))
             case .loaded(.none):
-                ContentUnavailableView("No lyrics available", systemImage: "quote.bubble")
+                EmptyState(art: .illustration(.emptyDescription), title: "No lyrics available")
             case let .loaded(.plain(text)):
                 ScrollView {
                     Text(text)
-                        .font(.title3.weight(.semibold))
+                        .font(.inter(.title3, weight: .semibold))
                         .multilineTextAlignment(.center)
                         .lineSpacing(6)
                         .textSelection(.enabled)
@@ -75,7 +76,7 @@ private struct SyncedLyrics: View {
                             player.seek(to: line.start + 0.001)
                         } label: {
                             Text(line.text.isEmpty ? "♪" : line.text)
-                                .font(.title3.weight(.bold))
+                                .font(.inter(.title3, weight: .bold))
                                 .foregroundStyle(index == current ? .primary : .tertiary)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity)

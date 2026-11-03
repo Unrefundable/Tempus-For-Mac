@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Library
 import Persistence
 import SubsonicAPI
@@ -84,7 +85,7 @@ struct SnapshotView<Value: Decodable & Sendable, Content: View>: View {
                     .safeAreaInset(edge: .top, spacing: 0) {
                         if isStale, let errorMessage {
                             Label(errorMessage, systemImage: "icloud.slash")
-                                .font(.caption)
+                                .font(.inter(.caption))
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, Theme.Spacing.xSmall)
@@ -93,7 +94,7 @@ struct SnapshotView<Value: Decodable & Sendable, Content: View>: View {
                     }
             } else if let errorMessage {
                 ContentUnavailableView {
-                    Label("Couldn't load", systemImage: "exclamationmark.triangle")
+                    Label("Couldn't load", tempus: .error)
                 } description: {
                     Text(errorMessage)
                 } actions: {
@@ -137,17 +138,18 @@ struct CoverTile: View {
     let title: String
     let subtitle: String?
     var size: CGFloat = Theme.Size.tile
+    var placeholder: TempusPlaceholder = .album
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.xSmall) {
-            ArtworkView(coverArtID: coverArtID, size: .medium)
+            ArtworkView(coverArtID: coverArtID, size: .medium, placeholder: placeholder)
                 .frame(width: size, height: size)
                 .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
             Text(title)
-                .font(.callout.weight(.medium))
+                .font(.inter(.callout, weight: .medium))
                 .lineLimit(1)
             Text(subtitle ?? " ")
-                .font(.caption)
+                .font(.inter(.caption))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
@@ -190,13 +192,13 @@ struct ArtistTile: View {
             navigator.open(.artist(id: artist.id))
         } label: {
             VStack(spacing: Theme.Spacing.xSmall) {
-                ArtworkView(coverArtID: artist.coverArtID, size: .medium, cornerRadius: size / 2)
+                ArtworkView(coverArtID: artist.coverArtID, size: .medium, cornerRadius: size / 2, placeholder: .artist)
                     .frame(width: size, height: size)
                 Text(artist.name ?? "Unknown artist")
-                    .font(.callout.weight(.medium))
+                    .font(.inter(.callout, weight: .medium))
                     .lineLimit(1)
                 Text(artist.albumCount.map { "\($0) albums" } ?? " ")
-                    .font(.caption)
+                    .font(.inter(.caption))
                     .foregroundStyle(.secondary)
             }
             .frame(width: size)
@@ -217,7 +219,7 @@ struct CoverRow<Item: Identifiable, Tile: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.small) {
             HStack {
-                Text(title).font(.title2.bold())
+                Text(title).font(.inter(.title2, weight: .bold))
                 Spacer()
                 if let seeAll {
                     Button("See All", action: seeAll).buttonStyle(.link)
@@ -273,18 +275,19 @@ struct DetailHeader<Actions: View>: View {
             ArtworkView(
                 coverArtID: coverArtID,
                 size: .large,
-                cornerRadius: round ? Theme.Size.detailCover / 2 : Theme.Radius.artwork
+                cornerRadius: round ? Theme.Size.detailCover / 2 : Theme.Radius.artwork,
+                placeholder: round ? .artist : .album
             )
             .frame(width: Theme.Size.detailCover, height: Theme.Size.detailCover)
             .shadow(radius: 8, y: 4)
             VStack(alignment: .leading, spacing: Theme.Spacing.xSmall) {
-                Text(kind.uppercased()).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                Text(title).font(.largeTitle.bold()).lineLimit(2).textSelection(.enabled)
+                Text(kind.uppercased()).font(.inter(.caption, weight: .semibold)).foregroundStyle(.secondary)
+                Text(title).font(.inter(.largeTitle, weight: .bold)).lineLimit(2).textSelection(.enabled)
                 if let subtitle {
-                    Text(subtitle).font(.title3).foregroundStyle(.secondary)
+                    Text(subtitle).font(.inter(.title3)).foregroundStyle(.secondary)
                 }
                 if let detail {
-                    Text(detail).font(.callout).foregroundStyle(.tertiary)
+                    Text(detail).font(.inter(.callout)).foregroundStyle(.tertiary)
                 }
                 HStack(spacing: Theme.Spacing.small) { actions() }
                     .padding(.top, Theme.Spacing.small)
@@ -303,9 +306,9 @@ struct PlayButtons: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        Button("Play", systemImage: "play.fill") { start(shuffled: false) }
+        Button("Play", tempus: .play) { start(shuffled: false) }
             .buttonStyle(.borderedProminent)
-        Button("Shuffle", systemImage: "shuffle") { start(shuffled: true) }
+        Button("Shuffle", tempus: .shuffle) { start(shuffled: true) }
             .buttonStyle(.bordered)
             .alert("Couldn't play", isPresented: .constant(errorMessage != nil)) {
                 Button("OK") { errorMessage = nil }

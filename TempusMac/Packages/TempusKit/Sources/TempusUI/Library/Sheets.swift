@@ -1,5 +1,6 @@
 import AppCore
 import AppKit
+import DesignSystem
 import SubsonicAPI
 import SwiftUI
 
@@ -62,7 +63,7 @@ struct AddToPlaylistSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
             Text("Add \(songs.count == 1 ? "“\(songs[0].title ?? "Track")”" : "\(songs.count) songs") to a Playlist")
-                .font(.headline)
+                .font(.inter(.headline))
             List(playlists) { playlist in
                 Button {
                     add(to: playlist)
@@ -71,7 +72,8 @@ struct AddToPlaylistSheet: View {
                         ArtworkView(
                             coverArtID: playlist.coverArtID,
                             size: .thumbnail,
-                            cornerRadius: Theme.Radius.artworkSmall
+                            cornerRadius: Theme.Radius.artworkSmall,
+                            placeholder: .playlist
                         )
                         .frame(width: Theme.Size.trackCover, height: Theme.Size.trackCover)
                         Text(playlist.name ?? "Playlist")
@@ -84,7 +86,7 @@ struct AddToPlaylistSheet: View {
             }
             .frame(minHeight: 240)
             if let errorMessage {
-                Text(errorMessage).font(.callout).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
             }
             HStack {
                 Button("New Playlist…") { sheets.present(.newPlaylist(songs)) }
@@ -129,14 +131,14 @@ struct NewPlaylistSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("New Playlist").font(.headline)
+            Text("New Playlist").font(.inter(.headline))
             TextField("Name", text: $name).textFieldStyle(.roundedBorder).onSubmit(create)
             if !songs.isEmpty {
-                Text("With \(songs.count) \(songs.count == 1 ? "song" : "songs")").font(.callout)
+                Text("With \(songs.count) \(songs.count == 1 ? "song" : "songs")").font(.inter(.callout))
                     .foregroundStyle(.secondary)
             }
             if let errorMessage {
-                Text(errorMessage).font(.callout).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
             }
             SheetButtons(
                 confirm: "Create",
@@ -170,10 +172,10 @@ struct TrackInfoSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
             HStack(spacing: Theme.Spacing.medium) {
-                ArtworkView(coverArtID: song.coverArtID, size: .medium)
+                ArtworkView(coverArtID: song.coverArtID, size: .medium, placeholder: .song)
                     .frame(width: 72, height: 72)
                 VStack(alignment: .leading) {
-                    Text(song.title ?? "Untitled").font(.headline)
+                    Text(song.title ?? "Untitled").font(.inter(.headline))
                     Text(song.artist ?? "").foregroundStyle(.secondary)
                 }
             }
@@ -185,7 +187,7 @@ struct TrackInfoSheet: View {
                     }
                 }
             }
-            .font(.callout)
+            .font(.inter(.callout))
             SheetButtons()
         }
         .frame(width: 440)
@@ -224,13 +226,13 @@ struct ShareSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("Share “\(name)”").font(.headline)
+            Text("Share “\(name)”").font(.inter(.headline))
             if let link {
                 HStack {
                     Text(link.absoluteString).textSelection(.enabled).lineLimit(1).truncationMode(.middle)
                     Button("Copy") { copy(link) }
                 }
-                Text("The link was copied.").font(.callout).foregroundStyle(.secondary)
+                Text("The link was copied.").font(.inter(.callout)).foregroundStyle(.secondary)
                 SheetButtons()
             } else {
                 TextField("Description (optional)", text: $note).textFieldStyle(.roundedBorder)
@@ -239,7 +241,7 @@ struct ShareSheet: View {
                     DatePicker("On", selection: $expiry, in: Date.now..., displayedComponents: .date)
                 }
                 if let errorMessage {
-                    Text(errorMessage).font(.callout).foregroundStyle(.red)
+                    Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
                 }
                 SheetButtons(confirm: "Create Link", isBusy: isBusy, action: create)
             }
@@ -279,7 +281,7 @@ private struct MessageSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text(title).font(.headline)
+            Text(title).font(.inter(.headline))
             Text(text)
             SheetButtons()
         }

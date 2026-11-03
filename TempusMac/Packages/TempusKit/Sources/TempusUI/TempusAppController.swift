@@ -1,5 +1,6 @@
 import AppCore
 import AppKit
+import DesignSystem
 import os
 import SwiftUI
 
@@ -29,7 +30,12 @@ public final class TempusAppController {
         Self.current = self
     }
 
-    @ViewBuilder public var rootView: some View {
+    /// Every window's text defaults to Tempus's typeface, Inter.
+    public var rootView: some View {
+        rootContent.font(.inter(.body))
+    }
+
+    @ViewBuilder private var rootContent: some View {
         switch model {
         case let .success(model):
             let launches = !isDemo
@@ -52,14 +58,14 @@ public final class TempusAppController {
     /// The Settings window's content.
     @ViewBuilder public var settingsView: some View {
         if case let .success(model) = model {
-            SettingsView().environment(model)
+            SettingsView().environment(model).font(.inter(.body))
         }
     }
 
     /// The menu bar mini player's content.
     @ViewBuilder public var menuBarContent: some View {
         if case let .success(model) = model {
-            MenuBarPlayer().environment(model)
+            MenuBarPlayer().environment(model).font(.inter(.body))
         }
     }
 

@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import SubsonicAPI
 import SwiftUI
 
@@ -14,9 +15,7 @@ struct PodcastsView: View {
     var body: some View {
         SnapshotView(request: .podcasts(includeEpisodes: false), reloadKey: revision) { channels in
             if channels.isEmpty {
-                ContentUnavailableView {
-                    Label("No podcasts", systemImage: "mic")
-                } actions: {
+                EmptyState(art: .illustration(.emptyPodcast), title: "No podcasts") {
                     Button("Add Podcast…") { isAdding = true }
                 }
             } else {
@@ -30,7 +29,8 @@ struct PodcastsView: View {
                                 CoverTile(
                                     coverArtID: channel.coverArtID,
                                     title: channel.title ?? "Podcast",
-                                    subtitle: channel.status == "error" ? "Couldn't update" : channel.description
+                                    subtitle: channel.status == "error" ? "Couldn't update" : channel.description,
+                                    placeholder: .podcast
                                 )
                             }
                             .buttonStyle(.plain)
@@ -47,12 +47,12 @@ struct PodcastsView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if let errorMessage {
-                Text(errorMessage).font(.callout).foregroundStyle(.red).padding(Theme.Spacing.small)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red).padding(Theme.Spacing.small)
             }
         }
         .toolbar {
-            Button("Add Podcast", systemImage: "plus") { isAdding = true }
-            Button("Check for New Episodes", systemImage: "arrow.clockwise") {
+            Button("Add Podcast", tempus: .add) { isAdding = true }
+            Button("Check for New Episodes", tempus: .refresh) {
                 Task { await perform(.refreshPodcasts) }
             }
         }
@@ -80,12 +80,12 @@ private struct AddPodcastSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("Add a Podcast").font(.headline)
+            Text("Add a Podcast").font(.inter(.headline))
             Text("Paste the podcast's RSS feed address. Your server downloads its episodes.")
-                .font(.callout).foregroundStyle(.secondary)
+                .font(.inter(.callout)).foregroundStyle(.secondary)
             TextField("https://example.com/feed.xml", text: $address).textFieldStyle(.roundedBorder)
             if let errorMessage {
-                Text(errorMessage).font(.callout).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
             }
             HStack {
                 Spacer()
@@ -144,12 +144,12 @@ struct PodcastChannelView: View {
                     }
                     if let description = channel.description, !description.isEmpty {
                         Text(ArtistDetailView.plainText(description))
-                            .font(.callout).foregroundStyle(.secondary).lineLimit(3)
+                            .font(.inter(.callout)).foregroundStyle(.secondary).lineLimit(3)
                             .padding(.horizontal, Theme.Spacing.xLarge)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     if let errorMessage {
-                        Text(errorMessage).font(.callout).foregroundStyle(.red)
+                        Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
                     }
                     List(episodes) { episode in
                         EpisodeRow(episode: episode, channelTitle: channel.title) { request in
@@ -160,7 +160,7 @@ struct PodcastChannelView: View {
                     }
                 }
             } else {
-                ContentUnavailableView("Podcast not found", systemImage: "mic.slash")
+                EmptyState(art: .icon(.error), title: "Podcast not found")
             }
         }
         .navigationTitle("Podcast")
@@ -186,19 +186,19 @@ private struct EpisodeRow: View {
     var body: some View {
         let song = episode.song(channelTitle: channelTitle)
         HStack(spacing: Theme.Spacing.medium) {
-            Button("Play", systemImage: "play.circle.fill") { song.map(play) }
+            Button("Play", tempus: .play) { song.map(play) }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
-                .font(.title2)
+                .tempusIconSize(Theme.Size.titleIcon)
                 .disabled(song == nil)
             VStack(alignment: .leading, spacing: 2) {
-                Text(episode.title ?? "Episode").font(.callout.weight(.medium))
+                Text(episode.title ?? "Episode").font(.inter(.callout, weight: .medium))
                 Text([
                     episode.publishDate?.formatted(date: .abbreviated, time: .omitted),
                     episode.duration.map { TrackFormatting.time(TimeInterval($0)) },
                     Self.status(episode.status),
                 ].compactMap(\.self).joined(separator: " • "))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.inter(.caption)).foregroundStyle(.secondary)
             }
             Spacer()
             if song == nil, episode.status != "downloading" {

@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Library
 import SubsonicAPI
 import SwiftUI
@@ -20,13 +21,9 @@ struct AlbumsView: View {
             if isLoading {
                 ProgressView().padding()
             } else if albums.isEmpty, let errorMessage {
-                ContentUnavailableView(
-                    "Couldn't load albums",
-                    systemImage: "square.stack",
-                    description: Text(errorMessage)
-                )
+                EmptyState(art: .icon(.albums), title: "Couldn't load albums", message: Text(errorMessage))
             } else if albums.isEmpty, reachedEnd {
-                ContentUnavailableView("No albums", systemImage: "square.stack")
+                EmptyState(art: .icon(.albums), title: "No albums")
             }
         }
         .toolbar {
@@ -95,7 +92,7 @@ struct ArtistsView: View {
             reloadKey: session.musicFolderID
         ) { indexes in
             if indexes.indexes.isEmpty {
-                ContentUnavailableView("No artists", systemImage: "music.mic")
+                EmptyState(art: .icon(.artists), title: "No artists")
             } else {
                 List {
                     ForEach(indexes.indexes, id: \.name) { index in
@@ -120,15 +117,20 @@ struct ArtistRow: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.medium) {
-            ArtworkView(coverArtID: artist.coverArtID, size: .thumbnail, cornerRadius: Theme.Size.trackCover / 2)
-                .frame(width: Theme.Size.trackCover, height: Theme.Size.trackCover)
+            ArtworkView(
+                coverArtID: artist.coverArtID,
+                size: .thumbnail,
+                cornerRadius: Theme.Size.trackCover / 2,
+                placeholder: .artist
+            )
+            .frame(width: Theme.Size.trackCover, height: Theme.Size.trackCover)
             Text(artist.name ?? "Unknown artist")
             if session.stars.isStarred(artist) {
-                Image(systemName: "heart.fill").font(.caption2).foregroundStyle(Theme.accent)
+                TempusIconImage(.favorite).tempusIconSize(Theme.Size.badgeIcon).foregroundStyle(Theme.accent)
             }
             Spacer()
             if let count = artist.albumCount {
-                Text("\(count) \(count == 1 ? "album" : "albums")").font(.caption).foregroundStyle(.secondary)
+                Text("\(count) \(count == 1 ? "album" : "albums")").font(.inter(.caption)).foregroundStyle(.secondary)
             }
         }
         .contentShape(.rect)
@@ -142,7 +144,7 @@ struct GenresView: View {
         SnapshotView(request: .genres) { genres in
             let sorted = genres.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             if sorted.isEmpty {
-                ContentUnavailableView("No genres", systemImage: "guitars")
+                EmptyState(art: .icon(.genres), title: "No genres")
             } else {
                 List(sorted, id: \.name) { genre in
                     Button { navigator.open(.genre(genre.name)) } label: {
@@ -150,7 +152,7 @@ struct GenresView: View {
                             Text(genre.name)
                             Spacer()
                             Text("\(genre.albumCount ?? 0) albums • \(genre.songCount ?? 0) songs")
-                                .font(.caption).foregroundStyle(.secondary)
+                                .font(.inter(.caption)).foregroundStyle(.secondary)
                         }
                         .contentShape(.rect)
                     }
@@ -176,7 +178,7 @@ struct PlaylistsView: View {
             let sorted = settings.playlistSort.sorted(playlists, faves: faves)
             if sorted.isEmpty {
                 ContentUnavailableView {
-                    Label("No playlists", systemImage: "music.note.list")
+                    Label("No playlists", tempus: .playlist)
                 } actions: {
                     Button("New Playlist…") { sheets.present(.newPlaylist([])) }
                 }
@@ -192,7 +194,8 @@ struct PlaylistsView: View {
                                     coverArtID: playlist.coverArtID,
                                     title: playlist.name ?? "Playlist",
                                     subtitle: "\(playlist.songCount ?? 0) songs" +
-                                        (faves.contains(playlist.id) ? " • ♥︎" : "")
+                                        (faves.contains(playlist.id) ? " • ♥︎" : ""),
+                                    placeholder: .playlist
                                 )
                             }
                             .buttonStyle(.plain)
@@ -223,8 +226,8 @@ struct PlaylistsView: View {
             Picker("Sort", selection: $settings.playlistSort) {
                 ForEach(PlaylistSort.allCases) { Text($0.title).tag($0) }
             }
-            Button("New Playlist", systemImage: "plus") { sheets.present(.newPlaylist([])) }
-            Button("Refresh", systemImage: "arrow.clockwise") { revision += 1 }
+            Button("New Playlist", tempus: .add) { sheets.present(.newPlaylist([])) }
+            Button("Refresh", tempus: .refresh) { revision += 1 }
         }
         .onChange(of: sheets.current == nil) {
             _, closed in if closed {
@@ -295,7 +298,7 @@ struct FoldersView: View {
                     Section(index.name ?? "#") {
                         ForEach(index.artists) { entry in
                             Button { navigator.open(.folder(id: entry.id, name: entry.name ?? "Folder")) } label: {
-                                Label(entry.name ?? "Folder", systemImage: "folder").contentShape(.rect)
+                                Label(entry.name ?? "Folder", tempus: .folder).contentShape(.rect)
                             }
                             .buttonStyle(.plain)
                         }

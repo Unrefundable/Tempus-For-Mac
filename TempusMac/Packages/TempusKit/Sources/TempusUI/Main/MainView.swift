@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import SwiftUI
 
 /// Where the sidebar can go.
@@ -28,20 +29,23 @@ enum SidebarDestination: String, Hashable, CaseIterable, Identifiable {
         }
     }
 
-    var systemImage: String {
+    /// Upstream's drawer and tab icons where it has the place, and the closest upstream icon
+    /// otherwise. Upstream has no icon for internet radio (its Radio tab is text), so that keeps
+    /// a symbol.
+    var icon: TempusIcon? {
         switch self {
-        case .nowPlaying: "play.circle"
-        case .home: "house"
-        case .search: "magnifyingglass"
-        case .albums: "square.stack"
-        case .artists: "music.mic"
-        case .genres: "guitars"
-        case .playlists: "music.note.list"
-        case .folders: "folder"
-        case .podcasts: "mic"
-        case .radio: "dot.radiowaves.left.and.right"
-        case .shares: "square.and.arrow.up"
-        case .downloads: "arrow.down.circle"
+        case .nowPlaying: .play
+        case .home: .home
+        case .search: .search
+        case .albums: .albums
+        case .artists: .artists
+        case .genres: .genres
+        case .playlists: .playlist
+        case .folders: .folder
+        case .podcasts: .feed
+        case .radio: nil
+        case .shares: .share
+        case .downloads: .playForWork
         }
     }
 
@@ -123,7 +127,7 @@ struct MainView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 if !navigator.path.isEmpty {
-                    Button("Back", systemImage: "chevron.left") { navigator.path.removeLast() }
+                    Button("Back", tempus: .arrowBack) { navigator.path.removeLast() }
                         .help("Back")
                 }
             }
@@ -176,7 +180,7 @@ struct MainView: View {
             ForEach(visibleSections, id: \.items) { section in
                 Section {
                     ForEach(section.items) { item in
-                        Label(item.title, systemImage: item.systemImage)
+                        SidebarLabel(item: item)
                             .badge(item == .downloads ? downloadBadge : 0)
                             .tag(item)
                     }
@@ -225,7 +229,7 @@ struct MainView: View {
                     .buttonStyle(.link)
                     .help("Try the server again")
             }
-            .font(.caption.weight(.medium))
+            .font(.inter(.caption, weight: .medium))
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.xSmall)
             .background(.red.opacity(0.15))
@@ -300,4 +304,16 @@ private struct ServerMenu: View {
     RootView()
         .environment(PreviewSupport.model(signedIn: true))
         .frame(width: 1100, height: 700)
+}
+
+private struct SidebarLabel: View {
+    let item: SidebarDestination
+
+    var body: some View {
+        if let icon = item.icon {
+            Label(item.title, tempus: icon)
+        } else {
+            Label(item.title, systemImage: "dot.radiowaves.left.and.right")
+        }
+    }
 }

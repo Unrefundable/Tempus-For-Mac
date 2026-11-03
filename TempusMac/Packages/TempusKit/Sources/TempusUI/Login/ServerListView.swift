@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Persistence
 import SwiftUI
 
@@ -41,7 +42,7 @@ struct ServerListView: View {
             .frame(width: Theme.Size.loginWidth, height: 280)
             .clipShape(.rect(cornerRadius: Theme.Radius.card))
             HStack {
-                Button("Add Server…", systemImage: "plus") { editing = .new }
+                Button("Add Server…", tempus: .add) { editing = .new }
                 Spacer()
                 Button("Edit…") { editing = selectedServer.map(EditorTarget.edit) }
                     .disabled(selectedServer == nil)
@@ -67,17 +68,17 @@ struct ServerListView: View {
 
     private func header(subtitle: String) -> some View {
         VStack(spacing: Theme.Spacing.small) {
-            Image(systemName: "music.note.house")
-                .font(.system(size: 44))
-                .foregroundStyle(Theme.accent)
-            Text("Subsonic servers").font(.largeTitle.bold())
+            Image(tempus: .toolbarLogo)
+                .resizable()
+                .frame(width: Theme.Size.loginLogo, height: Theme.Size.loginLogo)
+            Text("Subsonic servers").font(.inter(.largeTitle, weight: .bold))
             Text(subtitle).foregroundStyle(.secondary)
         }
     }
 
     @ViewBuilder private var errorBanner: some View {
         if let message = model.errorMessage {
-            Label(message, systemImage: "exclamationmark.triangle.fill")
+            Label(message, tempus: .error)
                 .foregroundStyle(.red)
                 .frame(width: Theme.Size.loginWidth, alignment: .leading)
         }
@@ -100,9 +101,9 @@ private struct ServerRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(server.name).font(.headline)
+            Text(server.name).font(.inter(.headline))
             Text(server.address.url.absoluteString)
-                .font(.subheadline)
+                .font(.inter(.subheadline))
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, Theme.Spacing.xSmall)

@@ -12,6 +12,7 @@ let package = Package(
         .library(name: "Playback", targets: ["Playback"]),
         .library(name: "AppCore", targets: ["AppCore"]),
         .library(name: "TempusUI", targets: ["TempusUI"]),
+        .library(name: "DesignSystem", targets: ["DesignSystem"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.11.1"),
@@ -41,10 +42,12 @@ let package = Package(
         .target(
             name: "TempusUI",
             dependencies: [
-                "AppCore", "Persistence", "Playback", "SecureStorage", "SubsonicAPI",
+                "AppCore", "DesignSystem", "Persistence", "Playback", "SecureStorage", "SubsonicAPI",
                 .product(name: "NukeUI", package: "Nuke"),
             ]
         ),
+        // Icons, colors and Inter come from upstream through scripts/import-tempus-assets.swift.
+        .target(name: "DesignSystem", resources: [.process("Resources")]),
         .testTarget(name: "SecureStorageTests", dependencies: ["SecureStorage"]),
         .testTarget(
             name: "SubsonicAPITests",
@@ -59,5 +62,6 @@ let package = Package(
             dependencies: ["AppCore", "SecureStorage", "Persistence", "Playback", "SubsonicAPI"],
             resources: [.copy("Fixtures")]
         ),
+        .testTarget(name: "DesignSystemTests", dependencies: ["DesignSystem"]),
     ]
 )

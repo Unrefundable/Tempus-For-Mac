@@ -1,5 +1,6 @@
 import AppCore
 import AppKit
+import DesignSystem
 import SubsonicAPI
 import SwiftUI
 
@@ -16,11 +17,11 @@ struct RadioView: View {
     var body: some View {
         Group {
             if stations.isEmpty, isLoaded {
-                ContentUnavailableView {
-                    Label("No radio stations", systemImage: "dot.radiowaves.left.and.right")
-                } description: {
-                    Text("Add a station by its stream address, or look one up on radio-browser.info.")
-                } actions: {
+                EmptyState(
+                    art: .illustration(.emptyRadioStation),
+                    title: "No radio stations",
+                    message: Text("Add a station by its stream address, or look one up on radio-browser.info.")
+                ) {
                     Button("Add a New Radio…") { editing = .add }
                 }
             } else {
@@ -43,10 +44,10 @@ struct RadioView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if let errorMessage {
-                Text(errorMessage).font(.callout).foregroundStyle(.red).padding(Theme.Spacing.small)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red).padding(Theme.Spacing.small)
             }
         }
-        .toolbar { Button("Add a New Radio", systemImage: "plus") { editing = .add } }
+        .toolbar { Button("Add a New Radio", tempus: .add) { editing = .add } }
         .sheet(item: $editing) { mode in
             RadioEditor(mode: mode, serverHasRadio: serverError == nil) { Task { await reload() } }
         }
@@ -88,16 +89,16 @@ private struct StationRow: View {
                 .frame(width: Theme.Size.trackCover, height: Theme.Size.trackCover)
                 .background(.quaternary, in: .rect(cornerRadius: Theme.Radius.artworkSmall))
             VStack(alignment: .leading) {
-                Text(station.name).font(.callout.weight(.medium))
-                Text(station.streamURL.host() ?? "").font(.caption).foregroundStyle(.secondary)
+                Text(station.name).font(.inter(.callout, weight: .medium))
+                Text(station.streamURL.host() ?? "").font(.inter(.caption)).foregroundStyle(.secondary)
             }
             if station.origin == .local {
-                Text("LOCAL").font(.caption2.weight(.bold)).padding(.horizontal, 4)
+                Text("LOCAL").font(.inter(.caption2, weight: .bold)).padding(.horizontal, 4)
                     .background(Theme.accent.opacity(0.2), in: .capsule)
             }
             Spacer()
             if session.player.queue.current?.song.id == station.song.id {
-                Image(systemName: "speaker.wave.2.fill").foregroundStyle(Theme.accent)
+                TempusIconImage(.equalizer, accessibilityName: Text("Now playing")).foregroundStyle(Theme.accent)
             }
         }
         .contentShape(.rect)
@@ -134,7 +135,7 @@ private struct RadioEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text(isEditing ? "Edit Radio Station" : "Add a New Radio").font(.headline)
+            Text(isEditing ? "Edit Radio Station" : "Add a New Radio").font(.inter(.headline))
             Form {
                 TextField("Name", text: $form.name)
                 TextField("Stream address", text: $form.streamAddress)
@@ -151,7 +152,7 @@ private struct RadioEditor: View {
                 lookup
             }
             if let errorMessage {
-                Text(errorMessage).font(.callout).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
             }
             HStack {
                 Spacer()
@@ -197,7 +198,7 @@ private struct RadioEditor: View {
                                 Text(station.name)
                                 Text([station.country, station.codec, station.bitrate.map { "\($0) kbps" }]
                                     .compactMap(\.self).joined(separator: " • "))
-                                    .font(.caption).foregroundStyle(.secondary)
+                                    .font(.inter(.caption)).foregroundStyle(.secondary)
                             }
                             Spacer()
                             Button("Use") { form = station.form }

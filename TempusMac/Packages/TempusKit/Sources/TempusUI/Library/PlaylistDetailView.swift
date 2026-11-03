@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import SubsonicAPI
 import SwiftUI
 
@@ -28,12 +29,15 @@ struct PlaylistDetailView: View {
                 ) {
                     PlayButtons { playlist.entries }
                     Button("Edit", systemImage: "pencil") { Task { await beginEditing() } }
-                    Menu("More", systemImage: "ellipsis.circle") { menu(for: playlist) }
+                    Menu("More", tempus: .moreVert) { menu(for: playlist) }
                         .menuStyle(.borderlessButton)
                         .fixedSize()
                 }
                 if let errorMessage {
-                    Text(errorMessage).font(.callout).foregroundStyle(.red).padding(.bottom, Theme.Spacing.small)
+                    Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red).padding(
+                        .bottom,
+                        Theme.Spacing.small
+                    )
                 }
                 TrackTable(
                     songs: playlist.entries,
@@ -145,15 +149,15 @@ private struct PlaylistEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("Edit Playlist").font(.headline)
+            Text("Edit Playlist").font(.inter(.headline))
             TextField("Name", text: $name).textFieldStyle(.roundedBorder)
             List {
                 ForEach(entries) { entry in
                     HStack {
-                        Image(systemName: "line.3.horizontal").foregroundStyle(.tertiary)
+                        TempusIconImage(.dragHandle).foregroundStyle(.tertiary)
                         VStack(alignment: .leading) {
                             Text(entry.song.title ?? "Untitled")
-                            Text(entry.song.artist ?? "").font(.caption).foregroundStyle(.secondary)
+                            Text(entry.song.artist ?? "").font(.inter(.caption)).foregroundStyle(.secondary)
                         }
                         Spacer()
                         Button("Remove", systemImage: "minus.circle.fill") {
@@ -169,7 +173,7 @@ private struct PlaylistEditor: View {
             }
             .frame(minHeight: 320)
             if let errorMessage {
-                Text(errorMessage).font(.callout).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
             }
             HStack {
                 if isSaving {

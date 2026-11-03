@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import NukeUI
 import SwiftUI
 
@@ -7,11 +8,12 @@ extension EnvironmentValues {
     @Entry var artwork: ArtworkPipeline?
 }
 
-/// A cover from the server, or a placeholder note while there is none.
+/// A cover from the server, or upstream's placeholder for that kind of item while there is none.
 struct ArtworkView: View {
     let coverArtID: String?
     let size: ArtworkSize
     var cornerRadius: CGFloat = Theme.Radius.artwork
+    var placeholder: TempusPlaceholder = .album
 
     @Environment(\.artwork) private var artwork
 
@@ -22,12 +24,12 @@ struct ArtworkView: View {
                     if let image = state.image {
                         image.resizable().scaledToFill()
                     } else {
-                        placeholder
+                        placeholderImage
                     }
                 }
                 .pipeline(artwork.pipeline)
             } else {
-                placeholder
+                placeholderImage
             }
         }
         .aspectRatio(1, contentMode: .fit)
@@ -35,14 +37,8 @@ struct ArtworkView: View {
         .accessibilityHidden(true)
     }
 
-    private var placeholder: some View {
-        Rectangle()
-            .fill(.quaternary)
-            .overlay {
-                Image(systemName: "music.note")
-                    .font(.system(size: 24))
-                    .foregroundStyle(.secondary)
-            }
+    private var placeholderImage: some View {
+        Image(tempus: placeholder).resizable()
     }
 }
 

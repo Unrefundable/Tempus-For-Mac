@@ -1,5 +1,6 @@
 import AppCore
 import CoreTransferable
+import DesignSystem
 import SubsonicAPI
 import SwiftUI
 import UniformTypeIdentifiers
@@ -41,7 +42,7 @@ struct TrackTable: View {
         Table(of: Row.self, selection: $selection) {
             TableColumn("#") { row in
                 if row.song.id == current {
-                    Image(systemName: "speaker.wave.2.fill").foregroundStyle(Theme.accent)
+                    TempusIconImage(.equalizer, accessibilityName: Text("Now playing")).foregroundStyle(Theme.accent)
                 } else {
                     Text(number(row)).foregroundStyle(.secondary).monospacedDigit()
                 }
@@ -52,12 +53,14 @@ struct TrackTable: View {
                     Text(row.song.title ?? "Untitled")
                         .foregroundStyle(row.song.id == current ? Theme.accent : .primary)
                     if session.stars.isStarred(row.song) {
-                        Image(systemName: "heart.fill").font(.caption2).foregroundStyle(Theme.accent)
-                            .accessibilityLabel("Starred")
+                        TempusIconImage(.favorite, accessibilityName: Text("Starred"))
+                            .tempusIconSize(Theme.Size.badgeIcon)
+                            .foregroundStyle(Theme.accent)
                     }
                     if session.downloads.isDownloaded(row.song.id) {
-                        Image(systemName: "arrow.down.circle.fill").font(.caption2).foregroundStyle(.secondary)
-                            .accessibilityLabel("Downloaded")
+                        TempusIconImage(.download, accessibilityName: Text("Downloaded"))
+                            .tempusIconSize(Theme.Size.badgeIcon)
+                            .foregroundStyle(.secondary)
                     } else if session.downloads.isPending(row.song.id) {
                         ProgressView().controlSize(.mini)
                     }

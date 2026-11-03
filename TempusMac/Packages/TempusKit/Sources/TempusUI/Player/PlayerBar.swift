@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Playback
 import SwiftUI
 
@@ -20,8 +21,8 @@ struct PlayerBar: View {
             }
             .frame(maxWidth: .infinity)
             HStack(spacing: Theme.Spacing.medium) {
-                Button("Lyrics", systemImage: "quote.bubble") { onTogglePanel(.lyrics) }
-                Button("Queue", systemImage: "list.bullet") { onTogglePanel(.queue) }
+                Button("Lyrics", tempus: .lyrics) { onTogglePanel(.lyrics) }
+                Button("Queue", tempus: .queue) { onTogglePanel(.queue) }
                 RoutePicker()
                     .frame(width: 24, height: 24)
                     .help("AirPlay and output devices")
@@ -43,14 +44,15 @@ struct PlayerBar: View {
                 ArtworkView(
                     coverArtID: player.queue.current?.song.coverArtID,
                     size: .thumbnail,
-                    cornerRadius: Theme.Radius.artworkSmall
+                    cornerRadius: Theme.Radius.artworkSmall,
+                    placeholder: .song
                 )
                 .frame(width: Theme.Size.playerBarCover, height: Theme.Size.playerBarCover)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(player.queue.current?.song.title ?? "Not Playing")
-                        .font(.callout.weight(.medium))
+                        .font(.inter(.callout, weight: .medium))
                     Text(player.queue.current?.song.artist ?? " ")
-                        .font(.caption)
+                        .font(.inter(.caption))
                         .foregroundStyle(.secondary)
                 }
                 .lineLimit(1)
@@ -64,7 +66,7 @@ struct PlayerBar: View {
     @ViewBuilder private var errorLine: some View {
         if let message = player.errorMessage {
             Text(message)
-                .font(.caption2)
+                .font(.inter(.caption2))
                 .foregroundStyle(.red)
                 .lineLimit(1)
                 .padding(.bottom, 2)

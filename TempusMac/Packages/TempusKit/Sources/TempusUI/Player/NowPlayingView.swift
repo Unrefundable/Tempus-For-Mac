@@ -1,5 +1,6 @@
 import AppCore
 import AppKit
+import DesignSystem
 import Playback
 import SubsonicAPI
 import SwiftUI
@@ -21,23 +22,23 @@ struct NowPlayingView: View {
         if let song = player.queue.current?.song {
             VStack(spacing: Theme.Spacing.large) {
                 // The cover gives way first, so the controls always fit beside the inspector.
-                ArtworkView(coverArtID: song.coverArtID, size: .original)
+                ArtworkView(coverArtID: song.coverArtID, size: .original, placeholder: .song)
                     .frame(maxWidth: Theme.Size.nowPlayingArtwork, maxHeight: Theme.Size.nowPlayingArtwork)
                     .shadow(radius: 12, y: 6)
                     .layoutPriority(-1)
                 VStack(spacing: Theme.Spacing.xSmall) {
                     Button { song.albumID.map { navigator.open(.album(id: $0)) } } label: {
-                        Text(title(of: song)).font(.title.bold())
+                        Text(title(of: song)).font(.inter(.title, weight: .bold))
                     }
                     .buttonStyle(.plain)
                     .help("Go to the album")
                     Button { song.artistID.map { navigator.open(.artist(id: $0)) } } label: {
-                        Text(song.artist ?? "Unknown artist").font(.title3).foregroundStyle(.secondary)
+                        Text(song.artist ?? "Unknown artist").font(.inter(.title3)).foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
                     .help("Go to the artist")
                     if let album = song.album {
-                        Text(album).font(.callout).foregroundStyle(.tertiary)
+                        Text(album).font(.inter(.callout)).foregroundStyle(.tertiary)
                     }
                 }
                 .multilineTextAlignment(.center)
@@ -48,7 +49,7 @@ struct NowPlayingView: View {
                 }
                 if let quality = TrackFormatting.quality(of: song) {
                     Text(quality)
-                        .font(.caption.weight(.medium))
+                        .font(.inter(.caption, weight: .medium))
                         .padding(.horizontal, Theme.Spacing.small)
                         .padding(.vertical, 3)
                         .background(Theme.accent.opacity(0.15), in: .capsule)
@@ -67,10 +68,10 @@ struct NowPlayingView: View {
             .padding(Theme.Spacing.xLarge)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ContentUnavailableView(
-                "Nothing Playing",
-                systemImage: "music.note",
-                description: Text("Play something from your library and it shows up here.")
+            EmptyState(
+                art: .icon(.play),
+                title: "Nothing Playing",
+                message: Text("Play something from your library and it shows up here.")
             )
         }
     }
@@ -94,12 +95,15 @@ private struct TrackActions: View {
     let session: ServerSession
     let song: Song
 
+    /// Stands in for the title3 symbols these buttons used.
+    private static let iconSize: CGFloat = 20
+
     @Environment(SheetPresenter.self) private var sheets
 
     var body: some View {
         HStack(spacing: Theme.Spacing.large) {
             let starred = session.stars.isStarred(song)
-            Button(starred ? "Unstar" : "Star", systemImage: starred ? "heart.fill" : "heart") {
+            Button(starred ? "Unstar" : "Star", tempus: starred ? .favorite : .favoritesOutlined) {
                 Task { await session.stars.toggle(song) }
             }
             .foregroundStyle(starred ? Theme.accent : .primary)
@@ -107,14 +111,15 @@ private struct TrackActions: View {
                 Task { await session.stars.setRating(rating, for: song) }
             }
             if session.downloads.isDownloaded(song.id) {
-                Image(systemName: "arrow.down.circle.fill").foregroundStyle(.secondary).help("Downloaded")
+                TempusIconImage(.download, accessibilityName: Text("Downloaded")).foregroundStyle(.secondary)
+                    .help("Downloaded")
             } else if session.downloads.isPending(song.id) {
                 ProgressView().controlSize(.small)
             } else {
-                Button("Download", systemImage: "arrow.down.circle") { session.downloads.download([song]) }
+                Button("Download", tempus: .download) { session.downloads.download([song]) }
             }
-            Button("Add to Playlist", systemImage: "text.badge.plus") { sheets.present(.addToPlaylist([song])) }
-            Button("Instant Mix", systemImage: "wand.and.stars") {
+            Button("Add to Playlist", tempus: .playlistAdd) { sheets.present(.addToPlaylist([song])) }
+            Button("Instant Mix", tempus: .mixFromHere) {
                 Task {
                     do throws(SubsonicError) {
                         try await session.player.playNext(session.sources.instantMix(for: song))
@@ -127,10 +132,10 @@ private struct TrackActions: View {
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
-        .font(.title3)
+        .tempusIconSize(Self.iconSize)
         .overlay(alignment: .bottom) {
             if let message = session.stars.errorMessage {
-                Text(message).font(.caption).foregroundStyle(.red).offset(y: 20)
+                Text(message).font(.inter(.caption)).foregroundStyle(.red).offset(y: 20)
             }
         }
     }
@@ -138,6 +143,9 @@ private struct TrackActions: View {
 
 /// Five stars; clicking the current rating clears it.
 struct RatingControl: View {
+    /// Stands in for the callout symbols these used.
+    private static let iconSize: CGFloat = 14
+
     let rating: Int
     let onChange: (Int) -> Void
 
@@ -145,13 +153,13 @@ struct RatingControl: View {
         HStack(spacing: 2) {
             ForEach(1 ... 5, id: \.self) { value in
                 Button { onChange(value == rating ? 0 : value) } label: {
-                    Image(systemName: value <= rating ? "star.fill" : "star")
+                    TempusIconImage(value <= rating ? .star : .starOutlined)
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("\(value) stars")
             }
         }
-        .font(.callout)
+        .tempusIconSize(Self.iconSize)
         .foregroundStyle(Theme.accent)
         .help("Rating")
     }
@@ -196,7 +204,7 @@ private struct SleepTimerMenu: View {
             }
         } label: {
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                Label(label(now: context.date), systemImage: "moon.zzz")
+                Label(label(now: context.date), tempus: .timer)
             }
         }
         .menuStyle(.borderlessButton)

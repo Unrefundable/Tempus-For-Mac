@@ -1,5 +1,6 @@
 import AppCore
 import AppKit
+import DesignSystem
 import Playback
 import SwiftUI
 
@@ -16,13 +17,14 @@ struct MenuBarPlayer: View {
                     ArtworkView(
                         coverArtID: player.queue.current?.song.coverArtID,
                         size: .thumbnail,
-                        cornerRadius: Theme.Radius.artworkSmall
+                        cornerRadius: Theme.Radius.artworkSmall,
+                        placeholder: .song
                     )
                     .frame(width: 56, height: 56)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(player.queue.current?.song.title ?? "Not Playing").font(.headline)
+                        Text(player.queue.current?.song.title ?? "Not Playing").font(.inter(.headline))
                         Text(player.queue.current?.song.artist ?? session.profile.name)
-                            .font(.callout).foregroundStyle(.secondary)
+                            .font(.inter(.callout)).foregroundStyle(.secondary)
                     }
                     .lineLimit(1)
                     Spacer(minLength: 0)
@@ -30,7 +32,7 @@ struct MenuBarPlayer: View {
                 SeekBar(player: player, compact: true)
                 TransportControls(player: player)
                 if let message = player.errorMessage {
-                    Text(message).font(.caption).foregroundStyle(.red).lineLimit(2)
+                    Text(message).font(.inter(.caption)).foregroundStyle(.red).lineLimit(2)
                 }
             } else {
                 Text("Not signed in").foregroundStyle(.secondary)

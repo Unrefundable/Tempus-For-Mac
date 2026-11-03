@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import os
 import SwiftUI
 import UniformTypeIdentifiers
@@ -32,7 +33,7 @@ struct CertificateField: View {
                 }
             }
             if let message {
-                Text(message).font(.caption).foregroundStyle(.red)
+                Text(message).font(.inter(.caption)).foregroundStyle(.red)
             }
         }
         .fileImporter(isPresented: $choosing, allowedContentTypes: [.pkcs12]) { result in

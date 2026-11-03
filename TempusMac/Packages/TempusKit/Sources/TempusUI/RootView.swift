@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Persistence
 import SwiftUI
 
@@ -41,7 +42,6 @@ public struct RootView: View {
                 navigator.selection = .home
             }
         }
-        .tint(Theme.accent)
     }
 }
 
@@ -53,8 +53,8 @@ private struct ConnectingView: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.large) {
             ProgressView()
-            Text("Connecting to \(profile.name)…").font(.headline)
-            Text(profile.address.url.absoluteString).font(.subheadline).foregroundStyle(.secondary)
+            Text("Connecting to \(profile.name)…").font(.inter(.headline))
+            Text(profile.address.url.absoluteString).font(.inter(.subheadline)).foregroundStyle(.secondary)
             Button("Cancel") {
                 Task { await model.signOut() }
             }
@@ -72,7 +72,7 @@ public struct StartupFailureView: View {
 
     public var body: some View {
         ContentUnavailableView {
-            Label("Tempus couldn't start", systemImage: "exclamationmark.triangle")
+            Label("Tempus couldn't start", tempus: .error)
         } description: {
             Text(message)
         }

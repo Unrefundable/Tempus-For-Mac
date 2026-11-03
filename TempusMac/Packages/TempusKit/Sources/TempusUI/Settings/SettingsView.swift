@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Playback
 import SwiftUI
 import UniformTypeIdentifiers
@@ -9,11 +10,11 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            Tab("General", systemImage: "gearshape") { GeneralSettings() }
-            Tab("Home", systemImage: "house") { HomeSettings() }
-            Tab("Playback", systemImage: "play.circle") { PlaybackSettingsPane() }
-            Tab("Equalizer", systemImage: "slider.vertical.3") { EqualizerPane() }
-            Tab("Downloads", systemImage: "arrow.down.circle") { DownloadSettings() }
+            Tab { GeneralSettings() } label: { Label("General", tempus: .settings) }
+            Tab { HomeSettings() } label: { Label("Home", tempus: .home) }
+            Tab { PlaybackSettingsPane() } label: { Label("Playback", tempus: .play) }
+            Tab { EqualizerPane() } label: { Label("Equalizer", tempus: .equalizer) }
+            Tab { DownloadSettings() } label: { Label("Downloads", tempus: .playForWork) }
         }
         .frame(width: 560)
         .frame(minHeight: 420)
@@ -29,12 +30,12 @@ private struct GeneralSettings: View {
             Section("Server") {
                 Toggle("Scrobble what I play", isOn: $settings.scrobbles)
                 Text("Tells your server what you play. It may pass it on to Last.fm or ListenBrainz if set up to.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.inter(.caption)).foregroundStyle(.secondary)
                 Toggle("Sync the play queue with the server", isOn: $settings.syncsPlayQueue)
                 Text(
                     "Saves your queue and position when you pause, change track and every 30 seconds, so another device can continue."
                 )
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.inter(.caption)).foregroundStyle(.secondary)
                 Toggle(
                     "Remember where I stopped in podcasts, audiobooks and long tracks",
                     isOn: $settings.savesBookmarks
@@ -71,7 +72,7 @@ private struct HomeSettings: View {
                 List {
                     ForEach(layout.visible) { section in
                         HStack {
-                            Image(systemName: "line.3.horizontal").foregroundStyle(.tertiary)
+                            TempusIconImage(.dragHandle).foregroundStyle(.tertiary)
                             Text(section.title)
                             Spacer()
                             Button("Hide") { model.settings.setHomeLayout(layout.hiding(section)) }
@@ -156,7 +157,7 @@ private struct PlaybackSettingsPane: View {
                     Text(
                         "Changes apply from the next track. Opus and Vorbis are always converted, since macOS can't stream them."
                     )
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.inter(.caption)).foregroundStyle(.secondary)
                 }
                 Section("ReplayGain") {
                     Picker("Mode", selection: Binding(
@@ -274,7 +275,7 @@ private struct DownloadSettings: View {
                 )
                 Toggle("Keep starred tracks downloaded", isOn: $settings.syncsStarredTracks)
                 Text("Starred tracks and kept-synced playlists are checked each time you sign in.")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.inter(.caption)).foregroundStyle(.secondary)
             }
             if let session = model.session {
                 Section("On this Mac for \(session.profile.name)") {

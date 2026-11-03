@@ -1,4 +1,5 @@
 import AppCore
+import DesignSystem
 import Persistence
 import SubsonicAPI
 import SwiftUI
@@ -19,17 +20,17 @@ struct HomeView: View {
             .id(revision)
         }
         .toolbar {
-            Button("Refresh", systemImage: "arrow.clockwise") { revision += 1 }
+            Button("Refresh", tempus: .refresh) { revision += 1 }
                 .help("Reload Home")
             SettingsLink { Label("Customize Home", systemImage: "slider.horizontal.3") }
                 .help("Choose and order Home's sections in Settings")
         }
         .overlay {
             if session.settings.homeLayout.visible.isEmpty {
-                ContentUnavailableView(
-                    "Home is empty",
-                    systemImage: "house",
-                    description: Text("Turn sections on in Settings › Home.")
+                EmptyState(
+                    art: .icon(.home),
+                    title: "Home is empty",
+                    message: Text("Turn sections on in Settings › Home.")
                 )
             }
         }
@@ -201,7 +202,8 @@ struct SongRow: View {
                     CoverTile(
                         coverArtID: item.song.coverArtID,
                         title: item.song.title ?? "Untitled",
-                        subtitle: item.song.artist
+                        subtitle: item.song.artist,
+                        placeholder: .song
                     )
                 }
                 .buttonStyle(.plain)
@@ -233,7 +235,8 @@ private struct ContinueListeningRow: View {
                         CoverTile(
                             coverArtID: item.bookmark.entry.coverArtID,
                             title: item.bookmark.entry.title ?? "Untitled",
-                            subtitle: "Resume at \(TrackFormatting.time(TimeInterval(item.bookmark.position) / 1000))"
+                            subtitle: "Resume at \(TrackFormatting.time(TimeInterval(item.bookmark.position) / 1000))",
+                            placeholder: .song
                         )
                     }
                     .buttonStyle(.plain)
@@ -287,7 +290,8 @@ private struct PlaylistRow: View {
                         CoverTile(
                             coverArtID: playlist.coverArtID,
                             title: playlist.name ?? "Playlist",
-                            subtitle: "\(playlist.songCount ?? 0) songs"
+                            subtitle: "\(playlist.songCount ?? 0) songs",
+                            placeholder: .playlist
                         )
                     }
                     .buttonStyle(.plain)
@@ -306,7 +310,7 @@ private struct GenreChips: View {
             let top = genres.sorted { ($0.songCount ?? 0) > ($1.songCount ?? 0) }.prefix(20)
             if !top.isEmpty {
                 VStack(alignment: .leading, spacing: Theme.Spacing.small) {
-                    Text("Genres").font(.title2.bold()).padding(.horizontal, Theme.Spacing.xLarge)
+                    Text("Genres").font(.inter(.title2, weight: .bold)).padding(.horizontal, Theme.Spacing.xLarge)
                     ScrollView(.horizontal) {
                         HStack {
                             ForEach(Array(top), id: \.name) { genre in

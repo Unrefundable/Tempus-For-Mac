@@ -1,3 +1,4 @@
+import DesignSystem
 import Playback
 import SwiftUI
 import UniformTypeIdentifiers
@@ -28,7 +29,7 @@ struct EqualizerPane: View {
                         ) { index, frequency in
                             VStack {
                                 Text(String(format: "%+.0f", equalizer.graphicGains[index]))
-                                    .font(.caption2).monospacedDigit()
+                                    .font(.inter(.caption2)).monospacedDigit()
                                 Slider(value: Binding(
                                     get: { equalizer.graphicGains[index] },
                                     set: { gain in
@@ -43,7 +44,7 @@ struct EqualizerPane: View {
                                     .rotationEffect(.degrees(-90))
                                     .frame(width: 120, height: 24)
                                     .frame(width: 28, height: 120)
-                                Text(Self.label(frequency)).font(.caption2)
+                                Text(Self.label(frequency)).font(.inter(.caption2))
                             }
                         }
                     }
@@ -59,10 +60,10 @@ struct EqualizerPane: View {
                     LabeledContent("Profile", value: equalizer.parametricName ?? "None")
                     Button("Import ParametricEQ.txt…") { isImporting = true }
                     if let importError {
-                        Text(importError).font(.callout).foregroundStyle(.red)
+                        Text(importError).font(.inter(.callout)).foregroundStyle(.red)
                     }
                     Text("Download a headphone's “ParametricEQ.txt” from autoeq.app and import it here.")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.inter(.caption)).foregroundStyle(.secondary)
                 }
             }
             .formStyle(.grouped)
