@@ -2,33 +2,7 @@ import AppCore
 import DesignSystem
 import SwiftUI
 
-/// Where the sidebar can go.
-enum SidebarDestination: String, Hashable, CaseIterable, Identifiable {
-    case nowPlaying, home, search
-    case albums, artists, genres, playlists, folders
-    case podcasts, radio, shares, downloads
-
-    var id: Self {
-        self
-    }
-
-    var title: String {
-        switch self {
-        case .nowPlaying: "Now Playing"
-        case .home: "Home"
-        case .search: "Search"
-        case .albums: "Albums"
-        case .artists: "Artists"
-        case .genres: "Genres"
-        case .playlists: "Playlists"
-        case .folders: "Music Folders"
-        case .podcasts: "Podcasts"
-        case .radio: "Radio"
-        case .shares: "Shares"
-        case .downloads: "Downloads"
-        }
-    }
-
+extension SidebarItem {
     /// Upstream's drawer and tab icons where it has the place, and the closest upstream icon
     /// otherwise. Upstream has no icon for internet radio (its Radio tab is text), so that keeps
     /// a symbol.
@@ -41,6 +15,7 @@ enum SidebarDestination: String, Hashable, CaseIterable, Identifiable {
         case .artists: .artists
         case .genres: .genres
         case .playlists: .playlist
+        case .favorites: .favorite
         case .folders: .folder
         case .podcasts: .feed
         case .radio: nil
@@ -48,12 +23,6 @@ enum SidebarDestination: String, Hashable, CaseIterable, Identifiable {
         case .downloads: .playForWork
         }
     }
-
-    static let sections: [(title: String?, items: [Self])] = [
-        (nil, [.nowPlaying, .home, .search]),
-        ("Library", [.albums, .artists, .genres, .playlists, .folders]),
-        ("More", [.podcasts, .radio, .shares, .downloads]),
-    ]
 
     /// ⌘1 to ⌘9 in the Go menu.
     static let shortcutOrder: [Self] = [
@@ -150,6 +119,16 @@ struct MainView: View {
                 .environment(navigator)
                 .environment(\.artwork, session.artwork)
         }
+        // On the window rather than the sidebar, so View › Edit Sidebar… works with it collapsed.
+        .sheet(isPresented: $navigator.isEditingSidebar) {
+            SidebarEditorSheet(settings: session.settings, unavailable: session.unavailableSidebarItems)
+        }
+        // Hiding the open item moves to the first one still shown.
+        .onChange(of: session.settings.sidebarLayout) { _, layout in
+            guard !layout.isVisible(navigator.selection) else { return }
+            let shown = SidebarSection.allCases.flatMap { shownItems(in: $0, layout: layout) }
+            navigator.selection = shown.first ?? navigator.selection
+        }
         .onChange(of: session.features.hasPodcasts) { _, has in
             if !has, navigator.selection == .podcasts {
                 navigator.selection = .home
@@ -162,31 +141,43 @@ struct MainView: View {
         }
     }
 
-    private var visibleSections: [(title: String?, items: [SidebarDestination])] {
-        SidebarDestination.sections.map { section in
-            (section.title, section.items.filter { item in
-                switch item {
-                case .podcasts: session.features.hasPodcasts
-                case .shares: session.features.hasShares
-                default: true
-                }
-            })
-        }
+    /// The items `section` shows: the ones left on in Edit Sidebar that this server has.
+    private func shownItems(in section: SidebarSection, layout: SidebarLayout) -> [SidebarItem] {
+        let unavailable = session.unavailableSidebarItems
+        return layout.visibleItems(in: section).filter { !unavailable.contains($0) }
     }
 
     private var sidebar: some View {
         @Bindable var navigator = navigator
+        let settings = session.settings
+        let layout = settings.sidebarLayout
         return List(selection: $navigator.selection) {
-            ForEach(visibleSections, id: \.items) { section in
-                Section {
-                    ForEach(section.items) { item in
-                        SidebarLabel(item: item)
-                            .badge(item == .downloads ? downloadBadge : 0)
-                            .tag(item)
-                    }
-                } header: {
-                    if let title = section.title {
-                        Text(title)
+            ForEach(SidebarSection.allCases) { section in
+                let items = shownItems(in: section, layout: layout)
+                if !items.isEmpty {
+                    Section {
+                        ForEach(items) { item in
+                            SidebarLabel(item: item)
+                                .badge(item == .downloads ? downloadBadge : 0)
+                                .tag(item)
+                                .contextMenu {
+                                    Button("Hide “\(item.title)” from Sidebar") {
+                                        settings.setSidebarLayout(settings.sidebarLayout.hiding(item))
+                                    }
+                                    .disabled(!layout.canHide(item))
+                                    Divider()
+                                    Button("Edit Sidebar…") { navigator.isEditingSidebar = true }
+                                }
+                        }
+                        .onMove { offsets, destination in
+                            settings.setSidebarLayout(
+                                settings.sidebarLayout.moving(fromOffsets: offsets, toOffset: destination, among: items)
+                            )
+                        }
+                    } header: {
+                        if let title = section.title {
+                            Text(title)
+                        }
                     }
                 }
             }
@@ -213,6 +204,7 @@ struct MainView: View {
         case .artists: ArtistsView()
         case .genres: GenresView()
         case .playlists: PlaylistsView()
+        case .favorites: FavoritesView()
         case .folders: FoldersView()
         case .podcasts: PodcastsView()
         case .radio: RadioView()
@@ -306,8 +298,8 @@ private struct ServerMenu: View {
         .frame(width: 1100, height: 700)
 }
 
-private struct SidebarLabel: View {
-    let item: SidebarDestination
+struct SidebarLabel: View {
+    let item: SidebarItem
 
     var body: some View {
         if let icon = item.icon {

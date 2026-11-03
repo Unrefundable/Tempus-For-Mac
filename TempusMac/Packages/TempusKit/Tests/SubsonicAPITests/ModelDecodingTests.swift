@@ -327,3 +327,20 @@ struct ModelDecodingTests {
         #expect(response == EmptyResponse())
     }
 }
+
+@Suite("Starred decoding")
+struct StarredDecodingTests {
+    @Test("Starred songs decode for Favorites")
+    func starredSongs() async throws {
+        let starred = try await decode(.starred(musicFolderID: "1"), body: ok(#"""
+        "starred2":{"song":[
+            {"id":"s1","title":"Blue Train","artist":"John Coltrane","starred":"2024-05-01T10:00:00Z"},
+            {"id":"s2","title":"Naima","starred":"2024-05-02T10:00:00Z"}
+        ]}
+        """#))
+
+        #expect(starred.songs.map(\.id) == ["s1", "s2"])
+        #expect(starred.songs.allSatisfy { $0.starred != nil })
+        #expect(starred.albums.isEmpty && starred.artists.isEmpty)
+    }
+}

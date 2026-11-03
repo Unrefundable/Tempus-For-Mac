@@ -4,7 +4,7 @@ import Playback
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The Settings window (⌘,): general, Home, playback, equalizer and downloads.
+/// The Settings window (⌘,): general, Home, sidebar, playback, equalizer and downloads.
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
 
@@ -12,6 +12,7 @@ struct SettingsView: View {
         TabView {
             Tab { GeneralSettings() } label: { Label("General", tempus: .settings) }
             Tab { HomeSettings() } label: { Label("Home", tempus: .home) }
+            Tab { SidebarSettings() } label: { Label("Sidebar", systemImage: "sidebar.left") }
             Tab { PlaybackSettingsPane() } label: { Label("Playback", tempus: .play) }
             Tab { EqualizerPane() } label: { Label("Equalizer", tempus: .equalizer) }
             Tab { DownloadSettings() } label: { Label("Downloads", tempus: .playForWork) }
@@ -98,6 +99,21 @@ private struct HomeSettings: View {
             Button("Restore Defaults") { model.settings.setHomeLayout(.default) }
         }
         .formStyle(.grouped)
+    }
+}
+
+private struct SidebarSettings: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
+            Text("Choose what the sidebar shows. Drag items to change their order.")
+                .foregroundStyle(.secondary)
+            SidebarEditor(settings: model.settings, unavailable: model.session?.unavailableSidebarItems ?? [])
+                .frame(minHeight: 380)
+            Button("Restore Defaults") { model.settings.setSidebarLayout(.default) }
+        }
+        .padding(Theme.Spacing.xLarge)
     }
 }
 
