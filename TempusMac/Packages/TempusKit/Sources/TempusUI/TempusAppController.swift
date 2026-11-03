@@ -5,7 +5,7 @@ import os
 import SwiftUI
 
 /// What the app target needs: the model on live services, the window's content, the menu
-/// commands and the work to do before quitting. Keeps the Xcode target down to `TempusUI`.
+/// commands, the updater and the work to do before quitting. Keeps the Xcode target down to `TempusUI`.
 @MainActor
 public final class TempusAppController {
     public enum DemoMode: Sendable {
@@ -17,6 +17,7 @@ public final class TempusAppController {
     private let model: Result<AppModel, any Error>
     private let isDemo: Bool
     private let navigator = Navigator()
+    private let updater: AppUpdater
     private lazy var dock = DockMenu(model: try? model.get())
 
     /// - Parameter demo: run on in-memory preview data, signed in or not, for screenshots that
@@ -27,6 +28,11 @@ public final class TempusAppController {
         if case let .failure(error) = model {
             Self.logger.fault("Couldn't start: \(error)")
         }
+        // Even when the model can't start, so a release that breaks launching can be fixed by the next.
+        updater = AppUpdater(
+            settings: (try? model.get())?.settings ?? AppSettings(),
+            isEnabled: demo == nil && Self.isReleaseBuild
+        )
         Self.current = self
     }
 
@@ -52,13 +58,13 @@ public final class TempusAppController {
     }
 
     public var commands: TempusCommands {
-        TempusCommands(model: try? model.get(), navigator: navigator)
+        TempusCommands(model: try? model.get(), navigator: navigator, updater: updater)
     }
 
     /// The Settings window's content.
     @ViewBuilder public var settingsView: some View {
         if case let .success(model) = model {
-            SettingsView().environment(model).font(.inter(.body))
+            SettingsView().environment(model).environment(updater).font(.inter(.body))
         }
     }
 
@@ -109,6 +115,12 @@ public final class TempusAppController {
     }
 
     static let terminationDeadline = Duration.seconds(2)
+
+    #if DEBUG
+        static let isReleaseBuild = false
+    #else
+        static let isReleaseBuild = true
+    #endif
 }
 
 /// Runs an action the first time it's asked to.

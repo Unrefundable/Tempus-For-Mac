@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 /// Settings outside playback (which `PlaybackSettingsStore` keeps): scrobbling, queue sync, the
-/// library in use, Home's and the sidebar's layout, sorting and downloads. Kept in UserDefaults;
+/// library in use, Home's and the sidebar's layout, sorting, downloads and the update channel. Kept in UserDefaults;
 /// nothing here is secret.
 @MainActor
 @Observable
@@ -71,7 +71,14 @@ public final class AppSettings {
         didSet { defaults.set(syncsStarredTracks, forKey: Self.prefix + "syncsStarredTracks") }
     }
 
-    public init(defaults: UserDefaults = .standard) {
+    /// Offers pre-releases as updates too. Sparkle keeps the other update settings itself.
+    public var receivesBetaUpdates: Bool {
+        didSet { defaults.set(receivesBetaUpdates, forKey: Self.prefix + "receivesBetaUpdates") }
+    }
+
+    /// - Parameter isPrereleaseBuild: whether the app running is a beta, which makes beta updates
+    ///   the default, so a beta tester keeps getting betas.
+    public init(defaults: UserDefaults = .standard, isPrereleaseBuild: Bool = UpdateChannel.isRunningPrerelease) {
         self.defaults = defaults
         let bool = { (key: String, fallback: Bool) in
             defaults.object(forKey: Self.prefix + key) as? Bool ?? fallback
@@ -83,6 +90,7 @@ public final class AppSettings {
         downloadsOnlyUnconstrained = bool("downloadsOnlyUnconstrained", false)
         transcodesDownloads = bool("transcodesDownloads", false)
         syncsStarredTracks = bool("syncsStarredTracks", false)
+        receivesBetaUpdates = bool("receivesBetaUpdates", isPrereleaseBuild)
         homeLayout = HomeLayout(stored: defaults.stringArray(forKey: Self.prefix + "homeSections"))
         sidebarLayout = SidebarLayout(
             storedOrder: defaults.stringArray(forKey: Self.prefix + "sidebarOrder"),
