@@ -42,14 +42,21 @@ public enum Theme {
         public static let tile: CGFloat = 156
         public static let detailCover: CGFloat = 200
         public static let trackCover: CGFloat = 32
-        /// A track table's row and header, for tables sized to their rows inside a scroll view.
-        public static let tableRow: CGFloat = 24
-        public static let tableHeader: CGFloat = 44
+        /// A track list's cover, as upstream's 52 dp row cover scaled to the Mac's denser lists.
+        public static let trackRowCover: CGFloat = 40
+        /// A track list's row as the table lays it out (the cover, its padding and the table's own
+        /// row inset), for tables sized to their rows inside a scroll view.
+        public static let trackRow: CGFloat = 56
+        /// Starred and downloaded marks at the end of a track row.
+        public static let trackMark: CGFloat = 14
         /// Starred and downloaded marks beside a title.
         public static let badgeIcon: CGFloat = 10
         /// An icon beside title-size text, such as a folder's name or an episode's play button.
         public static let titleIcon: CGFloat = 22
     }
+
+    /// Upstream darkens the playing track's cover under its play icon (`#80000000`).
+    public static let nowPlayingScrim = 0.5
 
     /// Upstream dims tracks that already played in the queue.
     public static let playedOpacity = 0.45

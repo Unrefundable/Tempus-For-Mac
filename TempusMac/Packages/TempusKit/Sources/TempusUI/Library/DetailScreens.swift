@@ -37,7 +37,7 @@ struct AlbumDetailView: View {
                     .menuStyle(.borderlessButton)
                     .fixedSize()
                 }
-                TrackTable(songs: album.songs)
+                TrackTable(songs: album.songs, showsArtwork: false)
             }
         }
         .navigationTitle("Album")
@@ -103,9 +103,8 @@ struct ArtistDetailView: View {
                             .horizontal,
                             Theme.Spacing.xLarge
                         )
-                        TrackTable(songs: topSongs, numbersByPosition: true)
-                            .frame(height: CGFloat(min(topSongs.count, 10)) * Theme.Size.tableRow + Theme.Size
-                                .tableHeader)
+                        TrackTable(songs: topSongs, subtitleShowsAlbum: true)
+                            .frame(height: CGFloat(min(topSongs.count, 10)) * Theme.Size.trackRow)
                             .padding(.horizontal, Theme.Spacing.large)
                     }
                     if !artist.albums.isEmpty {

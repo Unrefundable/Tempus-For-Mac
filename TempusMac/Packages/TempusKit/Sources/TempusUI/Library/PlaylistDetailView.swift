@@ -41,8 +41,7 @@ struct PlaylistDetailView: View {
                 }
                 TrackTable(
                     songs: playlist.entries,
-                    source: .init(playlistID: playlist.id, playlistName: playlist.name ?? "Playlist"),
-                    numbersByPosition: true
+                    source: .init(playlistID: playlist.id, playlistName: playlist.name ?? "Playlist")
                 )
                 .dropDestination(for: SongTransfer.self) { items, _ in
                     let songs = items.flatMap(\.songs)
