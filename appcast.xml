@@ -9,6 +9,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
         <description>Updates for Tempus for macOS. scripts/release.sh adds each release; don't edit by hand.</description>
         <language>en</language>
         <item>
+            <title>Version 0.1.0-beta.3</title>
+            <pubDate>Tue, 03 Nov 2026 17:23:04 -0600</pubDate>
+            <sparkle:version>22</sparkle:version>
+            <sparkle:shortVersionString>0.1.0-beta.3</sparkle:shortVersionString>
+            <sparkle:channel>beta</sparkle:channel>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:fullReleaseNotesLink>https://github.com/Unrefundable/Tempus-For-Mac/releases/tag/v0.1.0-beta.3</sparkle:fullReleaseNotesLink>
+            <enclosure url="https://github.com/Unrefundable/Tempus-For-Mac/releases/download/v0.1.0-beta.3/Tempus-0.1.0-beta.3-macOS.zip" length="13045048" type="application/octet-stream" sparkle:edSignature="Kpo2Wkl+XDdKWVTmkJv58CsC6Kky9pMjXnYOWZvTJCSuvaDmhUZuIHTKJGfpVpnh1hKxlQNgxkTD45osv45VBg=="></enclosure>
+        </item>
+        <item>
             <title>Version 0.1.0-beta.2</title>
             <pubDate>Tue, 03 Nov 2026 16:57:31 -0600</pubDate>
             <sparkle:version>19</sparkle:version>
@@ -21,6 +31,6 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: el1qBug/EtBOgxQOpRnNhfNSNRu8ZTryj2M9V1jKOqYkBy9rXaSWv60+VMbhPuvaxR5N/FabM6C7aqKdaqg6Bw==
-length: 1552
+edSignature: IesMw7MD/FePOojBUcx4Q21gbDlm4HIIjEnNCU/KT4k/E1i+albgyf0CIDwjC415czuZ/aAKLCzpzcTL0dDnAQ==
+length: 2415
 -->
