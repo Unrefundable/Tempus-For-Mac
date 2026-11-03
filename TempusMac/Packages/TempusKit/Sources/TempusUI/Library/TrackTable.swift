@@ -19,15 +19,19 @@ struct SongTransfer: Codable, Transferable {
     }
 }
 
-/// The one track list: number, title, artist, album, length. Double-click or Return plays from
-/// that row; the context menu has everything else; rows drag onto the queue.
+/// The one track list, in upstream's row: cover, title over `artist • time • quality`, then the
+/// starred and downloaded marks. Double-click or Return plays from that row; the context menu has
+/// everything else; rows drag onto the queue.
 struct TrackTable: View {
     let songs: [Song]
     /// The playlist they're from, remembered by downloads.
     var source: DownloadManager.Source?
-    /// Numbers rows by position instead of track number: for any list that isn't one album or
-    /// folder (playlists, favorites, search results), where track numbers repeat and jump about.
-    var numbersByPosition = false
+    /// Covers lead each row, except on an album's own page, where every cover would be the same
+    /// and the track number stands in its place (upstream's `showCoverArt`).
+    var showsArtwork = true
+    /// Names the album under each title instead of the artist, for an artist's own page
+    /// (upstream's `showAlbum`).
+    var subtitleShowsAlbum = false
 
     @Environment(ServerSession.self) private var session
     @State private var selection: Set<Int> = []
@@ -41,52 +45,24 @@ struct TrackTable: View {
         let rows = songs.enumerated().map { Row(id: $0.offset, song: $0.element) }
         let current = session.player.queue.current?.song.id
         Table(of: Row.self, selection: $selection) {
-            TableColumn("#") { row in
-                if row.song.id == current {
-                    TempusIconImage(.equalizer, accessibilityName: Text("Now playing")).foregroundStyle(Theme.accent)
-                } else {
-                    Text(TrackFormatting.rowNumber(row.song, at: row.id, byPosition: numbersByPosition))
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
-            }
-            // Room for three digits: favorites and downloads often run past 99 rows.
-            .width(40)
             TableColumn("Title") { row in
-                HStack(spacing: Theme.Spacing.xSmall) {
-                    Text(row.song.title ?? "Untitled")
-                        .foregroundStyle(row.song.id == current ? Theme.accent : .primary)
-                    if session.stars.isStarred(row.song) {
-                        TempusIconImage(.favorite, accessibilityName: Text("Starred"))
-                            .tempusIconSize(Theme.Size.badgeIcon)
-                            .foregroundStyle(Theme.accent)
-                    }
-                    if session.downloads.isDownloaded(row.song.id) {
-                        TempusIconImage(.download, accessibilityName: Text("Downloaded"))
-                            .tempusIconSize(Theme.Size.badgeIcon)
-                            .foregroundStyle(.secondary)
-                    } else if session.downloads.isPending(row.song.id) {
-                        ProgressView().controlSize(.mini)
-                    }
-                }
+                TrackRow(
+                    song: row.song,
+                    number: showsArtwork ? nil : TrackFormatting.rowNumber(row.song, at: row.id),
+                    subtitleShowsAlbum: subtitleShowsAlbum,
+                    isCurrent: row.song.id == current,
+                    isStarred: session.stars.isStarred(row.song),
+                    download: downloadMark(row.song)
+                )
             }
-            .width(min: 120, ideal: 240)
-            TableColumn("Artist") { row in Text(row.song.artist ?? "") }
-                .width(min: 60, ideal: 140)
-            TableColumn("Album") { row in Text(row.song.album ?? "") }
-                .width(min: 60, ideal: 140)
-            TableColumn("Time") { row in
-                Text(row.song.duration.map { TrackFormatting.time(TimeInterval($0)) } ?? "")
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-            }
-            .width(50)
         } rows: {
             ForEach(rows) { row in
                 TableRow(row)
                     .draggable(SongTransfer(songs: dragged(row, rows: rows)))
             }
         }
+        .tableColumnHeaders(.hidden)
+        .alternatingRowBackgrounds(.disabled)
         .frame(minWidth: 0, minHeight: 0)
         .contextMenu(forSelectionType: Int.self) { ids in
             let chosen = ids.sorted().compactMap { rows.indices.contains($0) ? rows[$0].song : nil }
@@ -99,10 +75,103 @@ struct TrackTable: View {
         }
     }
 
+    /// Read here, not in the row: a cell can lay out where the session isn't in its environment.
+    private func downloadMark(_ song: Song) -> TrackRow.DownloadMark? {
+        if session.downloads.isDownloaded(song.id) {
+            return .downloaded
+        }
+        return session.downloads.isPending(song.id) ? .pending : nil
+    }
+
     /// Dragging a selected row takes the whole selection along.
     private func dragged(_ row: Row, rows: [Row]) -> [Song] {
         guard selection.contains(row.id) else { return [row.song] }
         return selection.sorted().compactMap { rows.indices.contains($0) ? rows[$0].song : nil }
+    }
+}
+
+/// One track: its cover (or track number), title and subtitle, and marks. The playing track shows
+/// the equalizer over its cover, as upstream dims the cover under its play icon.
+private struct TrackRow: View {
+    enum DownloadMark { case downloaded, pending }
+
+    let song: Song
+    /// The album track number in place of the cover; nil shows the cover.
+    let number: String?
+    let subtitleShowsAlbum: Bool
+    let isCurrent: Bool
+    let isStarred: Bool
+    let download: DownloadMark?
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.medium) {
+            leading
+                .frame(width: Theme.Size.trackRowCover, height: Theme.Size.trackRowCover)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(song.title ?? "Untitled")
+                    .font(.inter(.body))
+                    .foregroundStyle(isCurrent ? Theme.accent : .primary)
+                let subtitle = TrackFormatting.listSubtitle(of: song, showingAlbum: subtitleShowsAlbum)
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.inter(.subheadline))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .lineLimit(1)
+            Spacer(minLength: 0)
+            marks
+        }
+        .padding(.vertical, Theme.Spacing.xSmall)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder private var leading: some View {
+        if let number {
+            if isCurrent {
+                nowPlaying.foregroundStyle(Theme.accent)
+            } else {
+                Text(number).foregroundStyle(.secondary).monospacedDigit()
+            }
+        } else {
+            ArtworkView(
+                coverArtID: song.coverArtID,
+                size: .thumbnail,
+                cornerRadius: Theme.Radius.artworkSmall,
+                placeholder: .song
+            )
+            .overlay {
+                if isCurrent {
+                    RoundedRectangle(cornerRadius: Theme.Radius.artworkSmall)
+                        .fill(.black.opacity(Theme.nowPlayingScrim))
+                        .overlay { nowPlaying.foregroundStyle(.white) }
+                }
+            }
+        }
+    }
+
+    private var nowPlaying: some View {
+        TempusIconImage(.equalizer, accessibilityName: Text("Now playing"))
+    }
+
+    private var marks: some View {
+        HStack(spacing: Theme.Spacing.small) {
+            if isStarred {
+                TempusIconImage(.favorite, accessibilityName: Text("Starred"))
+                    .tempusIconSize(Theme.Size.trackMark)
+                    .foregroundStyle(Theme.accent)
+            }
+            switch download {
+            case .downloaded:
+                TempusIconImage(.download, accessibilityName: Text("Downloaded"))
+                    .tempusIconSize(Theme.Size.trackMark)
+                    .foregroundStyle(.secondary)
+            case .pending:
+                ProgressView().controlSize(.mini)
+            case nil:
+                EmptyView()
+            }
+        }
     }
 }
 

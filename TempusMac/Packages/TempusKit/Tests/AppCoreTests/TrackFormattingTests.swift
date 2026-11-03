@@ -40,18 +40,54 @@ struct TrackFormattingTests {
     }
 }
 
-struct RowNumberTests {
+struct TrackListSubtitleTests {
     @Test
-    func `lists from many albums number rows by position, not track number`() {
-        let songs = [Song(id: "a", track: 11), Song(id: "b", track: 7), Song(id: "c", track: 11)]
-        let numbers = songs.indices.map { TrackFormatting.rowNumber(songs[$0], at: $0, byPosition: true) }
-        #expect(numbers == ["1", "2", "3"])
+    func `a row's subtitle reads like upstream's: artist, length, bitrate, depth and rate, format`() {
+        let song = Song(
+            id: "1", artist: "girl in red", suffix: "flac", duration: 176,
+            bitrate: 1512, samplingRate: 44100, bitDepth: 24
+        )
+        #expect(TrackFormatting.listSubtitle(of: song) == "girl in red • 2:56 • 1512kbps • 24/44 flac")
     }
 
     @Test
+    func `lossy files without a bit depth show the sample rate in kHz`() {
+        let song = Song(id: "1", artist: "Mitski", suffix: "mp3", duration: 137, bitrate: 320, samplingRate: 44100)
+        #expect(TrackFormatting.listSubtitle(of: song) == "Mitski • 2:17 • 320kbps • 44.1kHz mp3")
+    }
+
+    @Test
+    func `an artist's own page names the album instead`() {
+        let song = Song(id: "1", album: "Born to Die", artist: "Lana Del Rey", duration: 265)
+        #expect(TrackFormatting.listSubtitle(of: song, showingAlbum: true) == "Born to Die • 4:25")
+    }
+
+    @Test
+    func `whatever is unknown is left out`() {
+        #expect(TrackFormatting.listSubtitle(of: Song(id: "1")) == "")
+        #expect(TrackFormatting.listSubtitle(of: Song(id: "2", suffix: "opus")) == "opus")
+        #expect(TrackFormatting.listSubtitle(of: Song(id: "3", bitrate: 128, samplingRate: 48000, bitDepth: 16))
+            == "128kbps • 16/48")
+    }
+
+    @Test
+    func `zero lengths and sample rates are treated as unknown`() {
+        let song = Song(id: "1", artist: "Mitski", suffix: "flac", duration: 0, samplingRate: 0, bitDepth: 24)
+        #expect(TrackFormatting.listSubtitle(of: song) == "Mitski • 24b flac")
+    }
+
+    @Test
+    func `rates in kHz keep one decimal only when there is one`() {
+        #expect(TrackFormatting.listSubtitle(of: Song(id: "1", samplingRate: 48000)) == "48kHz")
+        #expect(TrackFormatting.listSubtitle(of: Song(id: "2", samplingRate: 88200)) == "88.2kHz")
+    }
+}
+
+struct RowNumberTests {
+    @Test
     func `album rows show the track number, else their position`() {
-        #expect(TrackFormatting.rowNumber(Song(id: "a", track: 4), at: 0, byPosition: false) == "4")
-        #expect(TrackFormatting.rowNumber(Song(id: "b"), at: 2, byPosition: false) == "3")
+        #expect(TrackFormatting.rowNumber(Song(id: "a", track: 4), at: 0) == "4")
+        #expect(TrackFormatting.rowNumber(Song(id: "b"), at: 2) == "3")
     }
 
     @Test(arguments: [(0.0, "In sync"), (0.5, "0.5 s earlier"), (-1.5, "1.5 s later"), (2, "2 s earlier")])

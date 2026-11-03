@@ -31,7 +31,7 @@ struct FavoritesView: View {
                         PlayButtons { songs }
                     }
                     .padding(Theme.Spacing.xLarge)
-                    TrackTable(songs: songs, numbersByPosition: true)
+                    TrackTable(songs: songs)
                 }
             }
         }

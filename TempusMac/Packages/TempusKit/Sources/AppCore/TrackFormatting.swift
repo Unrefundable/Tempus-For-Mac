@@ -39,11 +39,38 @@ public enum TrackFormatting {
         return "\(songs.count) \(songs.count == 1 ? "song" : "songs") • \(minutes) min"
     }
 
-    /// A track list's `#`: the album track number, or the row's place in the list when the list
-    /// isn't one album (or the track number is unknown).
-    public static func rowNumber(_ song: Song, at index: Int, byPosition: Bool) -> String {
-        guard !byPosition, let track = song.track else { return "\(index + 1)" }
-        return "\(track)"
+    /// An album's row number: the track number, or the row's place when that is unknown.
+    public static func rowNumber(_ song: Song, at index: Int) -> String {
+        song.track.map(String.init) ?? "\(index + 1)"
+    }
+
+    /// Upstream's track-row subtitle: `girl in red • 2:56 • 1512kbps • 24/44 flac`. An artist's own
+    /// page names the album in place of the artist. Whatever is unknown is left out.
+    public static func listSubtitle(of song: Song, showingAlbum: Bool = false) -> String {
+        let name = showingAlbum ? song.album : song.artist
+        let parts = [
+            name.flatMap { $0.isEmpty ? nil : $0 },
+            song.duration.flatMap { $0 > 0 ? time(TimeInterval($0)) : nil },
+            song.bitrate.flatMap { $0 > 0 ? "\($0)kbps" : nil },
+            listFormat(of: song),
+        ]
+        return parts.compactMap(\.self).joined(separator: " • ")
+    }
+
+    /// Upstream's `24/44 flac`: depth over whole kHz, or `44.1kHz` without a depth, then the suffix.
+    private static func listFormat(of song: Song) -> String? {
+        var parts: [String] = []
+        let rate = song.samplingRate.flatMap { $0 > 0 ? $0 : nil }
+        if let depth = song.bitDepth, depth > 0 {
+            parts.append(rate.map { "\(depth)/\($0 / 1000)" } ?? "\(depth)b")
+        } else if let rate {
+            // Fixed format, not the user's locale: the rest of the line is upstream's English.
+            parts.append(String(format: "%gkHz", (Double(rate) / 100).rounded() / 10))
+        }
+        if let suffix = song.suffix, !suffix.isEmpty {
+            parts.append(suffix)
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     /// The user's lyrics nudge: `In sync`, `0.5 s earlier`, `1.5 s later`.
