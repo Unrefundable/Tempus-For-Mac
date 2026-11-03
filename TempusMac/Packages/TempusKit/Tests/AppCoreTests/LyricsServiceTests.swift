@@ -37,6 +37,19 @@ struct LyricsServiceTests {
     }
 
     @Test
+    func `a positive offset shows lines sooner`() async throws {
+        // OpenSubsonic: "Positive means lyrics appear sooner, negative means later."
+        let shifted = Data(#"""
+        {"subsonic-response":{"status":"ok","version":"1.16.1","lyricsList":{"structuredLyrics":[
+          {"lang":"eng","synced":true,"offset":1500,"line":[{"start":2000,"value":"One"},{"start":5000,"value":"Two"}]}
+        ]}}}
+        """#.utf8)
+        let (service, _) = try await service(["getLyricsBySongId": shifted])
+        let lyrics = try await service.lyrics(for: TestData.song("1"))
+        #expect(lyrics == .synced([.init(start: 0.5, text: "One"), .init(start: 3.5, text: "Two")]))
+    }
+
+    @Test
     func `falls back to the classic lookup by artist and title`() async throws {
         let (service, _) = try await service(["getLyrics": Self.plain], openSubsonic: false)
         let lyrics = try await service.lyrics(for: TestData.song("1"))

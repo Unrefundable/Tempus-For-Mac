@@ -22,9 +22,10 @@ public enum LyricsContent: Sendable, Equatable {
 
     init(structured: [StructuredLyrics], plain: String?) {
         if let synced = structured.first(where: { $0.isSynced && !$0.lines.isEmpty }) {
+            // A positive offset means the lines show sooner, as with LRC's `[offset:]`.
             let offset = TimeInterval(synced.offset ?? 0)
             self = .synced(synced.lines.map { line in
-                Line(start: (TimeInterval(line.start ?? 0) + offset) / 1000, text: line.value)
+                Line(start: (TimeInterval(line.start ?? 0) - offset) / 1000, text: line.value)
             })
         } else if let unsynced = structured.first(where: { !$0.lines.isEmpty }) {
             self = .plain(unsynced.lines.map(\.value).joined(separator: "\n"))
