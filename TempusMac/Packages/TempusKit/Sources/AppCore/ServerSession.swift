@@ -19,7 +19,9 @@ extension StreamingEngine: PolicySwitchingEngine {}
 /// whole when the server changes.
 @MainActor
 @Observable
-public final class ServerSession {
+public final class ServerSession: Identifiable {
+    /// This session, not its server: coming back online replaces the session for the same server.
+    public let id = UUID()
     public let profile: ServerProfile
     public let client: SubsonicClient
     /// Nil when the server couldn't be reached at sign-in.
