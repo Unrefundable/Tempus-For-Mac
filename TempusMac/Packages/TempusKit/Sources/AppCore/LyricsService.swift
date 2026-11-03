@@ -18,6 +18,12 @@ public enum LyricsContent: Sendable, Equatable {
             self.start = start
             self.text = text
         }
+
+        /// Moved `seconds` sooner (later when negative): the user's nudge for lyrics out of step
+        /// with the audio.
+        public func shifted(sooner seconds: TimeInterval) -> Line {
+            Line(start: start - seconds, text: text)
+        }
     }
 
     init(structured: [StructuredLyrics], plain: String?) {

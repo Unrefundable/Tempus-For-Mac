@@ -87,7 +87,7 @@ struct MainView: View {
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                PlayerBar(player: session.player, onTogglePanel: toggle) {
+                PlayerBar(player: session.player, stars: session.stars, onTogglePanel: toggle) {
                     navigator.selection = .nowPlaying
                 }
             }

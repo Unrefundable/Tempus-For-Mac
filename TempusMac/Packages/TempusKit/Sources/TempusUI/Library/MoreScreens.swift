@@ -29,7 +29,7 @@ struct DownloadsView: View {
                     message: Text("Download tracks, albums or playlists to play them offline.")
                 )
             } else if settings.downloadGrouping == .track {
-                TrackTable(songs: Self.ordered(downloads.downloads).map(\.song))
+                TrackTable(songs: Self.ordered(downloads.downloads).map(\.song), numbersByPosition: true)
             } else {
                 List(groups(settings.downloadGrouping)) { group in
                     DisclosureGroup {

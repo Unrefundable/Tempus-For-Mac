@@ -122,6 +122,36 @@ public final class AppSettings {
 
     /// Bumped when a library choice changes, so screens observing it reload.
     public private(set) var musicFolderRevision = 0
+
+    /// How far either way one song's lyrics can be nudged, in seconds.
+    public static let lyricsNudgeLimit: TimeInterval = 60
+    /// One press of the lyrics panel's earlier or later button.
+    public static let lyricsNudgeStep: TimeInterval = 0.5
+
+    /// How many seconds sooner (later when negative) the user wants a song's synced lyrics, for
+    /// lyrics whose times are out of step with this server's audio file. 0 when never nudged.
+    public func lyricsNudge(song: String, server: String) -> TimeInterval {
+        _ = lyricsNudgeRevision
+        return defaults.double(forKey: Self.lyricsNudgeKey(song: song, server: server))
+    }
+
+    public func setLyricsNudge(_ seconds: TimeInterval, song: String, server: String) {
+        let key = Self.lyricsNudgeKey(song: song, server: server)
+        let clamped = min(max(seconds, -Self.lyricsNudgeLimit), Self.lyricsNudgeLimit)
+        if clamped == 0 || !clamped.isFinite {
+            defaults.removeObject(forKey: key)
+        } else {
+            defaults.set(clamped, forKey: key)
+        }
+        lyricsNudgeRevision += 1
+    }
+
+    /// Bumped when a lyrics nudge changes, so the lyrics panel observing it moves its lines.
+    public private(set) var lyricsNudgeRevision = 0
+
+    private static func lyricsNudgeKey(song: String, server: String) -> String {
+        prefix + "lyricsNudge." + server + "." + song
+    }
 }
 
 /// How the Albums screen sorts, mapped onto `getAlbumList2` types.

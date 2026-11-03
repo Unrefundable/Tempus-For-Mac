@@ -39,6 +39,20 @@ public enum TrackFormatting {
         return "\(songs.count) \(songs.count == 1 ? "song" : "songs") • \(minutes) min"
     }
 
+    /// A track list's `#`: the album track number, or the row's place in the list when the list
+    /// isn't one album (or the track number is unknown).
+    public static func rowNumber(_ song: Song, at index: Int, byPosition: Bool) -> String {
+        guard !byPosition, let track = song.track else { return "\(index + 1)" }
+        return "\(track)"
+    }
+
+    /// The user's lyrics nudge: `In sync`, `0.5 s earlier`, `1.5 s later`.
+    public static func lyricsNudge(_ seconds: TimeInterval) -> String {
+        guard seconds != 0 else { return "In sync" }
+        let amount = abs(seconds).formatted(.number.precision(.fractionLength(0 ... 1)))
+        return "\(amount) s \(seconds > 0 ? "earlier" : "later")"
+    }
+
     /// Upstream's speed button: `1.00x`.
     public static func speed(_ rate: Double) -> String {
         String(format: "%.2fx", rate)

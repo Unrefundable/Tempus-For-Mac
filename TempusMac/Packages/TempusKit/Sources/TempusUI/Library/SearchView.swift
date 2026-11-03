@@ -74,7 +74,7 @@ struct SearchView: View {
                     }
                     if !result.songs.isEmpty {
                         Text("Songs").font(.inter(.title2, weight: .bold)).padding(.horizontal, Theme.Spacing.xLarge)
-                        TrackTable(songs: result.songs)
+                        TrackTable(songs: result.songs, numbersByPosition: true)
                             .frame(height: CGFloat(result.songs.count) * Theme.Size.tableRow + Theme.Size.tableHeader)
                             .padding(.horizontal, Theme.Spacing.large)
                     }
