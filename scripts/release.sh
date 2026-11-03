@@ -86,8 +86,8 @@ APP="$DERIVED/Build/Products/Release/Tempus.app"
 codesign --verify --deep --strict "$APP"
 [[ -d "$APP/Contents/Frameworks/Sparkle.framework" ]] || { echo "Sparkle.framework isn't embedded." >&2; exit 1; }
 # The container and Keychain items follow the signature, so every release must carry the team's.
-codesign -dv "$APP" 2>&1 | grep -qx "TeamIdentifier=$TEAM" \
-    || { echo "Tempus.app isn't signed by team $TEAM." >&2; exit 1; }
+SIGNING=$(codesign -dv "$APP" 2>&1)
+grep -qx "TeamIdentifier=$TEAM" <<<"$SIGNING" || { echo "Tempus.app isn't signed by team $TEAM." >&2; exit 1; }
 SHORT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
 [[ $SHORT == "$VERSION" ]] || { echo "Built version $SHORT, expected $VERSION." >&2; exit 1; }
 echo "Architectures: $(lipo -archs "$APP/Contents/MacOS/Tempus")"
