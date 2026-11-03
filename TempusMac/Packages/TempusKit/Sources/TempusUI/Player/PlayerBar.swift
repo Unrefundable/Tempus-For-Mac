@@ -12,24 +12,27 @@ struct PlayerBar: View {
     let onTogglePanel: (InspectorPanel) -> Void
     let onOpenNowPlaying: () -> Void
 
-    /// The widest the transport and seek bar grow; the sides share what's left equally.
-    private static let controlsMaxWidth: CGFloat = 520
+    /// The transport and seek bar take this share of the bar, between these widths. Below the
+    /// floor the seek bar gets too short to aim; above the cap it's wider than it is useful.
+    private static let controlsShare: CGFloat = 0.45
+    private static let controlsWidths: ClosedRange<CGFloat> = 280 ... 520
 
     var body: some View {
-        // The transport takes its width first, then both sides split the rest evenly, so it sits
-        // in the middle of the bar however wide the titles or the buttons on the right are.
-        HStack(spacing: Theme.Spacing.large) {
+        // The titles and the transport both shrink with the window, the titles truncating, and
+        // the transport stays centered on the bar however wide the titles or buttons are.
+        CenteredBarLayout(
+            spacing: Theme.Spacing.large,
+            middleShare: Self.controlsShare,
+            middleWidths: Self.controlsWidths
+        ) {
             HStack(spacing: Theme.Spacing.small) {
                 nowPlaying
                 starButton
             }
-            .frame(minWidth: Theme.Size.playerBarCover, maxWidth: .infinity, alignment: .leading)
             VStack(spacing: 2) {
                 TransportControls(player: player)
                 SeekBar(player: player, compact: true)
             }
-            .frame(minWidth: 0, maxWidth: Self.controlsMaxWidth)
-            .layoutPriority(1)
             HStack(spacing: Theme.Spacing.medium) {
                 Button("Lyrics", tempus: .lyrics) { onTogglePanel(.lyrics) }
                 Button("Queue", tempus: .queue) { onTogglePanel(.queue) }
@@ -40,7 +43,6 @@ struct PlayerBar: View {
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
             .fixedSize()
-            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, Theme.Spacing.large)
         .frame(height: Theme.Size.playerBarHeight)
