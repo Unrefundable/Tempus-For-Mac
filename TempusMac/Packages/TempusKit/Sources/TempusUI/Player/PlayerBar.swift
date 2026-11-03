@@ -12,19 +12,24 @@ struct PlayerBar: View {
     let onTogglePanel: (InspectorPanel) -> Void
     let onOpenNowPlaying: () -> Void
 
+    /// The widest the transport and seek bar grow; the sides share what's left equally.
+    private static let controlsMaxWidth: CGFloat = 520
+
     var body: some View {
+        // The transport takes its width first, then both sides split the rest evenly, so it sits
+        // in the middle of the bar however wide the titles or the buttons on the right are.
         HStack(spacing: Theme.Spacing.large) {
             HStack(spacing: Theme.Spacing.small) {
                 nowPlaying
                 starButton
             }
-            .frame(minWidth: Theme.Size.playerBarCover, maxWidth: 320, alignment: .leading)
+            .frame(minWidth: Theme.Size.playerBarCover, maxWidth: .infinity, alignment: .leading)
             VStack(spacing: 2) {
                 TransportControls(player: player)
                 SeekBar(player: player, compact: true)
-                    .frame(minWidth: 0, maxWidth: 520)
             }
-            .frame(maxWidth: .infinity)
+            .frame(minWidth: 0, maxWidth: Self.controlsMaxWidth)
+            .layoutPriority(1)
             HStack(spacing: Theme.Spacing.medium) {
                 Button("Lyrics", tempus: .lyrics) { onTogglePanel(.lyrics) }
                 Button("Queue", tempus: .queue) { onTogglePanel(.queue) }
@@ -35,6 +40,7 @@ struct PlayerBar: View {
             .labelStyle(.iconOnly)
             .buttonStyle(.borderless)
             .fixedSize()
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, Theme.Spacing.large)
         .frame(height: Theme.Size.playerBarHeight)

@@ -216,10 +216,19 @@ struct MainView: View {
     @ViewBuilder private var offlineBanner: some View {
         if session.isOffline {
             HStack(spacing: Theme.Spacing.small) {
-                Text("Offline mode: showing saved data and downloads")
-                Button("Reconnect") { Task { await model.connect(to: session.profile) } }
-                    .buttonStyle(.link)
-                    .help("Try the server again")
+                switch model.reconnectStatus {
+                case .idle:
+                    Text("Offline mode: showing saved data and downloads")
+                case .retrying:
+                    Text("Offline mode: showing saved data and downloads. Reconnecting…")
+                case .waitingForPause:
+                    Text("The server is back: switching to it when playback pauses")
+                }
+                Button(model.reconnectStatus == .waitingForPause ? "Reconnect Now" : "Reconnect") {
+                    Task { await model.connect(to: session.profile) }
+                }
+                .buttonStyle(.link)
+                .help("Try the server again")
             }
             .font(.inter(.caption, weight: .medium))
             .frame(maxWidth: .infinity)

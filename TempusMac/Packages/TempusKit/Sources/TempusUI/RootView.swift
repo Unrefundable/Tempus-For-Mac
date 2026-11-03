@@ -30,7 +30,7 @@ public struct RootView: View {
                     MainView(session: session)
                         .environment(\.artwork, session.artwork)
                         .environment(navigator)
-                        .id(session.profile.id)
+                        .id(session.id)
                 }
             }
         }

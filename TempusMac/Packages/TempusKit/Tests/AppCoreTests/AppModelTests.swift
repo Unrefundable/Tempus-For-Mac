@@ -13,6 +13,7 @@ struct AppModelTests {
     let pings = PingStub()
     let defaults: UserDefaults
     let engine = FakeEngine()
+    let sleeper = SleepRecorder()
 
     init() throws {
         database = try AppDatabase.inMemory()
@@ -27,7 +28,8 @@ struct AppModelTests {
             defaults: defaults,
             settingsStore: PlaybackSettingsStore(defaults: defaults),
             artworkCaches: .inMemory,
-            isOnConstrainedNetwork: { false }
+            isOnConstrainedNetwork: { false },
+            sleep: sleeper.sleep
         )
         return AppModel(environment: environment, engine: engine)
     }
