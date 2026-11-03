@@ -20,7 +20,7 @@ enum Route: Hashable {
 @MainActor
 @Observable
 final class Navigator {
-    var selection: SidebarDestination = .home {
+    var selection: SidebarItem = .home {
         didSet {
             if oldValue != selection {
                 path = []
@@ -31,6 +31,8 @@ final class Navigator {
     var path: [Route] = []
     /// Bumped by ⌘F so the search field takes focus.
     var searchFocusRequest = 0
+    /// Shows the Edit Sidebar sheet, from View › Edit Sidebar… or the sidebar's context menu.
+    var isEditingSidebar = false
 
     func open(_ route: Route) {
         if selection == .nowPlaying {

@@ -2,7 +2,8 @@ import Foundation
 import Observation
 
 /// Settings outside playback (which `PlaybackSettingsStore` keeps): scrobbling, queue sync, the
-/// library in use, Home's layout, sorting and downloads. Kept in UserDefaults; nothing here is secret.
+/// library in use, Home's and the sidebar's layout, sorting and downloads. Kept in UserDefaults;
+/// nothing here is secret.
 @MainActor
 @Observable
 public final class AppSettings {
@@ -33,6 +34,14 @@ public final class AppSettings {
     /// Home's sections in order; hidden ones are left out.
     public private(set) var homeLayout: HomeLayout {
         didSet { defaults.set(homeLayout.visible.map(\.rawValue), forKey: Self.prefix + "homeSections") }
+    }
+
+    /// The sidebar's items in order, and which are hidden.
+    public private(set) var sidebarLayout: SidebarLayout {
+        didSet {
+            defaults.set(sidebarLayout.order.map(\.rawValue), forKey: Self.prefix + "sidebarOrder")
+            defaults.set(sidebarLayout.hidden.map(\.rawValue).sorted(), forKey: Self.prefix + "sidebarHidden")
+        }
     }
 
     public var playlistSort: PlaylistSort {
@@ -75,6 +84,10 @@ public final class AppSettings {
         transcodesDownloads = bool("transcodesDownloads", false)
         syncsStarredTracks = bool("syncsStarredTracks", false)
         homeLayout = HomeLayout(stored: defaults.stringArray(forKey: Self.prefix + "homeSections"))
+        sidebarLayout = SidebarLayout(
+            storedOrder: defaults.stringArray(forKey: Self.prefix + "sidebarOrder"),
+            storedHidden: defaults.stringArray(forKey: Self.prefix + "sidebarHidden")
+        )
         playlistSort = defaults.string(forKey: Self.prefix + "playlistSort").flatMap(PlaylistSort.init) ?? .name
         albumSort = defaults.string(forKey: Self.prefix + "albumSort").flatMap(AlbumSort.init) ?? .name
         downloadGrouping = defaults.string(forKey: Self.prefix + "downloadGrouping")
@@ -83,6 +96,10 @@ public final class AppSettings {
 
     public func setHomeLayout(_ layout: HomeLayout) {
         homeLayout = layout
+    }
+
+    public func setSidebarLayout(_ layout: SidebarLayout) {
+        sidebarLayout = layout
     }
 
     // MARK: Per server

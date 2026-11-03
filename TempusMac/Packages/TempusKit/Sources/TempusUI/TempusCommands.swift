@@ -3,7 +3,7 @@ import AppKit
 import Playback
 import SwiftUI
 
-/// The About window's credits, the Controls and Go menus, and ⌘F for search.
+/// The About window's credits, the Controls and Go menus, Edit Sidebar, and ⌘F for search.
 public struct TempusCommands: Commands {
     let model: AppModel?
     let navigator: Navigator
@@ -27,6 +27,10 @@ public struct TempusCommands: Commands {
         CommandGroup(after: .textEditing) {
             Button("Search") { navigator.search() }
                 .keyboardShortcut("f", modifiers: .command)
+                .disabled(model?.session == nil)
+        }
+        CommandGroup(after: .sidebar) {
+            Button("Edit Sidebar…") { navigator.isEditingSidebar = true }
                 .disabled(model?.session == nil)
         }
         CommandMenu("Controls") {
@@ -62,10 +66,11 @@ public struct TempusCommands: Commands {
         CommandMenu("Go") {
             Button("Now Playing") { navigator.selection = .nowPlaying }
                 .keyboardShortcut("0", modifiers: .command)
-            ForEach(Array(SidebarDestination.shortcutOrder.enumerated()), id: \.element) { index, destination in
+            ForEach(Array(SidebarItem.shortcutOrder.enumerated()), id: \.element) { index, destination in
                 Button(destination.title) { navigator.selection = destination }
                     .keyboardShortcut(KeyEquivalent(Character(String(index + 1))), modifiers: .command)
             }
+            Button(SidebarItem.favorites.title) { navigator.selection = .favorites }
             Divider()
             Button("Back") {
                 if !navigator.path.isEmpty {
