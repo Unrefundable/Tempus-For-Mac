@@ -104,3 +104,33 @@ extension PlayerControllerTests {
         #expect(try await events.next() == .nowPlaying(song("b")))
     }
 }
+
+/// A dead stream must not buffer forever: AudioStreaming never reports it.
+extension PlayerControllerTests {
+    @Test("A stream that never starts stops with a message after the start timeout")
+    func streamThatNeverStarts() async throws {
+        let player = controller()
+        player.startTimeout = .milliseconds(20)
+        try player.play([song("a")])
+        #expect(player.status == .buffering)
+
+        try await Task.sleep(for: .milliseconds(200))
+
+        #expect(player.status == .paused)
+        #expect(player.errorMessage != nil)
+    }
+
+    @Test("A stream that starts in time keeps playing")
+    func streamThatStartsInTime() async throws {
+        let player = controller()
+        player.startTimeout = .milliseconds(50)
+        try player.play([song("a")])
+        try engine.send(.started(#require(player.queue.currentID)))
+        engine.send(.stateChanged(.playing))
+
+        try await Task.sleep(for: .milliseconds(200))
+
+        #expect(player.status == .playing)
+        #expect(player.errorMessage == nil)
+    }
+}

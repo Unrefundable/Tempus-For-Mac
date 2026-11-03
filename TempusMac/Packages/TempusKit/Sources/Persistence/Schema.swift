@@ -5,6 +5,7 @@ extension AppDatabase {
     static var migrator: DatabaseMigrator {
         var migrator = DatabaseMigrator()
         migrator.registerMigration("v1", migrate: createVersion1)
+        migrator.registerMigration("v2", migrate: createVersion2)
         return migrator
     }
 
@@ -12,6 +13,7 @@ extension AppDatabase {
     /// when the server's account or address changes (`ServerStore.save`).
     static let perServerTables = [
         "queue", "queue_state", "play_history", "pending_star", "pinned_playlist", "lyrics_cache", "response_cache",
+        "download", "synced_playlist",
     ]
 
     private static func createVersion1(_ db: Database) throws {
@@ -93,6 +95,28 @@ extension AppDatabase {
             table.column("body", .blob).notNull()
             table.column("fetched_at", .datetime).notNull().indexed()
             table.primaryKey(["server_id", "key"])
+        }
+    }
+
+    /// Phase 8: downloaded tracks (upstream's `download` table) and playlists kept downloaded
+    /// (`synced_playlist`). Files live in Application Support; rows only name them.
+    private static func createVersion2(_ db: Database) throws {
+        try db.create(table: "download") { table in
+            serverColumn(table)
+            table.column("song_id", .text).notNull()
+            table.column("song", .text).notNull()
+            table.column("file_name", .text).notNull()
+            table.column("size", .integer).notNull()
+            table.column("playlist_id", .text)
+            table.column("playlist_name", .text)
+            table.column("downloaded_at", .datetime).notNull()
+            table.primaryKey(["server_id", "song_id"])
+        }
+        try db.create(table: "synced_playlist") { table in
+            serverColumn(table)
+            table.column("playlist_id", .text).notNull()
+            table.column("name", .text).notNull()
+            table.primaryKey(["server_id", "playlist_id"])
         }
     }
 

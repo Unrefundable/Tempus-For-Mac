@@ -2,7 +2,7 @@
 
 A native macOS client for Subsonic, OpenSubsonic and Navidrome servers, written in Swift and SwiftUI. It is a port of [Tempus](https://github.com/eddyizm/tempus), the open-source Android music client.
 
-**Status:** early development. See [docs/PLAN.md](docs/PLAN.md) for the roadmap and [docs/adr/](docs/adr/) for design decisions.
+**Status:** feature-complete for everyday use (Phases 0–9): library, Home, search, playback with gapless, ReplayGain and EQ, playlists, podcasts, radio, shares, downloads and offline play. Release packaging (Phase 10) is next. See [docs/PLAN.md](docs/PLAN.md) for the roadmap and [docs/adr/](docs/adr/) for design decisions.
 
 ## Layout
 
@@ -24,6 +24,12 @@ git submodule update --init
 
 ```bash
 cd TempusMac/Packages/TempusKit && swift test
+```
+
+To try the app without a real server, run the mock Subsonic server and add `http://127.0.0.1:4533` in Tempus (test account in the script's docstring; needs ffmpeg):
+
+```bash
+TempusMac/Packages/TempusKit/scripts/mock-subsonic.py
 ```
 
 ## License

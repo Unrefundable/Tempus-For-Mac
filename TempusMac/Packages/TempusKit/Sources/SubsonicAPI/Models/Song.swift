@@ -69,7 +69,10 @@ public struct Song: Codable, Sendable, Hashable, Identifiable {
         albumID: String? = nil,
         artistID: String? = nil,
         type: String? = "music",
-        replayGain: ReplayGain? = nil
+        replayGain: ReplayGain? = nil,
+        path: String? = nil,
+        size: Int64? = nil,
+        bookmarkPosition: Int64? = nil
     ) {
         _id = LenientString(wrappedValue: id)
         _parentID = LenientOptionalString(wrappedValue: albumID)
@@ -81,7 +84,7 @@ public struct Song: Codable, Sendable, Hashable, Identifiable {
         self.year = year
         self.genre = genre
         _coverArtID = LenientOptionalString(wrappedValue: coverArtID)
-        size = nil
+        self.size = size
         self.contentType = contentType
         self.suffix = suffix
         transcodedContentType = nil
@@ -90,7 +93,7 @@ public struct Song: Codable, Sendable, Hashable, Identifiable {
         self.bitrate = bitrate
         self.samplingRate = samplingRate
         self.bitDepth = bitDepth
-        path = nil
+        self.path = path
         isVideo = false
         self.userRating = userRating
         averageRating = nil
@@ -101,7 +104,7 @@ public struct Song: Codable, Sendable, Hashable, Identifiable {
         _albumID = LenientOptionalString(wrappedValue: albumID)
         _artistID = LenientOptionalString(wrappedValue: artistID)
         self.type = type
-        bookmarkPosition = nil
+        self.bookmarkPosition = bookmarkPosition
         self.replayGain = replayGain
         displayAlbumArtist = albumArtist
         legacyAlbumArtist = nil

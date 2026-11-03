@@ -102,6 +102,10 @@ public final class PlayerController {
     @ObservationIgnored var fade: Task<Void, Never>?
     @ObservationIgnored var persistence: Task<Void, Never>?
     @ObservationIgnored var nowPlaying: (any NowPlayingPublishing)?
+    /// Gives up on an entry that hasn't started by then: AudioStreaming retries a dead stream (a
+    /// station that's down, a server gone mid-request) forever without reporting it.
+    @ObservationIgnored var startTimeout = Duration.seconds(20)
+    @ObservationIgnored var startWatchdog: Task<Void, Never>?
 
     public init(
         engine: any PlayerEngine,
@@ -247,6 +251,21 @@ public final class PlayerController {
 
     public func addToQueue(_ songs: [Song]) {
         edit { $0.appending(songs) }
+    }
+
+    /// Empties the queue, stopping playback.
+    public func clear() {
+        countSkippedTrack()
+        engine.stop()
+        isLoaded = false
+        stopTicker()
+        cancelFade()
+        queue = PlaybackQueue(repeatMode: settings.repeatMode)
+        status = .stopped
+        position = 0
+        duration = 0
+        saveQueue()
+        publishNowPlaying()
     }
 
     public func remove(_ id: QueueItem.ID) {

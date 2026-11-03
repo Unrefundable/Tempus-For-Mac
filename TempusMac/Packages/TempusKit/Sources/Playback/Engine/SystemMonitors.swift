@@ -9,13 +9,18 @@ import Observation
 @Observable
 public final class NetworkMonitor {
     public private(set) var isConstrained = false
+    /// Called on the main actor after each change of network path.
+    @ObservationIgnored public var onChange: (@MainActor () -> Void)?
     @ObservationIgnored private let monitor = NWPathMonitor()
 
     public init() {
         // Updates arrive on the main queue, in order (separate Tasks could land out of order).
         monitor.pathUpdateHandler = { [weak self] path in
             let isConstrained = path.isExpensive || path.isConstrained
-            MainActor.assumeIsolated { self?.isConstrained = isConstrained }
+            MainActor.assumeIsolated {
+                self?.isConstrained = isConstrained
+                self?.onChange?()
+            }
         }
         monitor.start(queue: .main)
     }

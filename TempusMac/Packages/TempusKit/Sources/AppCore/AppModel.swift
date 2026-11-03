@@ -17,6 +17,10 @@ public struct AppEnvironment {
     public let settingsStore: PlaybackSettingsStore
     public let artworkCaches: ArtworkCaches
     public let isOnConstrainedNetwork: @MainActor @Sendable () -> Bool
+    public let settings: AppSettings
+    /// Where downloaded tracks go, one folder per server.
+    public let downloadsDirectory: URL
+    public let downloader: any FileDownloading
 
     public init(
         database: AppDatabase,
@@ -25,7 +29,10 @@ public struct AppEnvironment {
         defaults: UserDefaults = .standard,
         settingsStore: PlaybackSettingsStore = PlaybackSettingsStore(),
         artworkCaches: ArtworkCaches,
-        isOnConstrainedNetwork: @escaping @MainActor @Sendable () -> Bool = { false }
+        isOnConstrainedNetwork: @escaping @MainActor @Sendable () -> Bool = { false },
+        settings: AppSettings? = nil,
+        downloadsDirectory: URL = FileManager.default.temporaryDirectory.appending(path: "TempusDownloads"),
+        downloader: (any FileDownloading)? = nil
     ) {
         self.database = database
         self.secrets = secrets
@@ -34,6 +41,9 @@ public struct AppEnvironment {
         self.settingsStore = settingsStore
         self.artworkCaches = artworkCaches
         self.isOnConstrainedNetwork = isOnConstrainedNetwork
+        self.settings = settings ?? AppSettings(defaults: defaults)
+        self.downloadsDirectory = downloadsDirectory
+        self.downloader = downloader ?? URLSessionDownloader()
     }
 }
 
@@ -126,6 +136,7 @@ public final class AppModel {
             await signOut()
         }
         try await accounts.delete(profile)
+        DownloadManager.removeFiles(forServer: profile.id, in: environment.downloadsDirectory)
         environment.defaults.removeObject(forKey: Self.addressKeyPrefix + profile.id)
         await reloadServers()
     }
@@ -141,6 +152,18 @@ public final class AppModel {
     /// Saves the player's place before the app quits.
     public func prepareForTermination() async {
         await session?.player.savePosition()
+        session?.listening.saveNow()
+        await session?.listening.settled()
+    }
+
+    /// The settings shared by every server.
+    public var settings: AppSettings {
+        environment.settings
+    }
+
+    /// Network conditions changed: downloads held for a better network may start.
+    public func networkChanged() {
+        session?.downloads.pump()
     }
 
     /// Signed in to it, or connecting to it.
@@ -240,9 +263,20 @@ public final class AppModel {
         // Nothing below awaits, so no other connect can interleave once this check passes.
         guard attempt == connection else { return }
         engine.setPolicy(client.mediaRequestPolicy)
+        let downloads = DownloadManager(
+            client: client,
+            database: environment.database,
+            serverID: profile.id,
+            directory: environment.downloadsDirectory,
+            downloader: environment.downloader,
+            settings: environment.settings,
+            streamSettings: { [weak self] in self?.session?.player.settings.stream ?? StreamSettings() },
+            isOnConstrainedNetwork: environment.isOnConstrainedNetwork,
+            now: { Date() }
+        )
         let player = PlayerController(
             engine: engine,
-            source: SubsonicStreamSource(client: client),
+            source: SessionStreamSource(remote: SubsonicStreamSource(client: client), downloads: downloads.index),
             queueSaver: QueueStore(database: environment.database),
             serverID: profile.id,
             settingsStore: environment.settingsStore,
@@ -256,10 +290,11 @@ public final class AppModel {
             player.restore(saved)
         }
         let session = ServerSession(
-            profile: profile, client: client, serverInfo: info, player: player,
-            database: environment.database, artworkCaches: environment.artworkCaches
+            profile: profile, client: client, serverInfo: info, player: player, downloads: downloads,
+            database: environment.database, artworkCaches: environment.artworkCaches, settings: environment.settings
         )
         self.session = session
+        session.start()
         nowPlaying?.attach(to: player)
         observeCurrentSong(of: session)
         environment.defaults.set(profile.id, forKey: Self.lastServerKey)
@@ -277,6 +312,7 @@ public final class AppModel {
         nowPlaying?.detach()
         ending.player.pause()
         await ending.player.savePosition()
+        await ending.end()
         if session == nil {
             engine.setPolicy(nil)
         }

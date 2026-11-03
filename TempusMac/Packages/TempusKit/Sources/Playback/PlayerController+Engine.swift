@@ -48,12 +48,30 @@ extension PlayerController {
             engine.play(streamItem)
             isLoaded = true
             status = .buffering
+            watchStart(of: item.id)
             applyGain()
             refreshUpcoming()
             publishNowPlaying()
         } catch {
             Self.logger.error("Couldn't build a stream URL: \(error)")
             didFail(entry: nil, message: String(localized: "This track can't be streamed from the server."))
+        }
+    }
+
+    /// Real time, not `environment.sleep`, which tests make instant.
+    private func watchStart(of id: QueueItem.ID) {
+        startWatchdog?.cancel()
+        let timeout = startTimeout
+        startWatchdog = Task { [weak self] in
+            try? await Task.sleep(for: timeout)
+            guard !Task.isCancelled, let self, isLoaded, !self.hasCurrentStarted,
+                  queue.currentID == id, status == .buffering
+            else { return }
+            Self.logger.error("An entry didn't start within the timeout")
+            didFail(
+                entry: id,
+                message: String(localized: "The stream didn't start. Check your connection, or the station's address.")
+            )
         }
     }
 
@@ -95,6 +113,7 @@ extension PlayerController {
             upcomingID = nil
         }
         hasCurrentStarted = true
+        startWatchdog?.cancel()
         countedID = nil
         queue = queue.selecting(id)
         errorMessage = nil

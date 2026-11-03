@@ -5,8 +5,15 @@ import SwiftUI
 /// The main window: the server list until a server is in use, then the library and player.
 public struct RootView: View {
     @Environment(AppModel.self) private var model
+    @State private var navigator: Navigator
 
-    public init() {}
+    public init() {
+        _navigator = State(initialValue: Navigator())
+    }
+
+    init(navigator: Navigator) {
+        _navigator = State(initialValue: navigator)
+    }
 
     public var body: some View {
         Group {
@@ -21,10 +28,19 @@ public struct RootView: View {
                 if let session = model.session {
                     MainView(session: session)
                         .environment(\.artwork, session.artwork)
+                        .environment(navigator)
+                        .id(session.profile.id)
                 }
             }
         }
         .frame(minWidth: Theme.Size.windowMinWidth, minHeight: 560)
+        // Another server's album and artist ids mean nothing here.
+        .onChange(of: model.session?.profile.id) {
+            navigator.path = []
+            if navigator.selection != .nowPlaying {
+                navigator.selection = .home
+            }
+        }
         .tint(Theme.accent)
     }
 }

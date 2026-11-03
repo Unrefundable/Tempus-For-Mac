@@ -5,9 +5,12 @@ import SwiftUI
 
 /// The inspector beside the content: lyrics or the queue.
 struct PlayerInspector: View {
-    let player: PlayerController
-    let lyrics: LyricsService
+    let session: ServerSession
     @Binding var panel: InspectorPanel
+
+    private var player: PlayerController {
+        session.player
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,8 +21,8 @@ struct PlayerInspector: View {
             .labelsHidden()
             .padding(Theme.Spacing.medium)
             switch panel {
-            case .lyrics: LyricsPanel(player: player, service: lyrics)
-            case .queue: QueuePanel(player: player)
+            case .lyrics: LyricsPanel(player: player, service: session.lyrics)
+            case .queue: QueuePanel(session: session)
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
@@ -29,7 +32,14 @@ struct PlayerInspector: View {
 /// Upstream's "Playing Next": count and length, then each entry. Earlier tracks are dimmed and the
 /// current one highlighted. Double-click plays an entry; Delete or the context menu removes one.
 struct QueuePanel: View {
-    let player: PlayerController
+    let session: ServerSession
+
+    @Environment(SheetPresenter.self) private var sheets
+    @State private var errorMessage: String?
+
+    private var player: PlayerController {
+        session.player
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.small) {
@@ -45,12 +55,50 @@ struct QueuePanel: View {
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
                     .disabled(player.queue.items.count < 3)
+                Menu("Queue", systemImage: "ellipsis.circle") {
+                    Button("Save as Playlist…") { sheets.present(.newPlaylist(player.queue.items.map(\.song))) }
+                        .disabled(player.queue.isEmpty)
+                    if session.settings.syncsPlayQueue {
+                        Button("Load Queue from Server") { loadServerQueue() }
+                    }
+                    Divider()
+                    Button("Clear Queue", role: .destructive) { player.clear() }
+                        .disabled(player.queue.isEmpty)
+                }
+                .labelStyle(.iconOnly)
+                .menuStyle(.borderlessButton)
+                .fixedSize()
             }
             .padding(.horizontal, Theme.Spacing.medium)
-            if player.queue.isEmpty {
-                ContentUnavailableView("Queue is empty", systemImage: "music.note.list")
-            } else {
-                list
+            if let errorMessage {
+                Text(errorMessage).font(.caption).foregroundStyle(.red).padding(.horizontal, Theme.Spacing.medium)
+            }
+            Group {
+                if player.queue.isEmpty {
+                    ContentUnavailableView(
+                        "Queue is empty",
+                        systemImage: "music.note.list",
+                        description: Text("Drag songs here to add them.")
+                    )
+                } else {
+                    list
+                }
+            }
+            .dropDestination(for: SongTransfer.self) { items, _ in
+                let songs = items.flatMap(\.songs)
+                player.addToQueue(songs)
+                return !songs.isEmpty
+            }
+        }
+    }
+
+    private func loadServerQueue() {
+        Task {
+            do throws(SubsonicError) {
+                try await session.listening.loadServerQueue()
+                errorMessage = nil
+            } catch {
+                errorMessage = error.userMessage
             }
         }
     }
@@ -67,6 +115,8 @@ struct QueuePanel: View {
                         Button("Play") { player.jump(to: item.id) }
                         Button("Remove from Queue") { player.remove(item.id) }
                             .disabled(item.id == player.queue.currentID)
+                        Divider()
+                        SongMenu(songs: [item.song])
                     }
             }
             .onMove { source, destination in

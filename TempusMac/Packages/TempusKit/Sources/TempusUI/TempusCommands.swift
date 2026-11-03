@@ -1,22 +1,40 @@
 import AppCore
 import AppKit
+import Playback
 import SwiftUI
 
-/// The About window's credits and the Controls menu.
+/// The About window's credits, the Controls and Go menus, and ⌘F for search.
 public struct TempusCommands: Commands {
     let model: AppModel?
+    let navigator: Navigator
 
     public init(model: AppModel?) {
         self.model = model
+        navigator = Navigator()
     }
+
+    init(model: AppModel?, navigator: Navigator) {
+        self.model = model
+        self.navigator = navigator
+    }
+
+    static let seekStep: TimeInterval = 10
 
     public var body: some Commands {
         CommandGroup(replacing: .appInfo) {
             Button("About Tempus") { AboutPanel.show() }
         }
+        CommandGroup(after: .textEditing) {
+            Button("Search") { navigator.search() }
+                .keyboardShortcut("f", modifiers: .command)
+                .disabled(model?.session == nil)
+        }
         CommandMenu("Controls") {
             let player = model?.session?.player
             Button(player?.status.isActive == true ? "Pause" : "Play") { player?.togglePlayPause() }
+                .disabled(player?.queue.isEmpty ?? true)
+            Button("Stop") { player?.stop() }
+                .keyboardShortcut(".", modifiers: .command)
                 .disabled(player?.queue.isEmpty ?? true)
             Button("Next") { player?.next() }
                 .keyboardShortcut(.rightArrow, modifiers: .command)
@@ -25,10 +43,59 @@ public struct TempusCommands: Commands {
                 .keyboardShortcut(.leftArrow, modifiers: .command)
                 .disabled(player == nil)
             Divider()
-            Button("Shuffle") { player?.toggleShuffle() }
+            Button("Skip Forward 10 Seconds") { player.map { $0.seek(to: $0.position + Self.seekStep) } }
+                .keyboardShortcut(.rightArrow, modifiers: [.command, .option])
+                .disabled(player?.queue.isEmpty ?? true)
+            Button("Skip Back 10 Seconds") { player.map { $0.seek(to: $0.position - Self.seekStep) } }
+                .keyboardShortcut(.leftArrow, modifiers: [.command, .option])
+                .disabled(player?.queue.isEmpty ?? true)
+            Divider()
+            Button(player?.queue.isShuffled == true ? "Turn Shuffle Off" : "Shuffle") { player?.toggleShuffle() }
+                .keyboardShortcut("s", modifiers: [.command, .option])
                 .disabled(player == nil)
-            Button("Repeat") { player?.cycleRepeatMode() }
+            Button("Repeat: \(Self.repeatTitle(player?.settings.repeatMode))") { player?.cycleRepeatMode() }
+                .keyboardShortcut("r", modifiers: [.command, .option])
                 .disabled(player == nil)
+            Divider()
+            starButton
+        }
+        CommandMenu("Go") {
+            Button("Now Playing") { navigator.selection = .nowPlaying }
+                .keyboardShortcut("0", modifiers: .command)
+            ForEach(Array(SidebarDestination.shortcutOrder.enumerated()), id: \.element) { index, destination in
+                Button(destination.title) { navigator.selection = destination }
+                    .keyboardShortcut(KeyEquivalent(Character(String(index + 1))), modifiers: .command)
+            }
+            Divider()
+            Button("Back") {
+                if !navigator.path.isEmpty {
+                    navigator.path.removeLast()
+                }
+            }
+            .keyboardShortcut("[", modifiers: .command)
+            .disabled(navigator.path.isEmpty)
+        }
+    }
+
+    @ViewBuilder private var starButton: some View {
+        let session = model?.session
+        let song = session?.player.queue.current?.song
+        Button(song
+            .map { session?.stars.isStarred($0) == true } == true ? "Unstar Current Track" : "Star Current Track")
+        {
+            if let session, let song {
+                Task { await session.stars.toggle(song) }
+            }
+        }
+        .keyboardShortcut("l", modifiers: .command)
+        .disabled(song == nil || song?.type == "radio")
+    }
+
+    static func repeatTitle(_ mode: RepeatMode?) -> String {
+        switch mode {
+        case .all: "All"
+        case .one: "One"
+        default: "Off"
         }
     }
 }

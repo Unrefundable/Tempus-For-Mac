@@ -1,4 +1,5 @@
 import AppCore
+import AppKit
 import os
 import SwiftUI
 
@@ -14,6 +15,8 @@ public final class TempusAppController {
 
     private let model: Result<AppModel, any Error>
     private let isDemo: Bool
+    private let navigator = Navigator()
+    private lazy var dock = DockMenu(model: try? model.get())
 
     /// - Parameter demo: run on in-memory preview data, signed in or not, for screenshots that
     ///   leave the real database and Keychain alone. Debug builds only.
@@ -23,13 +26,14 @@ public final class TempusAppController {
         if case let .failure(error) = model {
             Self.logger.fault("Couldn't start: \(error)")
         }
+        Self.current = self
     }
 
     @ViewBuilder public var rootView: some View {
         switch model {
         case let .success(model):
             let launches = !isDemo
-            RootView()
+            RootView(navigator: navigator)
                 .environment(model)
                 .task {
                     if launches {
@@ -42,7 +46,41 @@ public final class TempusAppController {
     }
 
     public var commands: TempusCommands {
-        TempusCommands(model: try? model.get())
+        TempusCommands(model: try? model.get(), navigator: navigator)
+    }
+
+    /// The Settings window's content.
+    @ViewBuilder public var settingsView: some View {
+        if case let .success(model) = model {
+            SettingsView().environment(model)
+        }
+    }
+
+    /// The menu bar mini player's content.
+    @ViewBuilder public var menuBarContent: some View {
+        if case let .success(model) = model {
+            MenuBarPlayer().environment(model)
+        }
+    }
+
+    /// The controller the app is running on, for App Intents and other system entry points.
+    public private(set) weak static var current: TempusAppController?
+
+    public func togglePlayPause() {
+        (try? model.get())?.session?.player.togglePlayPause()
+    }
+
+    public func next() {
+        (try? model.get())?.session?.player.next()
+    }
+
+    public func previous() {
+        (try? model.get())?.session?.player.previous()
+    }
+
+    /// For `applicationDockMenu`.
+    public func dockMenu() -> NSMenu {
+        dock.menu()
     }
 
     /// Saves the player's place, then calls `done` once; after `terminationDeadline` it calls

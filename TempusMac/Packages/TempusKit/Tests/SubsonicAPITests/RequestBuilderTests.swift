@@ -106,3 +106,25 @@ struct RequestBuilderTests {
         #expect(url.query(percentEncoded: true)?.hasSuffix("&id=1&id=2") == true)
     }
 }
+
+@Suite("Long requests")
+struct LongRequestTests {
+    @Test("A request too long for a URL goes as a form POST with the same parameters")
+    func longRequestsArePosted() throws {
+        let url = try #require(URL(string: "https://music.example.com/rest/updatePlaylist?u=a&"
+                + Array(repeating: "songIdToAdd=abcdef0123456789", count: 300).joined(separator: "&")))
+        let request = SubsonicClient.urlRequest(for: url, timeout: 30)
+        #expect(request.httpMethod == "POST")
+        #expect(request.url?.absoluteString == "https://music.example.com/rest/updatePlaylist")
+        #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/x-www-form-urlencoded")
+        #expect(request.httpBody.map { String(decoding: $0, as: UTF8.self) }?.hasPrefix("u=a&songIdToAdd=") == true)
+    }
+
+    @Test("Ordinary requests stay GETs")
+    func shortRequestsAreGets() throws {
+        let url = try #require(URL(string: "https://music.example.com/rest/ping?u=a"))
+        let request = SubsonicClient.urlRequest(for: url, timeout: 30)
+        #expect(request.httpMethod == "GET")
+        #expect(request.url == url)
+    }
+}

@@ -39,6 +39,13 @@ public enum Theme {
         /// inspector never pushes columns past the window's edges.
         public static let windowMinWidth: CGFloat = 900
         public static let loginWidth: CGFloat = 480
+        /// Album, artist and playlist tiles in grids and Home rows.
+        public static let tile: CGFloat = 156
+        public static let detailCover: CGFloat = 200
+        public static let trackCover: CGFloat = 32
+        /// A track table's row and header, for tables sized to their rows inside a scroll view.
+        public static let tableRow: CGFloat = 24
+        public static let tableHeader: CGFloat = 44
     }
 
     /// Upstream dims tracks that already played in the queue.

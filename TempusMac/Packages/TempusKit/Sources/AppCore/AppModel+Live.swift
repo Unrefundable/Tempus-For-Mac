@@ -23,13 +23,15 @@ public extension AppModel {
             database: database,
             secrets: ServerSecretStore(),
             artworkCaches: .onDisk(at: caches.appending(path: "Artwork", directoryHint: .isDirectory)),
-            isOnConstrainedNetwork: { network.isConstrained }
+            isOnConstrainedNetwork: { network.isConstrained },
+            downloadsDirectory: support.appending(path: "Tempus/Downloads", directoryHint: .isDirectory)
         )
         let model = AppModel(environment: environment, engine: StreamingEngine(), nowPlaying: SystemNowPlaying())
 
         // Pause when the output in use disappears (headphones unplugged, Bluetooth gone), as Music does.
         let output = OutputDeviceMonitor()
         output.onOutputLost = { [weak model] in model?.session?.player.pause() }
+        network.onChange = { [weak model] in model?.networkChanged() }
         model.networkMonitor = network
         model.outputMonitor = output
         return model

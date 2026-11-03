@@ -11,7 +11,7 @@ struct AccountStoreTests {
 
         try AppDatabase.migrator.migrate(database.writer)
 
-        #expect(try database.appliedMigrations() == ["v1"])
+        #expect(try database.appliedMigrations() == ["v1", "v2"])
     }
 
     @Test("Servers are saved, listed in creation order, updated and deleted")

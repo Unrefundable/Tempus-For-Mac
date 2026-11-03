@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import TempusUI
 
@@ -12,6 +13,15 @@ struct TempusApp: App {
         .defaultSize(width: 1200, height: 760)
         .windowResizability(.contentMinSize)
         .commands { appDelegate.controller.commands }
+
+        Settings {
+            appDelegate.controller.settingsView
+        }
+
+        MenuBarExtra("Tempus", systemImage: "music.note") {
+            appDelegate.controller.menuBarContent
+        }
+        .menuBarExtraStyle(.window)
     }
 }
 
@@ -39,10 +49,71 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         false
     }
 
+    func applicationDockMenu(_: NSApplication) -> NSMenu? {
+        controller.dockMenu()
+    }
+
     func applicationShouldTerminate(_: NSApplication) -> NSApplication.TerminateReply {
         controller.prepareForTermination {
             NSApplication.shared.reply(toApplicationShouldTerminate: true)
         }
         return .terminateLater
+    }
+}
+
+/// Play/pause, next and previous for Shortcuts and Siri.
+struct PlayPauseIntent: AppIntent {
+    static let title: LocalizedStringResource = "Play or Pause"
+    static let openAppWhenRun = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        TempusAppController.current?.togglePlayPause()
+        return .result()
+    }
+}
+
+struct NextTrackIntent: AppIntent {
+    static let title: LocalizedStringResource = "Next Track"
+    static let openAppWhenRun = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        TempusAppController.current?.next()
+        return .result()
+    }
+}
+
+struct PreviousTrackIntent: AppIntent {
+    static let title: LocalizedStringResource = "Previous Track"
+    static let openAppWhenRun = false
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        TempusAppController.current?.previous()
+        return .result()
+    }
+}
+
+struct TempusShortcuts: AppShortcutsProvider {
+    static var appShortcuts: [AppShortcut] {
+        AppShortcut(
+            intent: PlayPauseIntent(),
+            phrases: ["Play or pause \(.applicationName)"],
+            shortTitle: "Play or Pause",
+            systemImageName: "playpause"
+        )
+        AppShortcut(
+            intent: NextTrackIntent(),
+            phrases: ["Next track in \(.applicationName)"],
+            shortTitle: "Next Track",
+            systemImageName: "forward"
+        )
+        AppShortcut(
+            intent: PreviousTrackIntent(),
+            phrases: ["Previous track in \(.applicationName)"],
+            shortTitle: "Previous Track",
+            systemImageName: "backward"
+        )
     }
 }

@@ -92,7 +92,7 @@ public struct SubsonicClient: Sendable {
     public func fetch<Response>(
         _ request: SubsonicRequest<Response>
     ) async throws(SubsonicError) -> (value: Response, data: Data) {
-        var urlRequest = try URLRequest(url: url(for: request), timeoutInterval: timeout)
+        var urlRequest = try Self.urlRequest(for: url(for: request), timeout: timeout)
         for field in headers.fields {
             urlRequest.setValue(field.value, forHTTPHeaderField: field.name)
         }
@@ -109,6 +109,24 @@ public struct SubsonicClient: Sendable {
         }
 
         return try (Self.decode(request, from: data), data)
+    }
+
+    /// URLs longer than this go as a form POST instead (a long playlist or play queue), since
+    /// proxies such as nginx refuse request lines over 8 KB. Subsonic servers accept either, and
+    /// OpenSubsonic advertises it as the `formPost` extension.
+    static let maximumGETLength = 4000
+
+    static func urlRequest(for url: URL, timeout: TimeInterval) -> URLRequest {
+        guard url.absoluteString.count > maximumGETLength,
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let query = components.percentEncodedQuery
+        else { return URLRequest(url: url, timeoutInterval: timeout) }
+        components.percentEncodedQuery = nil
+        var request = URLRequest(url: components.url ?? url, timeoutInterval: timeout)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = Data(query.utf8)
+        return request
     }
 
     /// Reads a response body, fresh or cached, through the same lenient decoding as `send`.

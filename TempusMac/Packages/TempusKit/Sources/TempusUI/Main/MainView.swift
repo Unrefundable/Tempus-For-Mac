@@ -1,11 +1,11 @@
 import AppCore
 import SwiftUI
 
-/// Where the sidebar can go. Everything but Now Playing is a placeholder until Phase 5.
+/// Where the sidebar can go.
 enum SidebarDestination: String, Hashable, CaseIterable, Identifiable {
     case nowPlaying, home, search
     case albums, artists, genres, playlists, folders
-    case podcasts, radio, downloads
+    case podcasts, radio, shares, downloads
 
     var id: Self {
         self
@@ -23,6 +23,7 @@ enum SidebarDestination: String, Hashable, CaseIterable, Identifiable {
         case .folders: "Music Folders"
         case .podcasts: "Podcasts"
         case .radio: "Radio"
+        case .shares: "Shares"
         case .downloads: "Downloads"
         }
     }
@@ -39,6 +40,7 @@ enum SidebarDestination: String, Hashable, CaseIterable, Identifiable {
         case .folders: "folder"
         case .podcasts: "mic"
         case .radio: "dot.radiowaves.left.and.right"
+        case .shares: "square.and.arrow.up"
         case .downloads: "arrow.down.circle"
         }
     }
@@ -46,7 +48,20 @@ enum SidebarDestination: String, Hashable, CaseIterable, Identifiable {
     static let sections: [(title: String?, items: [Self])] = [
         (nil, [.nowPlaying, .home, .search]),
         ("Library", [.albums, .artists, .genres, .playlists, .folders]),
-        ("More", [.podcasts, .radio, .downloads]),
+        ("More", [.podcasts, .radio, .shares, .downloads]),
+    ]
+
+    /// ⌘1 to ⌘9 in the Go menu.
+    static let shortcutOrder: [Self] = [
+        .home,
+        .search,
+        .albums,
+        .artists,
+        .genres,
+        .playlists,
+        .podcasts,
+        .radio,
+        .downloads,
     ]
 }
 
@@ -64,11 +79,14 @@ enum InspectorPanel: String, CaseIterable, Identifiable {
 struct MainView: View {
     let session: ServerSession
 
-    @SceneStorage("sidebarSelection") private var selection = SidebarDestination.home
+    @Environment(Navigator.self) private var navigator
+    @Environment(AppModel.self) private var model
+    @State private var sheets = SheetPresenter()
     @SceneStorage("inspectorShown") private var showsInspector = false
     @SceneStorage("inspectorPanel") private var panel = InspectorPanel.queue
 
     var body: some View {
+        @Bindable var navigator = navigator
         // The lyrics/queue panel is a fixed-width column inside the detail rather than SwiftUI's
         // `.inspector`, which overflowed narrow windows instead of resizing them. With fixed
         // widths, sidebar + content + panel always fit `Theme.Size.windowMinWidth`.
@@ -76,24 +94,39 @@ struct MainView: View {
             sidebar
         } detail: {
             HStack(spacing: 0) {
-                detail
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .safeAreaInset(edge: .top, spacing: 0) { offlineBanner }
+                Group {
+                    if let route = navigator.path.last {
+                        RouteView(route: route).id(navigator.path.count)
+                    } else {
+                        detail
+                    }
+                }
+                // Wide content (a table's ideal width) must shrink, never push the panel or the
+                // player bar out of the window.
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                .safeAreaInset(edge: .top, spacing: 0) { offlineBanner }
                 if showsInspector {
                     Divider()
-                    PlayerInspector(player: session.player, lyrics: session.lyrics, panel: $panel)
+                    PlayerInspector(session: session, panel: $panel)
                         .frame(width: Theme.Size.inspectorWidth)
+                        .layoutPriority(1)
                         .transition(.move(edge: .trailing))
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 PlayerBar(player: session.player, onTogglePanel: toggle) {
-                    selection = .nowPlaying
+                    navigator.selection = .nowPlaying
                 }
             }
             .animation(.snappy, value: showsInspector)
         }
         .toolbar {
+            ToolbarItem(placement: .navigation) {
+                if !navigator.path.isEmpty {
+                    Button("Back", systemImage: "chevron.left") { navigator.path.removeLast() }
+                        .help("Back")
+                }
+            }
             ToolbarItem {
                 Button("Lyrics and Queue", systemImage: "sidebar.trailing") { showsInspector.toggle() }
                     .help("Show or hide lyrics and the queue")
@@ -103,15 +136,49 @@ struct MainView: View {
             session.player.togglePlayPause()
             return .handled
         }
-        .navigationTitle(selection.title)
+        .navigationTitle(navigator.selection.title)
+        .environment(session)
+        .environment(sheets)
+        .sheet(item: $sheets.current) { sheet in
+            PresentedSheet(sheet: sheet)
+                .environment(session)
+                .environment(sheets)
+                .environment(navigator)
+                .environment(\.artwork, session.artwork)
+        }
+        .onChange(of: session.features.hasPodcasts) { _, has in
+            if !has, navigator.selection == .podcasts {
+                navigator.selection = .home
+            }
+        }
+        .onChange(of: session.features.hasShares) { _, has in
+            if !has, navigator.selection == .shares {
+                navigator.selection = .home
+            }
+        }
+    }
+
+    private var visibleSections: [(title: String?, items: [SidebarDestination])] {
+        SidebarDestination.sections.map { section in
+            (section.title, section.items.filter { item in
+                switch item {
+                case .podcasts: session.features.hasPodcasts
+                case .shares: session.features.hasShares
+                default: true
+                }
+            })
+        }
     }
 
     private var sidebar: some View {
-        List(selection: $selection) {
-            ForEach(SidebarDestination.sections, id: \.items) { section in
+        @Bindable var navigator = navigator
+        return List(selection: $navigator.selection) {
+            ForEach(visibleSections, id: \.items) { section in
                 Section {
                     ForEach(section.items) { item in
-                        Label(item.title, systemImage: item.systemImage).tag(item)
+                        Label(item.title, systemImage: item.systemImage)
+                            .badge(item == .downloads ? downloadBadge : 0)
+                            .tag(item)
                     }
                 } header: {
                     if let title = section.title {
@@ -121,30 +188,48 @@ struct MainView: View {
             }
         }
         .navigationSplitViewColumnWidth(min: Theme.Size.sidebarMinWidth, ideal: 220)
-        .safeAreaInset(edge: .bottom) { ServerMenu(session: session) }
+        .safeAreaInset(edge: .bottom) {
+            VStack(alignment: .leading, spacing: 0) {
+                LibraryPicker(session: session)
+                ServerMenu(session: session)
+            }
+        }
+    }
+
+    private var downloadBadge: Int {
+        session.downloads.active.count + session.downloads.waiting.count
     }
 
     @ViewBuilder private var detail: some View {
-        switch selection {
-        case .nowPlaying:
-            NowPlayingView(player: session.player)
-        default:
-            ContentUnavailableView(
-                selection.title,
-                systemImage: selection.systemImage,
-                description: Text("Coming in the next update.")
-            )
+        switch navigator.selection {
+        case .nowPlaying: NowPlayingView(session: session)
+        case .home: HomeView()
+        case .search: SearchView()
+        case .albums: AlbumsView()
+        case .artists: ArtistsView()
+        case .genres: GenresView()
+        case .playlists: PlaylistsView()
+        case .folders: FoldersView()
+        case .podcasts: PodcastsView()
+        case .radio: RadioView()
+        case .shares: SharesView()
+        case .downloads: DownloadsView()
         }
     }
 
     @ViewBuilder private var offlineBanner: some View {
         if session.isOffline {
-            Text("Offline mode")
-                .font(.caption.weight(.medium))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, Theme.Spacing.xSmall)
-                .background(.red.opacity(0.15))
-                .foregroundStyle(.red)
+            HStack(spacing: Theme.Spacing.small) {
+                Text("Offline mode: showing saved data and downloads")
+                Button("Reconnect") { Task { await model.connect(to: session.profile) } }
+                    .buttonStyle(.link)
+                    .help("Try the server again")
+            }
+            .font(.caption.weight(.medium))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Theme.Spacing.xSmall)
+            .background(.red.opacity(0.15))
+            .foregroundStyle(.red)
         }
     }
 
@@ -155,6 +240,29 @@ struct MainView: View {
         } else {
             panel = requested
             showsInspector = true
+        }
+    }
+}
+
+/// Upstream's library switcher: shown only when the server has more than one music folder.
+private struct LibraryPicker: View {
+    let session: ServerSession
+
+    var body: some View {
+        let folders = session.features.musicFolders
+        if folders.count > 1 {
+            Picker("Library", selection: Binding(
+                get: { session.musicFolderID },
+                set: { session.settings.setMusicFolderID($0, server: session.profile.id) }
+            )) {
+                Text("All Libraries").tag(String?.none)
+                ForEach(folders) { folder in
+                    Text(folder.name ?? "Library \(folder.id)").tag(Optional(folder.id))
+                }
+            }
+            .pickerStyle(.menu)
+            .padding(.horizontal, Theme.Spacing.medium)
+            .help("Limit browsing and search to one library")
         }
     }
 }

@@ -8,6 +8,8 @@ import SubsonicAPI
 public enum ArtworkSize: Sendable, Hashable {
     /// Queue rows and the player bar (upstream's queue uses 160).
     case thumbnail
+    /// Grid and carousel tiles, as upstream's 300 "Medium" image size.
+    case medium
     /// System Now Playing and widgets (upstream's widget uses 512).
     case large
     /// The full image, upstream's default "High" setting, for Now Playing.
@@ -17,6 +19,7 @@ public enum ArtworkSize: Sendable, Hashable {
     var pixels: Int? {
         switch self {
         case .thumbnail: 160
+        case .medium: 300
         case .large: 512
         case .original: nil
         }

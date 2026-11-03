@@ -13,3 +13,6 @@ DerivedData/
 
 # Generated spike media
 TempusMac/Spike/Media/
+
+# Generated audio for scripts/mock-subsonic.py
+TempusMac/Packages/TempusKit/scripts/.mock-media/
