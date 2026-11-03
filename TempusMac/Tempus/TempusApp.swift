@@ -1,15 +1,15 @@
+import DesignSystem
 import SwiftUI
 
 @main
 struct TempusApp: App {
+    init() {
+        TempusFonts.register()
+    }
+
     var body: some Scene {
         WindowGroup {
-            ContentUnavailableView(
-                "Tempus",
-                systemImage: "music.note",
-                description: Text("Connect to a Subsonic server to get started.")
-            )
-            .frame(minWidth: 900, minHeight: 600)
+            RootView()
         }
     }
 }
