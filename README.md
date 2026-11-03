@@ -38,6 +38,16 @@ The icons, theme colors, fonts and app icon come from upstream. After updating t
 swift scripts/import-tempus-assets.swift reference/tempus
 ```
 
+## Releasing
+
+Installed copies update themselves with [Sparkle](https://sparkle-project.org) from `appcast.xml` on `main`. Versions with a pre-release suffix, like `0.2.0-beta.1`, go only to users who turned on beta updates. To publish, run this from a clean `main`. It builds, signs, creates the GitHub release and updates the feed, asking before anything is published:
+
+```bash
+scripts/release.sh 0.2.0-beta.1
+```
+
+It needs the Sparkle signing key in your login Keychain and the Apple Development certificate. See [ADR 0006](docs/adr/0006-updates.md).
+
 ## License
 
 Tempus for macOS is released under the [GNU General Public License v3.0](LICENSE), the same license as upstream Tempus, because it is a derivative work of it.
@@ -49,4 +59,5 @@ Tempus for macOS is released under the [GNU General Public License v3.0](LICENSE
 - [SeattleGuy](https://github.com/SeattleGuy) for the Tempus logo design. The icons, illustrations and app icon are upstream Tempus's drawables, converted to SVG.
 - [Inter](https://github.com/rsms/inter) by The Inter Project Authors (SIL Open Font License 1.1), the typeface Tempus uses. Its license ships next to the fonts in `TempusKit/Sources/DesignSystem/Resources/Fonts/OFL.txt`.
 - [Amperfy](https://github.com/BLeeEZ/amperfy) (GPL-3.0), whose player served as a reference for wiring AudioStreaming, the equalizer and ReplayGain.
+- [Sparkle](https://sparkle-project.org) (MIT) for app updates.
 - [AudioStreaming](https://github.com/dimitris-c/AudioStreaming) (MIT) for audio playback. A patched copy lives in `TempusMac/Vendor/AudioStreaming`; its `TEMPUS-PATCHES.md` lists the changes.

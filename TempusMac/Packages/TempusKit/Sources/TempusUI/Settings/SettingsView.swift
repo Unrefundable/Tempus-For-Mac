@@ -4,7 +4,7 @@ import Playback
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The Settings window (⌘,): general, Home, sidebar, playback, equalizer and downloads.
+/// The Settings window (⌘,): general, Home, sidebar, playback, equalizer, downloads and updates.
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
 
@@ -16,6 +16,7 @@ struct SettingsView: View {
             Tab { PlaybackSettingsPane() } label: { Label("Playback", tempus: .play) }
             Tab { EqualizerPane() } label: { Label("Equalizer", tempus: .equalizer) }
             Tab { DownloadSettings() } label: { Label("Downloads", tempus: .playForWork) }
+            Tab { UpdateSettings() } label: { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
         }
         .frame(width: 560)
         .frame(minHeight: 420)
@@ -268,6 +269,37 @@ private struct QualityPicker: View {
                 .labelsHidden()
                 .disabled(format == .original || format == .flac)
             }
+        }
+    }
+}
+
+private struct UpdateSettings: View {
+    @Environment(AppUpdater.self) private var updater: AppUpdater?
+
+    var body: some View {
+        if let updater {
+            @Bindable var updater = updater
+            Form {
+                Section {
+                    Toggle("Download and install updates automatically", isOn: $updater.automaticallyUpdates)
+                    Text("Checks once a day. New versions install in the background when you quit Tempus.")
+                        .font(.inter(.caption)).foregroundStyle(.secondary)
+                    Toggle("Get beta updates", isOn: $updater.receivesBetaUpdates)
+                    Text("Betas are pre-releases of the next version. They come sooner, with rougher edges.")
+                        .font(.inter(.caption)).foregroundStyle(.secondary)
+                }
+                .disabled(!updater.isEnabled)
+                Section {
+                    LabeledContent("Version", value: AppUpdater.currentVersion)
+                    Button("Check for Updates Now") { updater.checkForUpdates() }
+                        .disabled(!updater.canCheckForUpdates)
+                    if !updater.isEnabled {
+                        Text("Development builds don't update themselves.")
+                            .font(.inter(.caption)).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .formStyle(.grouped)
         }
     }
 }

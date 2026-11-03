@@ -3,19 +3,23 @@ import AppKit
 import Playback
 import SwiftUI
 
-/// The About window's credits, the Controls and Go menus, Edit Sidebar, and ⌘F for search.
+/// The About window's credits, Check for Updates, the Controls and Go menus, Edit Sidebar, and ⌘F
+/// for search.
 public struct TempusCommands: Commands {
     let model: AppModel?
     let navigator: Navigator
+    let updater: AppUpdater?
 
     public init(model: AppModel?) {
         self.model = model
         navigator = Navigator()
+        updater = nil
     }
 
-    init(model: AppModel?, navigator: Navigator) {
+    init(model: AppModel?, navigator: Navigator, updater: AppUpdater?) {
         self.model = model
         self.navigator = navigator
+        self.updater = updater
     }
 
     static let seekStep: TimeInterval = 10
@@ -23,6 +27,8 @@ public struct TempusCommands: Commands {
     public var body: some Commands {
         CommandGroup(replacing: .appInfo) {
             Button("About Tempus") { AboutPanel.show() }
+            Button("Check for Updates…") { updater?.checkForUpdates() }
+                .disabled(updater?.canCheckForUpdates != true)
         }
         CommandGroup(after: .textEditing) {
             Button("Search") { navigator.search() }
@@ -116,7 +122,7 @@ enum AboutPanel {
     CappielloAntonio (from v3.9.0). Logo by SeattleGuy. Thanks to tvillega, herrerad85, MaFo-28 \
     and all Tempus contributors, and to unDraw for its illustrations.
 
-    Released under the GNU General Public License v3.0. Built with AudioStreaming, GRDB and Nuke.
+    Released under the GNU General Public License v3.0. Built with AudioStreaming, GRDB, Nuke and Sparkle.
     """
 
     @MainActor

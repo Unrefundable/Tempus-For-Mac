@@ -20,6 +20,20 @@
 			</array>
 		</dict>
 	</array>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/Unrefundable/Tempus-For-Mac/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>NSdwl+k2q079QyOYtw6u/VrgoAsYxrA/DKs7SI95rPc=</string>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
+	<key>SURequireSignedFeed</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Tempus connects to music servers on your local network.</string>
 </dict>

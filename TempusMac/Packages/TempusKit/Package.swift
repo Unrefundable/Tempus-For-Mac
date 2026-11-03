@@ -19,6 +19,8 @@ let package = Package(
         // Patched for gapless MP3/AAC, redirects and pitch; see Vendor/AudioStreaming/TEMPUS-PATCHES.md.
         .package(path: "../../Vendor/AudioStreaming"),
         .package(url: "https://github.com/kean/Nuke", from: "13.2.0"),
+        // App updates from the GitHub releases' appcast; see docs/adr/0006-updates.md.
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.10.1"),
     ],
     targets: [
         .target(name: "SubsonicAPI"),
@@ -44,6 +46,7 @@ let package = Package(
             dependencies: [
                 "AppCore", "DesignSystem", "Persistence", "Playback", "SecureStorage", "SubsonicAPI",
                 .product(name: "NukeUI", package: "Nuke"),
+                .product(name: "Sparkle", package: "Sparkle"),
             ]
         ),
         // Icons, colors and Inter come from upstream through scripts/import-tempus-assets.swift.
