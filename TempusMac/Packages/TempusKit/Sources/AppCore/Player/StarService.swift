@@ -34,6 +34,12 @@ public final class StarService {
 
     // MARK: Reading
 
+    /// Whether the player's current entry can be starred: a track is playing, not a radio stream.
+    public static func canStar(_ song: Song?) -> Bool {
+        guard let song else { return false }
+        return song.type != RadioStation.songType
+    }
+
     public func isStarred(_ song: Song) -> Bool {
         overrides[.song(song.id)] ?? (song.starred != nil)
     }

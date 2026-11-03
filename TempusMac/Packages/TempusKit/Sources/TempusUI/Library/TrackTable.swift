@@ -25,7 +25,8 @@ struct TrackTable: View {
     let songs: [Song]
     /// The playlist they're from, remembered by downloads.
     var source: DownloadManager.Source?
-    /// Numbers rows by position (playlists) instead of track number (albums).
+    /// Numbers rows by position instead of track number: for any list that isn't one album or
+    /// folder (playlists, favorites, search results), where track numbers repeat and jump about.
     var numbersByPosition = false
 
     @Environment(ServerSession.self) private var session
@@ -44,10 +45,13 @@ struct TrackTable: View {
                 if row.song.id == current {
                     TempusIconImage(.equalizer, accessibilityName: Text("Now playing")).foregroundStyle(Theme.accent)
                 } else {
-                    Text(number(row)).foregroundStyle(.secondary).monospacedDigit()
+                    Text(TrackFormatting.rowNumber(row.song, at: row.id, byPosition: numbersByPosition))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
                 }
             }
-            .width(32)
+            // Room for three digits: favorites and downloads often run past 99 rows.
+            .width(40)
             TableColumn("Title") { row in
                 HStack(spacing: Theme.Spacing.xSmall) {
                     Text(row.song.title ?? "Untitled")
@@ -93,13 +97,6 @@ struct TrackTable: View {
             guard let first = ids.min() else { return }
             session.player.play(songs, startingAt: first)
         }
-    }
-
-    private func number(_ row: Row) -> String {
-        if numbersByPosition {
-            return "\(row.id + 1)"
-        }
-        return row.song.track.map(String.init) ?? "\(row.id + 1)"
     }
 
     /// Dragging a selected row takes the whole selection along.

@@ -103,7 +103,7 @@ struct ArtistDetailView: View {
                             .horizontal,
                             Theme.Spacing.xLarge
                         )
-                        TrackTable(songs: topSongs)
+                        TrackTable(songs: topSongs, numbersByPosition: true)
                             .frame(height: CGFloat(min(topSongs.count, 10)) * Theme.Size.tableRow + Theme.Size
                                 .tableHeader)
                             .padding(.horizontal, Theme.Spacing.large)

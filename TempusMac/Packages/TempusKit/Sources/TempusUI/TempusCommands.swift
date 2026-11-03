@@ -99,7 +99,7 @@ public struct TempusCommands: Commands {
             }
         }
         .keyboardShortcut("l", modifiers: .command)
-        .disabled(song == nil || song?.type == "radio")
+        .disabled(!StarService.canStar(song))
     }
 
     static func repeatTitle(_ mode: RepeatMode?) -> String {

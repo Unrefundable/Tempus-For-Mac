@@ -50,6 +50,31 @@ struct LyricsServiceTests {
     }
 
     @Test
+    func `a nudge moves a synced line sooner or later`() {
+        let line = LyricsContent.Line(start: 2, text: "One")
+        #expect(line.shifted(sooner: 1.5) == .init(start: 0.5, text: "One"))
+        #expect(line.shifted(sooner: -1) == .init(start: 3, text: "One"))
+    }
+
+    @MainActor @Test
+    func `the nudge is kept per song and server, within limits`() throws {
+        let defaults = try #require(UserDefaults(suiteName: "LyricsNudge-\(UUID())"))
+        let settings = AppSettings(defaults: defaults)
+        #expect(settings.lyricsNudge(song: "1", server: "s1") == 0)
+        let revision = settings.lyricsNudgeRevision
+        settings.setLyricsNudge(1.5, song: "1", server: "s1")
+        settings.setLyricsNudge(-999, song: "2", server: "s1")
+        #expect(settings.lyricsNudgeRevision > revision)
+
+        let reloaded = AppSettings(defaults: defaults)
+        #expect(reloaded.lyricsNudge(song: "1", server: "s1") == 1.5)
+        #expect(reloaded.lyricsNudge(song: "1", server: "s2") == 0)
+        #expect(reloaded.lyricsNudge(song: "2", server: "s1") == -AppSettings.lyricsNudgeLimit)
+        reloaded.setLyricsNudge(0, song: "1", server: "s1")
+        #expect(defaults.object(forKey: "settings.lyricsNudge.s1.1") == nil)
+    }
+
+    @Test
     func `falls back to the classic lookup by artist and title`() async throws {
         let (service, _) = try await service(["getLyrics": Self.plain], openSubsonic: false)
         let lyrics = try await service.lyrics(for: TestData.song("1"))

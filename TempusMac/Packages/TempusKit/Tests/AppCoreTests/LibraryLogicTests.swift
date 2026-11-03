@@ -188,6 +188,13 @@ struct StarServiceTests {
     }
 
     @Test
+    func `only a playing track that isn't a radio stream can be starred`() {
+        #expect(StarService.canStar(TestData.song("1")))
+        #expect(!StarService.canStar(Song(id: "r1", type: RadioStation.songType)))
+        #expect(!StarService.canStar(nil))
+    }
+
+    @Test
     func `starring shows at once and is sent to the server`() async throws {
         let transport = RecordingTransport()
         let (stars, _) = try await service(transport)

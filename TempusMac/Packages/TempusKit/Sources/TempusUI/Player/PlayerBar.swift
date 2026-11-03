@@ -4,16 +4,21 @@ import Playback
 import SwiftUI
 
 /// Upstream's mini player, laid out the Mac way across the bottom of the window: cover and titles
-/// (click to open Now Playing), transport and seek bar in the middle, then lyrics, queue and AirPlay.
+/// (click to open Now Playing) with a heart to star the track, transport and seek bar in the
+/// middle, then lyrics, queue and AirPlay.
 struct PlayerBar: View {
     let player: PlayerController
+    let stars: StarService
     let onTogglePanel: (InspectorPanel) -> Void
     let onOpenNowPlaying: () -> Void
 
     var body: some View {
         HStack(spacing: Theme.Spacing.large) {
-            nowPlaying
-                .frame(minWidth: Theme.Size.playerBarCover, maxWidth: 280, alignment: .leading)
+            HStack(spacing: Theme.Spacing.small) {
+                nowPlaying
+                starButton
+            }
+            .frame(minWidth: Theme.Size.playerBarCover, maxWidth: 320, alignment: .leading)
             VStack(spacing: 2) {
                 TransportControls(player: player)
                 SeekBar(player: player, compact: true)
@@ -61,6 +66,22 @@ struct PlayerBar: View {
         }
         .buttonStyle(.plain)
         .help("Show Now Playing")
+    }
+
+    /// Stars or unstars the playing track, as ⌘L does.
+    @ViewBuilder private var starButton: some View {
+        let song = player.queue.current?.song
+        let starred = song.map(stars.isStarred) ?? false
+        Button(starred ? "Unstar" : "Star", tempus: starred ? .favorite : .favoritesOutlined) {
+            if let song {
+                Task { await stars.toggle(song) }
+            }
+        }
+        .labelStyle(.iconOnly)
+        .buttonStyle(.borderless)
+        .foregroundStyle(starred ? Theme.accent : .secondary)
+        .help(starred ? "Unstar this track" : "Star this track")
+        .disabled(!StarService.canStar(song))
     }
 
     @ViewBuilder private var errorLine: some View {

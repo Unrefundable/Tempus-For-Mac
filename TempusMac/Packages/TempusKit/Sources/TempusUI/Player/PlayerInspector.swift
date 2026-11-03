@@ -22,7 +22,13 @@ struct PlayerInspector: View {
             .labelsHidden()
             .padding(Theme.Spacing.medium)
             switch panel {
-            case .lyrics: LyricsPanel(player: player, service: session.lyrics)
+            case .lyrics:
+                LyricsPanel(
+                    player: player,
+                    service: session.lyrics,
+                    settings: session.settings,
+                    serverID: session.profile.id
+                )
             case .queue: QueuePanel(session: session)
             }
         }
