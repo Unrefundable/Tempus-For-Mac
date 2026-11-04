@@ -90,6 +90,7 @@ xcodebuild -project TempusMac/TempusMac.xcodeproj -scheme Tempus -configuration 
     -derivedDataPath "$DERIVED" \
     MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD" \
     CODE_SIGN_IDENTITY="$IDENTITY" DEVELOPMENT_TEAM="$TEAM" \
+    CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
     ONLY_ACTIVE_ARCH=NO \
     clean build >"$OUT/build.log" 2>&1 || { echo "Build failed; see $OUT/build.log." >&2; exit 1; }
 
@@ -99,6 +100,13 @@ codesign --verify --deep --strict "$APP"
 # The container and Keychain items follow the signature, so every release must carry the team's.
 SIGNING=$(codesign -dv "$APP" 2>&1)
 grep -qx "TeamIdentifier=$TEAM" <<<"$SIGNING" || { echo "Tempus.app isn't signed by team $TEAM." >&2; exit 1; }
+# Development signing adds get-task-allow, which lets debuggers attach; a shipped app must not have it.
+# Captured first, so grep -q can't break codesign's pipe under pipefail.
+ENTITLEMENTS=$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)
+if grep -q "get-task-allow" <<<"$ENTITLEMENTS"; then
+    echo "Tempus.app carries the get-task-allow debugging entitlement." >&2
+    exit 1
+fi
 SHORT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
 [[ $SHORT == "$VERSION" ]] || { echo "Built version $SHORT, expected $VERSION." >&2; exit 1; }
 echo "Architectures: $(lipo -archs "$APP/Contents/MacOS/Tempus")"
