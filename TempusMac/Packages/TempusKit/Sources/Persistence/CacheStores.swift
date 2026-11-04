@@ -52,6 +52,23 @@ public struct LyricsStore: Sendable {
             }
         }
     }
+
+    /// The UTF-8 size of every server's cached lyrics.
+    public func totalBytes() async throws -> Int64 {
+        try await writer.read { db in
+            try Int64.fetchOne(db, sql: """
+            SELECT COALESCE(SUM(
+                COALESCE(LENGTH(CAST(structured AS BLOB)), 0) + COALESCE(LENGTH(CAST(plain AS BLOB)), 0)
+            ), 0)
+            FROM lyrics_cache
+            """) ?? 0
+        }
+    }
+
+    /// Removes every server's lyrics; they are fetched again when next shown.
+    public func clearAll() async throws {
+        try await writer.write { try $0.execute(sql: "DELETE FROM lyrics_cache") }
+    }
 }
 
 /// A radio station kept on this Mac, shown with every server (upstream's "Local" stations).
@@ -172,5 +189,17 @@ public struct ResponseCache: Sendable {
             sql: "DELETE FROM response_cache WHERE server_id = ?",
             arguments: [server]
         ) }
+    }
+
+    /// The size of every server's cached response bodies.
+    public func totalBytes() async throws -> Int64 {
+        try await writer.read { db in
+            try Int64.fetchOne(db, sql: "SELECT COALESCE(SUM(LENGTH(body)), 0) FROM response_cache") ?? 0
+        }
+    }
+
+    /// Removes every server's cached responses. Screens show nothing offline until fetched again.
+    public func clearAll() async throws {
+        try await writer.write { try $0.execute(sql: "DELETE FROM response_cache") }
     }
 }

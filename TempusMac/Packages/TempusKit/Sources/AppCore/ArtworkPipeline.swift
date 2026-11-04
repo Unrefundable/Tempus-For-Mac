@@ -53,6 +53,21 @@ public struct ArtworkCaches: Sendable {
             return inMemory
         }
     }
+
+    /// The space covers take on disk, once pending writes have landed. Blocks while it reads the
+    /// folder, so call it off the main actor.
+    func diskBytes() -> Int64 {
+        guard let disk else { return 0 }
+        disk.flush()
+        return Int64(disk.totalAllocatedSize)
+    }
+
+    /// Forgets every server's covers, in memory and on disk. Blocks until the files are gone.
+    func removeAll() {
+        memory.removeAll()
+        disk?.removeAll()
+        disk?.flush()
+    }
 }
 
 /// Loads one server's cover art through Nuke. Cover URLs carry credentials, so:
