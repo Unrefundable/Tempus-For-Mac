@@ -207,6 +207,7 @@ struct FolderDetailView: View {
                                 Text(folder.title ?? "Folder")
                                 Spacer()
                                 TempusIconImage(.navigateNext).foregroundStyle(Theme.tertiaryText)
+                                    .tempusIconKeepsForeground()
                             }
                             .contentShape(.rect)
                         }

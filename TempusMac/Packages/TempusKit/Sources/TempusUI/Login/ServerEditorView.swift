@@ -142,6 +142,7 @@ struct ServerEditorView: View {
         if let outcome {
             Label(outcome.message, tempus: outcome.isSuccess ? .checkCircle : .error)
                 .foregroundStyle(outcome.isSuccess ? Theme.success : Theme.error)
+                .tempusIconKeepsForeground()
                 .padding(.horizontal, Theme.Spacing.small)
         }
     }

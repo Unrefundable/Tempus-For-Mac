@@ -22,6 +22,7 @@ struct TransportControls: View {
         HStack(spacing: large ? Theme.Spacing.xLarge : Theme.Spacing.large) {
             Button("Shuffle", tempus: .shuffle) { player.toggleShuffle() }
                 .foregroundStyle(player.queue.isShuffled ? Theme.accent : Theme.secondaryText)
+                .tempusIconKeepsForeground(!player.queue.isShuffled)
                 .help(player.queue.isShuffled ? "Turn shuffle off" : "Turn shuffle on")
             Button("Previous", tempus: .skipPrevious) { player.previous() }
                 .disabled(player.queue.isEmpty)
@@ -37,6 +38,7 @@ struct TransportControls: View {
                 player.cycleRepeatMode()
             }
             .foregroundStyle(player.queue.repeatMode == .off ? Theme.secondaryText : Theme.accent)
+            .tempusIconKeepsForeground(player.queue.repeatMode == .off)
             .help("Repeat: \(player.queue.repeatMode.rawValue)")
         }
         .labelStyle(.iconOnly)
@@ -89,12 +91,20 @@ struct SeekBar: View {
 }
 
 /// AirPlay and other outputs. AudioStreaming renders to the system output, so the picker routes it.
+/// Its button is AppKit's, so the theme's icon color is passed to it by hand.
 struct RoutePicker: NSViewRepresentable {
+    @Environment(\.tempusIconColor) private var iconColor
+
     func makeNSView(context _: Context) -> AVRoutePickerView {
         let picker = AVRoutePickerView()
         picker.isRoutePickerButtonBordered = false
         return picker
     }
 
-    func updateNSView(_: AVRoutePickerView, context _: Context) {}
+    func updateNSView(_ picker: AVRoutePickerView, context _: Context) {
+        // Nil puts back the system's color.
+        let color = iconColor.map { NSColor($0) }
+        picker.setRoutePickerButtonColor(color, for: .normal)
+        picker.setRoutePickerButtonColor(color, for: .normalHighlighted)
+    }
 }

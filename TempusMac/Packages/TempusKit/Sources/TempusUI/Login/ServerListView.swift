@@ -80,6 +80,7 @@ struct ServerListView: View {
         if let message = model.errorMessage {
             Label(message, tempus: .error)
                 .foregroundStyle(Theme.error)
+                .tempusIconKeepsForeground()
                 .frame(width: Theme.Size.loginWidth, alignment: .leading)
         }
     }

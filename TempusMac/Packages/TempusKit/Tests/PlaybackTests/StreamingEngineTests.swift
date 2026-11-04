@@ -97,4 +97,22 @@ struct StreamingEngineTests {
         engine.setGain(decibels: 200)
         #expect(engine.equalizerNode.globalGain == 24)
     }
+
+    @Test("The redirect hook runs off the main thread, where URLSession calls it")
+    func redirectOffMainThread() async throws {
+        // Internet radio streams nearly always redirect. The hook used to be main-actor isolated
+        // and trapped as soon as URLSession's delegate queue called it.
+        let handler = StreamingEngine.redirectHandler(reading: PolicyBox(nil))
+        let source = try #require(URL(string: "https://radio.example/stream"))
+        let target = try #require(URL(string: "https://cdn.example/live.mp3"))
+        let response = try #require(HTTPURLResponse(url: source, statusCode: 302, httpVersion: nil, headerFields: nil))
+
+        let followed = await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                continuation.resume(returning: handler(response, URLRequest(url: target))?.url)
+            }
+        }
+
+        #expect(followed == target)
+    }
 }

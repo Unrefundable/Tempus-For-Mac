@@ -13,10 +13,13 @@ People asked for two things upstream Tempus doesn't have on the Mac: a way to ch
 - `AppTheme` (AppCore) holds a `ThemePreset`, light/dark/system, and a color per `ThemeColorRole` that the user set. A role's color is the user's, else the preset's, else the system's.
 - It is stored as JSON under `settings.theme` in UserDefaults. Decoding is lenient: an unknown preset, role or bad hex code is skipped, so one bad value can't lose the whole theme.
 - Choosing a preset replaces the user's colors, so a preset always looks as its card shows.
+- Every preset has a light and a dark set of colors (`ThemePreset.colors(for:)`), and views ask for the set matching the appearance showing (`colorScheme`). A preset switched to the other appearance used to keep its colors, so OLED in light drew black text on black and Midnight drew pale text on the system's light surfaces. A test checks text contrast for every preset in both. The user's own colors apply to both sets.
+- An `icons` role colors Tempus's icons (`TempusIconImage`, through the `tempusIconColor` environment value) and the few SF Symbols beside them. Icons whose color means something keep it (`tempusIconKeepsForeground`): errors, toggles that are off, drag handles, empty states. Disabled controls aren't tinted, so they still look disabled. Unset, icons look as before.
 
 ### 2. Unset roles keep the system's adaptive styles
 - Views draw with `ThemeStyle`, a `ShapeStyle` that resolves the theme from the environment. Unset, it resolves to `.primary`, `.secondary`, `.tertiary`, the accent color, `.bar`, `.red` or `.green`. The default look is unchanged, including vibrancy and selection contrast.
 - Backgrounds (`themedBackground`) are only drawn when set. Lists and tables then hide their own background so the color shows through.
+- When the background is set, the window toolbar is painted in it too (`themedToolbar`). Otherwise AppKit draws its own grey toolbar on any screen without a scroll view under it (empty states, a header above a table, Now Playing), so the bar changed color from screen to screen.
 - Light or dark is set on `NSApp.appearance`, so menus, Settings and the menu bar player follow it.
 - Selection highlights in the sidebar and tables stay with the system accent; SwiftUI doesn't expose them.
 

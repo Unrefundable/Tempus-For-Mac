@@ -88,6 +88,7 @@ struct PlayerBar: View {
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
         .foregroundStyle(starred ? Theme.accent : Theme.secondaryText)
+        .tempusIconKeepsForeground(!starred)
         .help(starred ? "Unstar this track" : "Star this track")
         .disabled(!StarService.canStar(song))
     }

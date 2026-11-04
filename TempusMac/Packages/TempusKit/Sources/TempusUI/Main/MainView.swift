@@ -87,6 +87,7 @@ struct MainView: View {
                 }
             }
             .themedBackground(.background)
+            .themedToolbar()
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 PlayerBar(player: session.player, stars: session.stars, onTogglePanel: toggle) {
                     navigator.selection = .nowPlaying
@@ -102,8 +103,11 @@ struct MainView: View {
                 }
             }
             ToolbarItem {
-                Button("Lyrics and Queue", systemImage: "sidebar.trailing") { showsInspector.toggle() }
-                    .help("Show or hide lyrics and the queue")
+                Button { showsInspector.toggle() } label: {
+                    Label { Text("Lyrics and Queue") } icon: { Image(systemName: "sidebar.trailing").tempusIconTinted()
+                    }
+                }
+                .help("Show or hide lyrics and the queue")
             }
         }
         .onKeyPress(.space) {
@@ -316,7 +320,11 @@ struct SidebarLabel: View {
         if let icon = item.icon {
             Label(item.title, tempus: icon)
         } else {
-            Label(item.title, systemImage: "dot.radiowaves.left.and.right")
+            Label {
+                Text(item.title)
+            } icon: {
+                Image(systemName: "dot.radiowaves.left.and.right").tempusIconTinted()
+            }
         }
     }
 }

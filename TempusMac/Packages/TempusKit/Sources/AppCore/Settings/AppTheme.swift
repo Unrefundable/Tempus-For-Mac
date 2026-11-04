@@ -63,6 +63,7 @@ public struct ThemeColor: Sendable, Hashable {
 /// Every color Tempus draws that the Appearance settings can change.
 public enum ThemeColorRole: String, CaseIterable, Sendable, Identifiable {
     case accent
+    case icons
     case background
     case sidebar
     case playerBar
@@ -80,6 +81,7 @@ public enum ThemeColorRole: String, CaseIterable, Sendable, Identifiable {
     public var title: String {
         switch self {
         case .accent: "Accent"
+        case .icons: "Icons"
         case .background: "Background"
         case .sidebar: "Sidebar"
         case .playerBar: "Player bar"
@@ -95,6 +97,7 @@ public enum ThemeColorRole: String, CaseIterable, Sendable, Identifiable {
     public var summary: String {
         switch self {
         case .accent: "Buttons, toggles, the playing track and stars"
+        case .icons: "Sidebar, player controls, toolbar and other icons"
         case .background: "Behind the library, lists and Now Playing"
         case .sidebar: "Behind the sidebar"
         case .playerBar: "Behind the player along the bottom"
@@ -121,8 +124,16 @@ public enum ThemeAppearance: String, CaseIterable, Sendable, Identifiable {
     }
 }
 
+/// Which set of a preset's colors is showing: the light ones or the dark ones.
+public enum ThemeVariant: String, CaseIterable, Sendable {
+    case light, dark
+}
+
 /// A starting point for the Appearance settings: an appearance and some colors. Roles a preset
 /// leaves out use the system's colors.
+///
+/// Every preset has colors for both light and dark, so switching the appearance away from the
+/// preset's own never leaves its text on a background meant for the other one.
 public enum ThemePreset: String, CaseIterable, Sendable, Identifiable {
     case system, light, dark, oled, midnight, sepia, forest
 
@@ -150,28 +161,51 @@ public enum ThemePreset: String, CaseIterable, Sendable, Identifiable {
         }
     }
 
-    public var colors: [ThemeColorRole: ThemeColor] {
-        switch self {
-        case .system, .light, .dark:
+    /// The colors this preset sets when `variant` is showing.
+    public func colors(for variant: ThemeVariant) -> [ThemeColorRole: ThemeColor] {
+        switch (self, variant) {
+        case (.system, _), (.light, _), (.dark, _):
             [:]
-        case .oled:
+        case (.oled, .dark):
             Self.parse([.background: "#000000", .sidebar: "#000000", .playerBar: "#000000"])
-        case .midnight:
+        case (.oled, .light):
+            Self.parse([.background: "#FFFFFF", .sidebar: "#FFFFFF", .playerBar: "#FFFFFF"])
+        case (.midnight, .dark):
             Self.parse([
                 .accent: "#60A5FA", .background: "#0F172A", .sidebar: "#0B1222", .playerBar: "#111B30",
                 .primaryText: "#E2E8F0", .secondaryText: "#94A3B8", .tertiaryText: "#64748B",
             ])
-        case .sepia:
+        case (.midnight, .light):
+            Self.parse([
+                .accent: "#2563EB", .background: "#F8FAFC", .sidebar: "#EEF2F7", .playerBar: "#F1F5F9",
+                .primaryText: "#0F172A", .secondaryText: "#475569", .tertiaryText: "#94A3B8",
+            ])
+        case (.sepia, .light):
             Self.parse([
                 .accent: "#A0522D", .background: "#F4ECD8", .sidebar: "#EADFC4", .playerBar: "#EFE5CC",
                 .primaryText: "#4B3A2A", .secondaryText: "#7A6650", .tertiaryText: "#A8957C",
             ])
-        case .forest:
+        case (.sepia, .dark):
+            Self.parse([
+                .accent: "#D08B5B", .background: "#2B2219", .sidebar: "#231B14", .playerBar: "#33291F",
+                .primaryText: "#EFE4CC", .secondaryText: "#BFAA8C", .tertiaryText: "#8C7860",
+            ])
+        case (.forest, .dark):
             Self.parse([
                 .accent: "#7BC47F", .background: "#14201A", .sidebar: "#0F1914", .playerBar: "#18261F",
                 .primaryText: "#E3EFE6", .secondaryText: "#9DB5A4", .tertiaryText: "#6B8573",
             ])
+        case (.forest, .light):
+            Self.parse([
+                .accent: "#2E7D32", .background: "#F1F7F2", .sidebar: "#E2EEE5", .playerBar: "#E9F2EB",
+                .primaryText: "#14201A", .secondaryText: "#45604D", .tertiaryText: "#8AA391",
+            ])
         }
+    }
+
+    /// The variant the preset is designed around, which its card in Settings shows.
+    public var variant: ThemeVariant {
+        appearance == .light ? .light : .dark
     }
 
     private static func parse(_ hex: [ThemeColorRole: String]) -> [ThemeColorRole: ThemeColor] {
@@ -198,9 +232,10 @@ public struct AppTheme: Sendable, Equatable {
         self.customColors = customColors
     }
 
-    /// The color for `role`, or nil to use the system's.
-    public func color(for role: ThemeColorRole) -> ThemeColor? {
-        customColors[role] ?? preset.colors[role]
+    /// The color for `role` while `variant` is showing, or nil to use the system's. The user's own
+    /// colors apply to both variants.
+    public func color(for role: ThemeColorRole, in variant: ThemeVariant) -> ThemeColor? {
+        customColors[role] ?? preset.colors(for: variant)[role]
     }
 
     /// Whether anything differs from the preset.

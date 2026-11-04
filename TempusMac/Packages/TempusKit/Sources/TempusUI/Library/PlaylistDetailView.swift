@@ -153,7 +153,7 @@ private struct PlaylistEditor: View {
             List {
                 ForEach(entries) { entry in
                     HStack {
-                        TempusIconImage(.dragHandle).foregroundStyle(Theme.tertiaryText)
+                        TempusIconImage(.dragHandle).foregroundStyle(Theme.tertiaryText).tempusIconKeepsForeground()
                         VStack(alignment: .leading) {
                             Text(entry.song.title ?? "Untitled")
                             Text(entry.song.artist ?? "").font(.inter(.caption)).foregroundStyle(Theme.secondaryText)

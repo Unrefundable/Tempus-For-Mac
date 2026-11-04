@@ -40,7 +40,9 @@ struct AppThemeTests {
         #expect(theme.preset == .system)
         #expect(theme.appearance == .system)
         for role in ThemeColorRole.allCases {
-            #expect(theme.color(for: role) == nil, "\(role)")
+            for variant in ThemeVariant.allCases {
+                #expect(theme.color(for: role, in: variant) == nil, "\(role)")
+            }
         }
         #expect(!theme.isCustomized)
     }
@@ -50,9 +52,9 @@ struct AppThemeTests {
         let theme = AppTheme(preset: .oled)
         #expect(theme.appearance == .dark)
         let black = ThemeColor(red: 0, green: 0, blue: 0)
-        #expect(theme.color(for: .background) == black)
-        #expect(theme.color(for: .sidebar) == black)
-        #expect(theme.color(for: .playerBar) == black)
+        #expect(theme.color(for: .background, in: .dark) == black)
+        #expect(theme.color(for: .sidebar, in: .dark) == black)
+        #expect(theme.color(for: .playerBar, in: .dark) == black)
     }
 
     @Test
@@ -60,8 +62,10 @@ struct AppThemeTests {
         #expect(AppTheme(preset: .light).appearance == .light)
         #expect(AppTheme(preset: .dark).appearance == .dark)
         for role in ThemeColorRole.allCases {
-            #expect(AppTheme(preset: .light).color(for: role) == nil)
-            #expect(AppTheme(preset: .dark).color(for: role) == nil)
+            for variant in ThemeVariant.allCases {
+                #expect(AppTheme(preset: .light).color(for: role, in: variant) == nil)
+                #expect(AppTheme(preset: .dark).color(for: role, in: variant) == nil)
+            }
         }
     }
 
@@ -70,11 +74,15 @@ struct AppThemeTests {
         let pink = try #require(ThemeColor(hex: "#FF00AA"))
         let base = AppTheme(preset: .oled)
         let custom = base.setting(.background, to: pink)
-        #expect(custom.color(for: .background) == pink)
+        #expect(custom.color(for: .background, in: .dark) == pink)
+        #expect(custom.color(for: .background, in: .light) == pink, "the user's colors apply in both variants")
         #expect(custom.isCustomized)
-        #expect(base.color(for: .background) == ThemeColor(red: 0, green: 0, blue: 0), "the original is unchanged")
+        #expect(
+            base.color(for: .background, in: .dark) == ThemeColor(red: 0, green: 0, blue: 0),
+            "the original is unchanged"
+        )
         let reset = custom.setting(.background, to: nil)
-        #expect(reset.color(for: .background) == ThemeColor(red: 0, green: 0, blue: 0))
+        #expect(reset.color(for: .background, in: .dark) == ThemeColor(red: 0, green: 0, blue: 0))
         #expect(!reset.isCustomized)
     }
 
@@ -87,7 +95,68 @@ struct AppThemeTests {
         #expect(sepia.preset == .sepia)
         #expect(sepia.appearance == .light)
         #expect(!sepia.isCustomized)
-        #expect(sepia.color(for: .accent) == ThemePreset.sepia.colors[.accent])
+        #expect(sepia.color(for: .accent, in: .light) == ThemePreset.sepia.colors(for: .light)[.accent])
+    }
+
+    @Test(arguments: ThemePreset.allCases, ThemeVariant.allCases)
+    func `every preset's text stays readable on its backgrounds in light and in dark`(
+        preset: ThemePreset,
+        variant: ThemeVariant
+    ) {
+        // A preset switched to the other appearance used to keep its colors, so OLED in light
+        // drew black text on black and Midnight drew pale text on the system's light surfaces.
+        let colors = preset.colors(for: variant)
+        let systemText = variant == .light ? ThemeColor(red: 0, green: 0, blue: 0) : ThemeColor(
+            red: 255,
+            green: 255,
+            blue: 255
+        )
+        let systemSurface = variant == .light ? ThemeColor(red: 255, green: 255, blue: 255) : ThemeColor(
+            red: 30,
+            green: 30,
+            blue: 30
+        )
+        let text = colors[.primaryText] ?? systemText
+        for surface in [ThemeColorRole.background, .sidebar, .playerBar] {
+            let fill = colors[surface] ?? systemSurface
+            #expect(Self.contrast(text, fill) >= Self.readableContrast, "\(preset) \(variant) \(surface)")
+        }
+        let secondary = colors[.secondaryText] ?? text
+        #expect(Self.contrast(secondary, colors[.background] ?? systemSurface) >= Self.readableContrast)
+    }
+
+    @Test
+    func `a preset's colors follow the variant showing`() {
+        let theme = AppTheme(preset: .oled)
+        #expect(theme.color(for: .background, in: .light) == ThemeColor(red: 255, green: 255, blue: 255))
+        #expect(theme.color(for: .background, in: .dark) == ThemeColor(red: 0, green: 0, blue: 0))
+        #expect(ThemePreset.midnight.variant == .dark)
+        #expect(ThemePreset.sepia.variant == .light)
+    }
+
+    @Test
+    func `icons have their own color, unset by default`() throws {
+        let red = try #require(ThemeColor(hex: "#FF3B30"))
+        #expect(AppTheme.default.color(for: .icons, in: .dark) == nil)
+        let theme = AppTheme.default.setting(.icons, to: red)
+        #expect(theme.color(for: .icons, in: .light) == red)
+        #expect(try JSONDecoder().decode(AppTheme.self, from: JSONEncoder().encode(theme)) == theme)
+    }
+
+    /// WCAG's minimum for body text.
+    private static let readableContrast = 4.5
+
+    /// WCAG contrast ratio between two opaque colors.
+    private static func contrast(_ first: ThemeColor, _ second: ThemeColor) -> Double {
+        let (lighter, darker) = (max(luminance(first), luminance(second)), min(luminance(first), luminance(second)))
+        return (lighter + 0.05) / (darker + 0.05)
+    }
+
+    private static func luminance(_ color: ThemeColor) -> Double {
+        let linear = color.unitComponents.prefix(3).map { channel in
+            channel <= 0.039_28 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
     }
 
     @Test
@@ -101,8 +170,10 @@ struct AppThemeTests {
     func `every preset has a title and only sets colors that parse back`() {
         for preset in ThemePreset.allCases {
             #expect(!preset.title.isEmpty)
-            for (_, color) in preset.colors {
-                #expect(ThemeColor(hex: color.hex) == color)
+            for variant in ThemeVariant.allCases {
+                for (_, color) in preset.colors(for: variant) {
+                    #expect(ThemeColor(hex: color.hex) == color)
+                }
             }
         }
     }
@@ -123,8 +194,8 @@ struct AppThemeTests {
         """.utf8)
         let theme = try JSONDecoder().decode(AppTheme.self, from: json)
         #expect(theme.preset == .oled)
-        #expect(theme.color(for: .accent) == ThemeColor(red: 0x12, green: 0x34, blue: 0x56))
-        #expect(theme.color(for: .sidebar) == ThemePreset.oled.colors[.sidebar])
+        #expect(theme.color(for: .accent, in: .dark) == ThemeColor(red: 0x12, green: 0x34, blue: 0x56))
+        #expect(theme.color(for: .sidebar, in: .dark) == ThemePreset.oled.colors(for: .dark)[.sidebar])
     }
 
     @Test

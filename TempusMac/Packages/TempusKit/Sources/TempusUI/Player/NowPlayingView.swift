@@ -112,6 +112,7 @@ private struct TrackActions: View {
             }
             if session.downloads.isDownloaded(song.id) {
                 TempusIconImage(.download, accessibilityName: Text("Downloaded")).foregroundStyle(Theme.secondaryText)
+                    .tempusIconKeepsForeground()
                     .help("Downloaded")
             } else if session.downloads.isPending(song.id) {
                 ProgressView().controlSize(.small)
