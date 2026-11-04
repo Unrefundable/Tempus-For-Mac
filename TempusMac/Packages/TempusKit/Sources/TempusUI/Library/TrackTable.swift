@@ -52,7 +52,7 @@ struct TrackTable: View {
                     subtitleShowsAlbum: subtitleShowsAlbum,
                     isCurrent: row.song.id == current,
                     isStarred: session.stars.isStarred(row.song),
-                    download: downloadMark(row.song)
+                    download: TrackDownloadMark.of(row.song, in: session.downloads)
                 )
             }
         } rows: {
@@ -75,14 +75,6 @@ struct TrackTable: View {
         }
     }
 
-    /// Read here, not in the row: a cell can lay out where the session isn't in its environment.
-    private func downloadMark(_ song: Song) -> TrackRow.DownloadMark? {
-        if session.downloads.isDownloaded(song.id) {
-            return .downloaded
-        }
-        return session.downloads.isPending(song.id) ? .pending : nil
-    }
-
     /// Dragging a selected row takes the whole selection along.
     private func dragged(_ row: Row, rows: [Row]) -> [Song] {
         guard selection.contains(row.id) else { return [row.song] }
@@ -90,9 +82,21 @@ struct TrackTable: View {
     }
 }
 
+/// Whether a song is saved for offline, or on its way.
+enum TrackDownloadMark {
+    /// Read by the list, not the row: a cell can lay out where the session isn't in its environment.
+    @MainActor
+    static func of(_ song: Song, in downloads: DownloadManager) -> TrackRow.DownloadMark? {
+        if downloads.isDownloaded(song.id) {
+            return .downloaded
+        }
+        return downloads.isPending(song.id) ? .pending : nil
+    }
+}
+
 /// One track: its cover (or track number), title and subtitle, and marks. The playing track shows
 /// the equalizer over its cover, as upstream dims the cover under its play icon.
-private struct TrackRow: View {
+struct TrackRow: View {
     enum DownloadMark { case downloaded, pending }
 
     let song: Song

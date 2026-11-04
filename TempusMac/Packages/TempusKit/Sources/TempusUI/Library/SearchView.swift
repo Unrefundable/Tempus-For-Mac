@@ -25,16 +25,29 @@ struct SearchView: View {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .searchable(text: $text, placement: .toolbar, prompt: "Artists, albums and songs")
-        .searchFocused($isFocused)
-        .onSubmit(of: .search) { Task { await remember(text) } }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // In the page rather than the toolbar, where it floated apart from everything else at
+        // the window's far corner.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            SearchField(text: $text, isFocused: $isFocused) { Task { await remember(text) } }
+                .padding(.horizontal, Theme.Spacing.xLarge)
+                .padding(.vertical, Theme.Spacing.medium)
+                // Opaque, so results scrolling under the bar don't show through the query.
+                .themedBackground(.background)
+                .background(.background)
+        }
         .task(id: text) {
             // Waits for typing to pause, as upstream's search bar.
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
             await search(text)
         }
-        .task(id: navigator.searchFocusRequest) { isFocused = true }
+        .task(id: navigator.searchFocusRequest) {
+            // ⌘F from another page switches here and asks for focus in the same update; wait a
+            // turn so the field exists before focusing it.
+            await Task.yield()
+            isFocused = true
+        }
         .task { recent = await (try? session.recentSearches.recent()) ?? [] }
     }
 
@@ -74,12 +87,11 @@ struct SearchView: View {
                     }
                     if !result.songs.isEmpty {
                         Text("Songs").font(.inter(.title2, weight: .bold)).padding(.horizontal, Theme.Spacing.xLarge)
-                        TrackTable(songs: result.songs)
-                            .frame(height: CGFloat(result.songs.count) * Theme.Size.trackRow)
+                        TrackList(songs: result.songs)
                             .padding(.horizontal, Theme.Spacing.large)
                     }
                 }
-                .padding(.vertical, Theme.Spacing.xLarge)
+                .padding(.bottom, Theme.Spacing.xLarge)
             }
         }
     }
@@ -108,4 +120,45 @@ struct SearchView: View {
         try? await session.recentSearches.record(query, at: .now)
         recent = await (try? session.recentSearches.recent()) ?? []
     }
+}
+
+/// The search page's own field: icon, text and a clear button, as one rounded bar.
+private struct SearchField: View {
+    @Binding var text: String
+    var isFocused: FocusState<Bool>.Binding
+    let onSubmit: () -> Void
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.small) {
+            TempusIconImage(.search, accessibilityName: Text("Search"))
+                .tempusIconSize(Self.iconSize)
+                .foregroundStyle(Theme.secondaryText)
+            TextField("Artists, albums and songs", text: $text)
+                .textFieldStyle(.plain)
+                .font(.inter(.title3))
+                .focused(isFocused)
+                .onSubmit(onSubmit)
+                // Escape clears the text, then a second Escape leaves the field.
+                .onExitCommand {
+                    if text.isEmpty {
+                        isFocused.wrappedValue = false
+                    } else {
+                        text = ""
+                    }
+                }
+            if !text.isEmpty {
+                Button { text = "" } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.secondaryText)
+                }
+                .buttonStyle(.plain)
+                .help("Clear the search")
+                .accessibilityLabel("Clear")
+            }
+        }
+        .padding(.horizontal, Theme.Spacing.medium)
+        .padding(.vertical, Theme.Spacing.small + 2)
+        .background(.quaternary.opacity(0.6), in: RoundedRectangle(cornerRadius: Theme.Radius.row))
+    }
+
+    private static let iconSize: CGFloat = 18
 }

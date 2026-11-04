@@ -103,8 +103,7 @@ struct ArtistDetailView: View {
                             .horizontal,
                             Theme.Spacing.xLarge
                         )
-                        TrackTable(songs: topSongs, subtitleShowsAlbum: true)
-                            .frame(height: CGFloat(min(topSongs.count, 10)) * Theme.Size.trackRow)
+                        TrackList(songs: topSongs, subtitleShowsAlbum: true)
                             .padding(.horizontal, Theme.Spacing.large)
                     }
                     if !artist.albums.isEmpty {
