@@ -47,31 +47,39 @@ Like Tempus, it doesn't rely on recommendation algorithms. Home is built from yo
 
 ## Screenshots
 
-<p align="center">
-  <img alt="Tempus Home in the light Forest theme" src="docs/screenshots/light-forest-home.webp" width="49%">
-  <img alt="Tempus Home in the dark Forest theme" src="docs/screenshots/dark-forest-home.webp" width="49%">
-</p>
-
 Pick a theme in **Settings › Appearance**. Each theme comes in a light and a dark version.
 
-| Theme | Light | Dark |
-|---|---|---|
-| **Forest** | <img alt="Forest, light" src="docs/screenshots/light-forest-now-playing.webp" width="400"> | <img alt="Forest, dark" src="docs/screenshots/dark-forest-now-playing.webp" width="400"> |
-| **Midnight** | <img alt="Midnight, light" src="docs/screenshots/light-midnight-home.webp" width="400"> | <img alt="Midnight, dark" src="docs/screenshots/dark-midnight-home.webp" width="400"> |
-| **OLED** | <img alt="OLED, light" src="docs/screenshots/light-oled-home.webp" width="400"> | <img alt="OLED, dark" src="docs/screenshots/dark-oled-home.webp" width="400"> |
-| **Sepia** | <img alt="Sepia, light" src="docs/screenshots/light-sepia-home.webp" width="400"> | <img alt="Sepia, dark" src="docs/screenshots/dark-sepia-home.webp" width="400"> |
+<p align="center">
+  <b>Light theme</b>
+</p>
 
-<details>
-<summary>Now Playing in every theme</summary>
+<p align="center">
+    <img alt="Home in Forest, light" title="Forest" src="docs/screenshots/light-forest-home.webp" width=400>
+    <img alt="Now Playing in Forest, light" title="Forest" src="docs/screenshots/light-forest-now-playing.webp" width=400>
+    <img alt="Home in Midnight, light" title="Midnight" src="docs/screenshots/light-midnight-home.webp" width=400>
+    <img alt="Now Playing in Midnight, light" title="Midnight" src="docs/screenshots/light-midnight-now-playing.webp" width=400>
+    <img alt="Home in OLED, light" title="OLED" src="docs/screenshots/light-oled-home.webp" width=400>
+    <img alt="Now Playing in OLED, light" title="OLED" src="docs/screenshots/light-oled-now-playing.webp" width=400>
+    <img alt="Home in Sepia, light" title="Sepia" src="docs/screenshots/light-sepia-home.webp" width=400>
+    <img alt="Now Playing in Sepia, light" title="Sepia" src="docs/screenshots/light-sepia-now-playing.webp" width=400>
+</p>
+
 <br>
 
-| Theme | Light | Dark |
-|---|---|---|
-| **Midnight** | <img alt="Now Playing in Midnight, light" src="docs/screenshots/light-midnight-now-playing.webp" width="400"> | <img alt="Now Playing in Midnight, dark" src="docs/screenshots/dark-midnight-now-playing.webp" width="400"> |
-| **OLED** | <img alt="Now Playing in OLED, light" src="docs/screenshots/light-oled-now-playing.webp" width="400"> | <img alt="Now Playing in OLED, dark" src="docs/screenshots/dark-oled-now-playing.webp" width="400"> |
-| **Sepia** | <img alt="Now Playing in Sepia, light" src="docs/screenshots/light-sepia-now-playing.webp" width="400"> | <img alt="Now Playing in Sepia, dark" src="docs/screenshots/dark-sepia-now-playing.webp" width="400"> |
+<p align="center">
+  <b>Dark theme</b>
+</p>
 
-</details>
+<p align="center">
+    <img alt="Home in Forest, dark" title="Forest" src="docs/screenshots/dark-forest-home.webp" width=400>
+    <img alt="Now Playing in Forest, dark" title="Forest" src="docs/screenshots/dark-forest-now-playing.webp" width=400>
+    <img alt="Home in Midnight, dark" title="Midnight" src="docs/screenshots/dark-midnight-home.webp" width=400>
+    <img alt="Now Playing in Midnight, dark" title="Midnight" src="docs/screenshots/dark-midnight-now-playing.webp" width=400>
+    <img alt="Home in OLED, dark" title="OLED" src="docs/screenshots/dark-oled-home.webp" width=400>
+    <img alt="Now Playing in OLED, dark" title="OLED" src="docs/screenshots/dark-oled-now-playing.webp" width=400>
+    <img alt="Home in Sepia, dark" title="Sepia" src="docs/screenshots/dark-sepia-home.webp" width=400>
+    <img alt="Now Playing in Sepia, dark" title="Sepia" src="docs/screenshots/dark-sepia-now-playing.webp" width=400>
+</p>
 
 ## Features
 
