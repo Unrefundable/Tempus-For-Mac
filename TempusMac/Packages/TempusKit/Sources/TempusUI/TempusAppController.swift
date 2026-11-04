@@ -17,6 +17,7 @@ public final class TempusAppController {
     private let model: Result<AppModel, any Error>
     private let isDemo: Bool
     private let navigator = Navigator()
+    private let windows = WindowLink()
     private let updater: AppUpdater
     private lazy var dock = DockMenu(model: try? model.get())
 
@@ -48,9 +49,11 @@ public final class TempusAppController {
         case let .success(model):
             let launches = !isDemo
             let navigator = navigator
+            let windows = windows
             Themed(settings: model.settings) {
                 RootView(navigator: navigator)
             }
+            .onWindowChange { windows.setMain($0) }
             .environment(model)
             .task {
                 if launches {
@@ -66,11 +69,13 @@ public final class TempusAppController {
         TempusCommands(model: try? model.get(), navigator: navigator, updater: updater)
     }
 
-    /// The Settings window's content.
+    /// The Settings window's content. The window rides along with the main one; see `WindowLink`.
     @ViewBuilder public var settingsView: some View {
         if case let .success(model) = model {
+            let windows = windows
             Themed(settings: model.settings) { SettingsView() }
                 .environment(model).environment(updater).font(.inter(.body))
+                .onWindowChange { windows.setSettings($0) }
         }
     }
 

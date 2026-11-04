@@ -31,7 +31,6 @@ extension Color {
     static func system(_ role: ThemeColorRole) -> Color {
         switch role {
         case .accent: .accentColor
-        case .icons: .primary
         case .background: Color(nsColor: .textBackgroundColor)
         case .sidebar: Color(nsColor: .underPageBackgroundColor)
         case .playerBar: Color(nsColor: .windowBackgroundColor)
@@ -67,9 +66,8 @@ public struct ThemeStyle: ShapeStyle {
             return AnyShapeStyle(Color(color))
         }
         return switch role {
+        // Icons take the accent only when the theme sets one; see `tempusIconColor`.
         case .accent: AnyShapeStyle(Color.accentColor)
-        // Icons take the foreground style when unset; see `tempusIconColor`.
-        case .icons: AnyShapeStyle(.foreground)
         // Backgrounds are only drawn when set; see `themedBackground(_:)`.
         case .background, .sidebar: AnyShapeStyle(Color.clear)
         case .playerBar: AnyShapeStyle(.bar)
@@ -109,11 +107,13 @@ private struct AppThemeModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
-        let variant = ThemeVariant(colorScheme)
+        // One color for controls and icons. Unset, icons stay in the text color rather than the
+        // system accent, as the system's own sidebars and toolbars draw them.
+        let accent = theme.color(for: .accent, in: ThemeVariant(colorScheme)).map(Color.init)
         content
             .foregroundStyle(ThemeStyle(role: .primaryText))
-            .tint(theme.color(for: .accent, in: variant).map(Color.init))
-            .tempusIconColor(theme.color(for: .icons, in: variant).map(Color.init))
+            .tint(accent)
+            .tempusIconColor(accent)
             .environment(\.appTheme, theme)
             .onChange(of: theme.appearance, initial: true) { _, appearance in
                 appearance.apply()
