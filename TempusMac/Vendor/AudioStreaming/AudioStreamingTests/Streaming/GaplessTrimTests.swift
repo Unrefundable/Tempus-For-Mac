@@ -56,6 +56,28 @@ class GaplessTrimTests: XCTestCase {
         XCTAssertEqual(run(&trim, [5000]), [[0, 5000]])
     }
 
+    func testAnAccurateSeekDropsTheFramesBeforeTheTarget() {
+        // A FLAC seek landed on the frame at 4608 for a target of 5000.
+        var trim = GaplessTrim()
+        trim.restart(atSourceFrame: 4608, keepingFrom: 5000)
+        XCTAssertTrue(trim.isActive)
+        XCTAssertEqual(run(&trim, [300, 300, 300]), [[300, 0], [92, 208], [0, 300]])
+    }
+
+    func testTheKeepPointScalesToTheOutputRate() {
+        var trim = GaplessTrim()
+        trim.restart(atSourceFrame: 100, keepingFrom: 150)
+        XCTAssertEqual(run(&trim, [200], ratio: 2), [[100, 100]])
+    }
+
+    func testAnInexactSeekForgetsTheKeepPoint() {
+        var trim = GaplessTrim()
+        trim.restart(atSourceFrame: 0, keepingFrom: 500)
+        trim.stopTrimming()
+        trim.restart(atSourceFrame: 1000)
+        XCTAssertFalse(trim.isActive)
+    }
+
     func testEmptyChunksAndBadRatiosAreHarmless() {
         var trim = GaplessTrim(primingFrames: 10, validFrames: 10)
         XCTAssertEqual(run(&trim, [0]), [[0, 0]])

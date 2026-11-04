@@ -48,4 +48,28 @@ Found in the Phase 3 security review.
   - The probing requests now carry the stream's headers. Without them, M4A files behind a header-gated proxy (Cloudflare Access) failed. They go through the same redirect hook, so headers still never leave the server.
 - **The URL session** (`NetworkingClient.networkingConfiguration`): no shared credential storage, so client certificates stay out of the process-wide store, and TLS 1.2 at least.
 
-**Upstream:** all four are worth offering as pull requests. Until they're merged, Tempus uses this copy.
+## 5. Accurate seeks in FLAC and VBR MP3
+
+AudioStreaming turned a seek time into a byte offset as if the bitrate were constant, unless Core Audio could name the exact packet (it can for WAV, AAC and CBR MP3, but not for FLAC or VBR MP3). Real music isn't constant: in a FLAC with a quiet intro, a seek to 0:05 played from 0:19. The reported position still said 0:05, so synced lyrics showed one line and played another. Clicking a lyric started the song past that line.
+
+- `Streaming/Audio Entry/Models/AccurateSeek.swift` (new):
+  - `FlacFrameHeader` finds the next frame header (CRC-8 checked) after a jump and reads the frame's position from it.
+  - `FlacSeekSearch` jumps again, interpolating with a bisection fallback, until it lands within 2 s before the target. Below 256 KB of uncertainty it plays on from the last frame known to be before the target.
+  - `XingSeekTable` reads the table of contents in a VBR MP3's Xing or LAME header.
+- `AudioFileStreamProcessor`:
+  - `processSeek` hands FLAC to the search and uses the Xing table for MP3 when the file has one. Other formats seek as before.
+  - `parseFileStreamBytes` holds back a FLAC seek's bytes until a frame header settles where it landed, and keeps the start of an MP3 until its first frame has been checked for a Xing header.
+- `GaplessTrim.restart(atSourceFrame:keepingFrom:)` drops the samples between the frame a FLAC seek lands on and the target, so playback starts on the exact sample.
+
+Tested in `AudioStreamingTests/Streaming/AccurateSeekTests.swift` and `GaplessTrimTests.swift`, and against the real engine in Tempus's `StreamingEngineTests` (a FLAC that is silent for 6 s, then a rising tone; the pitch heard after a seek gives the position actually played).
+
+**Measured** with rising-tone files, played locally and over HTTP with range requests, after seeks to 5, 20, 12 and 25 s. The figure is the gap between the position played and the position reported:
+
+| Format | Before | After |
+|---|---|---|
+| WAV, AAC, CBR MP3 | under 0.1 s | under 0.1 s |
+| FLAC, constant density | up to 0.7 s | under 0.1 s |
+| FLAC, quiet then dense | 2.5–14 s | under 0.1 s |
+| VBR MP3, quiet then dense | 2.5–7 s | under 0.2 s, never late |
+
+**Upstream:** all five are worth offering as pull requests. Until they're merged, Tempus uses this copy.

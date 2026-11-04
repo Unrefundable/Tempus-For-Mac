@@ -55,6 +55,11 @@ class AudioEntry {
     /// Tempus patch: encoder priming and padding to drop for gapless playback. Guarded by `lock`.
     var gaplessTrim = GaplessTrim()
 
+    /// Tempus patch: a VBR MP3's seek table, once the stream's start has been read. Guarded by `lock`.
+    var xingSeekTable: XingSeekTable?
+    /// Tempus patch: whether the stream's start has been checked for `xingSeekTable`. Guarded by `lock`.
+    var hasLookedForXingSeekTable = false
+
     var packetDuration: Double
 
     private var averagePacketByteSize: Double {

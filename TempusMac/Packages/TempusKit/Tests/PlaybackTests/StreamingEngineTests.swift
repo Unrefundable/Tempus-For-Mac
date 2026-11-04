@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 @testable import Playback
+import Synchronization
 import Testing
 
 /// The real AudioStreaming engine, playing short local files silently.
@@ -79,6 +80,72 @@ struct StreamingEngineTests {
         engine.stop()
     }
 
+    @Test("A FLAC seek plays from the requested time, even where the bitrate varies")
+    func flacSeekIsAccurate() async throws {
+        // Clicking a lyric seeks to its line. AudioStreaming used to guess the byte offset as if the
+        // bitrate were constant, so in a FLAC with a quiet start the audio jumped seconds past the
+        // line while the reported position (and the highlighted lyric) said otherwise.
+        let engine = StreamingEngine()
+        engine.volume = 0
+        let pitch = PitchMeter()
+        engine.equalizerNode.installTap(onBus: 0, bufferSize: 4410, format: nil, block: pitch.tap)
+        defer { engine.equalizerNode.removeTap(onBus: 0) }
+
+        try engine.play(EngineItem(id: UUID(), url: Self.silenceThenSweep(), headers: [:]))
+        try await Task.sleep(for: .seconds(1))
+        engine.seek(to: 9)
+        try await Task.sleep(for: .seconds(0.8))
+        let heard = Self.sweepPosition(hearing: pitch.frequency)
+        let reported = engine.progress
+        engine.stop()
+
+        // A constant-bitrate guess lands near 10.5 s. The tap runs a buffer (0.1 s) ahead of what
+        // `progress` has counted as played.
+        #expect(abs(reported - 9.8) < 0.5, "reported \(reported)")
+        #expect(abs(heard - reported) < 0.4, "heard \(heard), reported \(reported)")
+    }
+
+    /// 6 s of silence, which FLAC packs into almost nothing, then a 6 s sweep from 300 to 900 Hz.
+    private static func silenceThenSweep() throws -> URL {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "tempus-engine-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appending(path: "sweep.flac")
+        let rate = 44100.0
+        let format = try #require(AVAudioFormat(standardFormatWithSampleRate: rate, channels: 2))
+        let frames = AVAudioFrameCount(rate * 12)
+        let buffer = try #require(AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames))
+        buffer.frameLength = frames
+        for channel in 0 ..< 2 {
+            let samples = try #require(buffer.floatChannelData?[channel])
+            for frame in 0 ..< Int(frames) {
+                let sweepTime = Double(frame) / rate - 6
+                // The phase of a tone rising 100 Hz a second from 300 Hz.
+                let phase = 2 * Double.pi * (300 * sweepTime + 50 * sweepTime * sweepTime)
+                samples[frame] = sweepTime > 0 ? Float(0.3 * sin(phase)) : 0
+            }
+        }
+        let settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatFLAC, AVSampleRateKey: rate, AVNumberOfChannelsKey: 2,
+            AVLinearPCMBitDepthKey: 16,
+        ]
+        // In a scope of its own: the file's header is finished when it closes.
+        do {
+            let file = try AVAudioFile(
+                forWriting: url,
+                settings: settings,
+                commonFormat: .pcmFormatFloat32,
+                interleaved: false
+            )
+            try file.write(from: buffer)
+        }
+        return url
+    }
+
+    /// Where in `silenceThenSweep` a tone of `frequency` plays.
+    private static func sweepPosition(hearing frequency: Double) -> Double {
+        6 + (frequency - 300) / 100
+    }
+
     @Test("Equalizer bands, ReplayGain and the preamp reach the EQ unit")
     func equalizer() throws {
         let engine = StreamingEngine()
@@ -114,5 +181,25 @@ struct StreamingEngineTests {
         }
 
         #expect(followed == target)
+    }
+}
+
+/// Measures the pitch of the engine's output, from zero crossings, on the audio thread.
+private final class PitchMeter: Sendable {
+    private let latest = Mutex<Double>(0)
+
+    var frequency: Double {
+        latest.withLock { $0 }
+    }
+
+    /// Built outside the main actor: the tap runs on the audio thread, where an isolated closure traps.
+    nonisolated var tap: AVAudioNodeTapBlock {
+        { [self] buffer, _ in
+            guard let samples = buffer.floatChannelData?[0], buffer.frameLength > 1 else { return }
+            let count = Int(buffer.frameLength)
+            let crossings = (1 ..< count).count { (samples[$0 - 1] < 0) != (samples[$0] < 0) }
+            let seconds = Double(count) / buffer.format.sampleRate
+            latest.withLock { $0 = Double(crossings) / 2 / seconds }
+        }
     }
 }

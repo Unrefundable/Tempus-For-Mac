@@ -54,6 +54,23 @@ final class AudioFileStreamProcessor {
     // Track if we're processing Ogg Vorbis
     private var isProcessingOggVorbis: Bool = false
 
+    // Tempus patch: accurate seeks (see AccurateSeek.swift).
+    /// A FLAC seek still looking for the frame to play from, with the bytes read since its last jump.
+    private var flacSeek: FlacSeekSearch?
+    private var flacSeekBytes: [UInt8] = []
+    private var flacSeekBytesStart: Int64 = 0
+    /// The file offset of the next byte to parse, while the stream is read from its start.
+    private var parsePosition: Int64?
+    /// The stream's bytes from where its audio may start, kept until they've been checked for a Xing seek table.
+    private var headBytes: [UInt8] = []
+    private var headBytesStart: Int64 = 0
+    /// While the tags before the audio are read, how many of their latest bytes `headBytes` keeps.
+    private static let headBytesLimit = 256 * 1024
+    /// A FLAC seek gives up looking for a frame header after this many bytes.
+    private static let flacSeekBytesLimit = 1024 * 1024
+    /// How far before the target a FLAC seek may land, in seconds; the gap is decoded and dropped.
+    private static let flacSeekTolerance = 2.0
+
     var isFileStreamOpen: Bool {
         audioFileStream != nil || isProcessingOggVorbis
     }
@@ -85,6 +102,7 @@ final class AudioFileStreamProcessor {
             return noErr
         } else {
             isProcessingOggVorbis = false
+            resetAccurateSeekState(parsingFromStart: true) // Tempus patch
             let data = UnsafeMutableRawPointer.from(object: self)
             return AudioFileStreamOpen(data, _propertyListenerProc, _propertyPacketsProc, fileHint, &audioFileStream)
         }
@@ -104,6 +122,7 @@ final class AudioFileStreamProcessor {
         }
         AudioFileStreamClose(fileStream)
         audioFileStream = nil
+        resetAccurateSeekState(parsingFromStart: false) // Tempus patch
     }
 
     /// Parses the given data using `AudioFileStreamParseBytes`
@@ -120,8 +139,19 @@ final class AudioFileStreamProcessor {
         }
         
         guard let stream = audioFileStream else { return 0 }
+        // Tempus patch: a FLAC seek reads ahead for a frame header before anything is parsed.
+        if flacSeek != nil {
+            return continueFlacSeek(with: data, stream: stream)
+        }
+        recordHeadBytes(data)
+        let status = parse(data, stream: stream)
+        lookForXingSeekTable()
+        return status
+    }
+
+    private func parse(_ bytes: some ContiguousBytes, stream: AudioFileStreamID) -> OSStatus {
         let flags: AudioFileStreamParseFlags = discontinuous ? .discontinuity : .init()
-        return data.withUnsafeBytes { buffer -> OSStatus in
+        return bytes.withUnsafeBytes { buffer -> OSStatus in
             AudioFileStreamParseBytes(stream, UInt32(buffer.count), buffer.baseAddress, flags)
         }
     }
@@ -178,7 +208,17 @@ final class AudioFileStreamProcessor {
       
         guard duration > 0.0 else { return }
 
+        // Tempus patch: FLAC frames carry their position, so the seek searches for the exact frame.
+        if let search = flacSeekSearch(for: readingEntry, duration: duration) {
+            beginFlacSeek(search, entry: readingEntry, stream: stream)
+            return
+        }
+
         var seekByteOffset = Int64(dataOffset + (readingEntry.seekRequest.time / duration) * dataLengthInBytes)
+        // Tempus patch: a VBR MP3's seek table lands far closer than assuming a constant bitrate.
+        if let tableOffset = xingSeekOffset(for: readingEntry, duration: duration) {
+            seekByteOffset = tableOffset
+        }
 
         if seekByteOffset > readingEntry.length - (2 * Int(readingEntry.processedPacketsState.bufferSize)) {
             seekByteOffset = Int64(readingEntry.length - (2 * Int(readingEntry.processedPacketsState.bufferSize)))
@@ -207,11 +247,6 @@ final class AudioFileStreamProcessor {
             }
         }
 
-        if let converted = audioConverter {
-            AudioConverterReset(converted)
-        }
-
-        readingEntry.reset()
         // Tempus patch: decoding restarts mid-stream, so count gapless trimming from the seek point.
         // When the position is only estimated (a VBR MP3 without a seek table), counting from it
         // could cut the end of the track, so trimming stops for this entry instead.
@@ -224,7 +259,16 @@ final class AudioFileStreamProcessor {
             readingEntry.gaplessTrim.stopTrimming()
         }
         readingEntry.lock.unlock()
-        readingEntry.seek(at: Int(seekByteOffset))
+        restartReading(readingEntry, at: seekByteOffset)
+    }
+
+    /// Decoding restarts at `byteOffset`, with nothing of the old position left in the buffers.
+    private func restartReading(_ entry: AudioEntry, at byteOffset: Int64) {
+        if let converted = audioConverter {
+            AudioConverterReset(converted)
+        }
+        entry.reset()
+        entry.seek(at: Int(byteOffset))
         rendererContext.waitingForDataAfterSeekFrameCount.write { $0 = 0 }
         playerContext.setInternalState(to: .waitingForDataAfterSeek)
         rendererContext.resetBuffers()
@@ -837,4 +881,152 @@ private func getHardwareCodecClassDescription(formatId: UInt32, classDesc: Unsaf
         }
     #endif
     return false
+}
+
+// MARK: - Tempus patch: accurate seeks
+
+extension AudioFileStreamProcessor {
+    fileprivate func resetAccurateSeekState(parsingFromStart: Bool) {
+        flacSeek = nil
+        flacSeekBytes = []
+        flacSeekBytesStart = 0
+        parsePosition = parsingFromStart ? 0 : nil
+        headBytes = []
+        headBytesStart = 0
+    }
+
+    // MARK: VBR MP3
+
+    /// Keeps the stream's start while it may still hold a Xing seek table.
+    fileprivate func recordHeadBytes(_ data: Data) {
+        guard let position = parsePosition else { return }
+        parsePosition = position + Int64(data.count)
+        guard let entry = playerContext.audioReadingEntry,
+              !entry.lock.withLock(body: { entry.hasLookedForXingSeekTable })
+        else { return }
+        if headBytes.isEmpty {
+            headBytesStart = position
+        }
+        headBytes.append(contentsOf: data)
+    }
+
+    /// Once Core Audio knows where the audio starts, reads the seek table from the first frame.
+    fileprivate func lookForXingSeekTable() {
+        guard parsePosition != nil, let entry = playerContext.audioReadingEntry,
+              !entry.lock.withLock(body: { entry.hasLookedForXingSeekTable })
+        else { return }
+        guard entry.audioStreamState.processedDataFormat else {
+            // Still in the tags before the audio: the header can only be in the latest bytes.
+            dropHeadBytes(before: headBytesStart + Int64(headBytes.count) - Int64(Self.headBytesLimit))
+            return
+        }
+        let dataOffset = Int64(entry.audioStreamState.dataOffset)
+        let headBytesEnd = headBytesStart + Int64(headBytes.count)
+        let isMP3 = entry.audioStreamFormat.mFormatID == kAudioFormatMPEGLayer3
+        // The header is in the first frame, within a few kilobytes of the data offset.
+        guard !isMP3 || headBytesEnd >= dataOffset + 4096 else {
+            dropHeadBytes(before: dataOffset - 4096)
+            return
+        }
+        let table = isMP3 ? XingSeekTable(bytes: headBytes, bytesStart: headBytesStart, dataOffset: dataOffset) : nil
+        entry.lock.withLock {
+            entry.xingSeekTable = table
+            entry.hasLookedForXingSeekTable = true
+        }
+        headBytes = []
+    }
+
+    private func dropHeadBytes(before offset: Int64) {
+        let count = min(headBytes.count, Int(max(0, offset - headBytesStart)))
+        guard count > 0 else { return }
+        headBytes.removeFirst(count)
+        headBytesStart += Int64(count)
+    }
+
+    fileprivate func xingSeekOffset(for entry: AudioEntry, duration: Double) -> Int64? {
+        guard let table = entry.lock.withLock(body: { entry.xingSeekTable }) else { return nil }
+        return table.byteOffset(
+            for: entry.seekRequest.time,
+            frameDuration: entry.packetDuration,
+            duration: duration,
+            fileLength: Int64(entry.length)
+        )
+    }
+
+    // MARK: FLAC
+
+    fileprivate func flacSeekSearch(for entry: AudioEntry, duration: Double) -> FlacSeekSearch? {
+        let format = entry.audioStreamFormat
+        guard format.mFormatID == kAudioFormatFLAC, format.mSampleRate > 0, format.mFramesPerPacket > 0 else {
+            return nil
+        }
+        let dataOffset = Int64(entry.audioStreamState.dataOffset)
+        let dataEnd = dataOffset + Int64(entry.audioDataLengthBytes())
+        guard dataEnd > dataOffset else { return nil }
+        let rate = format.mSampleRate
+        return FlacSeekSearch(
+            target: Int64(entry.seekRequest.time * rate),
+            tolerance: Int64(Self.flacSeekTolerance * rate),
+            lower: .init(byte: dataOffset, sample: 0),
+            upper: .init(byte: dataEnd, sample: Int64(duration * rate))
+        )
+    }
+
+    fileprivate func beginFlacSeek(_ search: FlacSeekSearch, entry: AudioEntry, stream: AudioFileStreamID) {
+        // Resets the parser for data from a new place; the offset it estimates isn't used.
+        var ioFlags = AudioFileStreamSeekFlags(rawValue: 0)
+        var ignoredOffset: Int64 = 0
+        let packet = entry.packetDuration > 0 ? Int64(entry.seekRequest.time / entry.packetDuration) : 0
+        AudioFileStreamSeek(stream, packet, &ignoredOffset, &ioFlags)
+
+        entry.lock.withLock { entry.seekTime = entry.seekRequest.time }
+        parsePosition = nil
+        flacSeek = search
+        flacSeekBytes = []
+        flacSeekBytesStart = search.firstJump
+        restartReading(entry, at: search.firstJump)
+    }
+
+    /// Reads ahead from the last jump until a frame header says where it landed, then plays from
+    /// that frame or jumps again.
+    fileprivate func continueFlacSeek(with data: Data, stream: AudioFileStreamID) -> OSStatus {
+        guard var search = flacSeek, let entry = playerContext.audioReadingEntry else {
+            flacSeek = nil
+            return parse(data, stream: stream)
+        }
+        flacSeekBytes.append(contentsOf: data)
+        let format = entry.audioStreamFormat
+        guard let header = FlacFrameHeader.find(
+            in: flacSeekBytes,
+            nominalBlockSize: Int64(format.mFramesPerPacket),
+            sampleRate: format.mSampleRate
+        ) else {
+            guard flacSeekBytes.count > Self.flacSeekBytesLimit else { return noErr }
+            // No frame where there should be one: play from here, as an estimated seek would.
+            Logger.error("FLAC seek found no frame header; playing from an estimated position", category: .generic)
+            entry.lock.withLock { entry.gaplessTrim.stopTrimming() }
+            return finishFlacSeek(playing: flacSeekBytes[...], stream: stream)
+        }
+
+        let landing = FlacSeekSearch.Anchor(byte: flacSeekBytesStart + Int64(header.index), sample: header.sample)
+        switch search.landed(at: landing) {
+        case let .jump(to: byte):
+            flacSeek = search
+            flacSeekBytes = []
+            flacSeekBytesStart = byte
+            entry.seek(at: Int(byte))
+            return noErr
+        case .accept:
+            entry.lock.withLock {
+                entry.gaplessTrim.restart(atSourceFrame: Int(landing.sample), keepingFrom: Int(search.target))
+            }
+            return finishFlacSeek(playing: flacSeekBytes[header.index...], stream: stream)
+        }
+    }
+
+    private func finishFlacSeek(playing bytes: ArraySlice<UInt8>, stream: AudioFileStreamID) -> OSStatus {
+        flacSeek = nil
+        flacSeekBytes = []
+        return parse(Array(bytes), stream: stream)
+    }
 }
