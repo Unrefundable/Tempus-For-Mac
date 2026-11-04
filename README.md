@@ -45,7 +45,6 @@ Like Tempus, it doesn't rely on recommendation algorithms. Home is built from yo
 > [!IMPORTANT]
 > Tempus for macOS is in **beta**. Expect bugs
 
-## Screenshots
 
 <p align="center">
   <b>Light theme</b>
