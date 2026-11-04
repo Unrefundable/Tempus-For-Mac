@@ -45,14 +45,6 @@ Like Tempus, it doesn't rely on recommendation algorithms. Home is built from yo
 > [!IMPORTANT]
 > Tempus for macOS is in **beta**. Expect bugs
 
-## Screenshots
-
-<p align="center">
-  <img alt="Tempus Home in the light Forest theme" src="docs/screenshots/light-forest-home.webp" width="49%">
-  <img alt="Tempus Home in the dark Forest theme" src="docs/screenshots/dark-forest-home.webp" width="49%">
-</p>
-
-Pick a theme in **Settings › Appearance**. Each theme comes in a light and a dark version.
 
 | Theme | Light | Dark |
 |---|---|---|
@@ -61,9 +53,6 @@ Pick a theme in **Settings › Appearance**. Each theme comes in a light and a d
 | **OLED** | <img alt="OLED, light" src="docs/screenshots/light-oled-home.webp" width="400"> | <img alt="OLED, dark" src="docs/screenshots/dark-oled-home.webp" width="400"> |
 | **Sepia** | <img alt="Sepia, light" src="docs/screenshots/light-sepia-home.webp" width="400"> | <img alt="Sepia, dark" src="docs/screenshots/dark-sepia-home.webp" width="400"> |
 
-<details>
-<summary>Now Playing in every theme</summary>
-<br>
 
 | Theme | Light | Dark |
 |---|---|---|
