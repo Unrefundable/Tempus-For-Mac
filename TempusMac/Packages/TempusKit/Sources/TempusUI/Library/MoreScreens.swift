@@ -38,7 +38,7 @@ struct DownloadsView: View {
                                 HStack {
                                     Text(song.title ?? "Untitled")
                                     Spacer()
-                                    Text(song.artist ?? "").foregroundStyle(.secondary)
+                                    Text(song.artist ?? "").foregroundStyle(Theme.secondaryText)
                                 }
                                 .contentShape(.rect)
                             }
@@ -48,7 +48,7 @@ struct DownloadsView: View {
                     } label: {
                         HStack {
                             Text(group.title).font(.inter(.callout, weight: .medium))
-                            Text("\(group.songs.count)").foregroundStyle(.secondary)
+                            Text("\(group.songs.count)").foregroundStyle(Theme.secondaryText)
                             Spacer()
                             Button("Play", tempus: .play) { session.player.play(group.songs) }
                                 .labelStyle(.iconOnly).buttonStyle(.borderless)
@@ -92,11 +92,11 @@ struct DownloadsView: View {
             }
             Spacer()
             if let message = downloads.errorMessage {
-                Text(message).foregroundStyle(.red).lineLimit(1)
+                Text(message).foregroundStyle(Theme.error).lineLimit(1)
             }
         }
         .font(.inter(.caption))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Theme.secondaryText)
         .padding(.horizontal, Theme.Spacing.large)
         .padding(.vertical, Theme.Spacing.small)
     }
@@ -170,7 +170,7 @@ struct SharesView: View {
                             share.expires.map { "expires \($0.formatted(date: .abbreviated, time: .omitted))" },
                             share.visitCount.map { "\($0) visits" },
                         ].compactMap(\.self).joined(separator: " • "))
-                            .font(.inter(.caption)).foregroundStyle(.secondary)
+                            .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
                     }
                     .contextMenu {
                         if let url = share.url {
@@ -200,7 +200,7 @@ struct SharesView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if let errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red).padding(Theme.Spacing.small)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error).padding(Theme.Spacing.small)
             }
         }
         .toolbar { Button("Refresh", tempus: .refresh) { revision += 1 } }

@@ -93,7 +93,7 @@ struct ArtistDetailView: View {
                     if let biography = info?.biography.map(Self.plainText), !biography.isEmpty {
                         Text(biography)
                             .font(.inter(.callout))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.secondaryText)
                             .lineLimit(6)
                             .textSelection(.enabled)
                             .padding(.horizontal, Theme.Spacing.xLarge)
@@ -206,7 +206,7 @@ struct FolderDetailView: View {
                                 .frame(width: Theme.Size.trackCover, height: Theme.Size.trackCover)
                                 Text(folder.title ?? "Folder")
                                 Spacer()
-                                TempusIconImage(.navigateNext).foregroundStyle(.tertiary)
+                                TempusIconImage(.navigateNext).foregroundStyle(Theme.tertiaryText)
                             }
                             .contentShape(.rect)
                         }

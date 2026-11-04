@@ -13,5 +13,9 @@
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)-spks</string>
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)-spki</string>
 	</array>
+	<key>com.apple.security.temporary-exception.sbpl</key>
+	<array>
+		<string>(allow network-outbound (remote unix-socket (path-regex #"^(/private)?/var/folders/[0-9a-z_]+/[0-9a-z_]+/T/discord-ipc-[0-9]$")))</string>
+	</array>
 </dict>
 </plist>

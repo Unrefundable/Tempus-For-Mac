@@ -42,7 +42,7 @@ struct SearchView: View {
         List {
             Section("Recent Searches") {
                 if recent.isEmpty {
-                    Text("Nothing yet").foregroundStyle(.secondary)
+                    Text("Nothing yet").foregroundStyle(Theme.secondaryText)
                 }
                 ForEach(recent, id: \.self) { query in
                     Button(query) { text = query }

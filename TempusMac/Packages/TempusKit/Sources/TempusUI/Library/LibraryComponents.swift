@@ -88,7 +88,7 @@ struct SnapshotView<Value: Decodable & Sendable, Content: View>: View {
                         if isStale, let errorMessage {
                             Label(errorMessage, systemImage: "icloud.slash")
                                 .font(.inter(.caption))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.secondaryText)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, Theme.Spacing.xSmall)
                                 .background(.bar)
@@ -152,7 +152,7 @@ struct CoverTile: View {
                 .lineLimit(1)
             Text(subtitle ?? " ")
                 .font(.inter(.caption))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.secondaryText)
                 .lineLimit(1)
         }
         .frame(width: size, alignment: .leading)
@@ -201,7 +201,7 @@ struct ArtistTile: View {
                     .lineLimit(1)
                 Text(artist.albumCount.map { "\($0) albums" } ?? " ")
                     .font(.inter(.caption))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.secondaryText)
             }
             .frame(width: size)
             .contentShape(.rect)
@@ -283,13 +283,13 @@ struct DetailHeader<Actions: View>: View {
             .frame(width: Theme.Size.detailCover, height: Theme.Size.detailCover)
             .shadow(radius: 8, y: 4)
             VStack(alignment: .leading, spacing: Theme.Spacing.xSmall) {
-                Text(kind.uppercased()).font(.inter(.caption, weight: .semibold)).foregroundStyle(.secondary)
+                Text(kind.uppercased()).font(.inter(.caption, weight: .semibold)).foregroundStyle(Theme.secondaryText)
                 Text(title).font(.inter(.largeTitle, weight: .bold)).lineLimit(2).textSelection(.enabled)
                 if let subtitle {
-                    Text(subtitle).font(.inter(.title3)).foregroundStyle(.secondary)
+                    Text(subtitle).font(.inter(.title3)).foregroundStyle(Theme.secondaryText)
                 }
                 if let detail {
-                    Text(detail).font(.inter(.callout)).foregroundStyle(.tertiary)
+                    Text(detail).font(.inter(.callout)).foregroundStyle(Theme.tertiaryText)
                 }
                 HStack(spacing: Theme.Spacing.small) { actions() }
                     .padding(.top, Theme.Spacing.small)

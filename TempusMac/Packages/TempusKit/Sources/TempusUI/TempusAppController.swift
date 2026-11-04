@@ -34,6 +34,8 @@ public final class TempusAppController {
             isEnabled: demo == nil && Self.isReleaseBuild
         )
         Self.current = self
+        // Before any window shows, so a launch into the menu bar alone is already light or dark.
+        (try? model.get())?.settings.theme.appearance.apply()
     }
 
     /// Every window's text defaults to Tempus's typeface, Inter.
@@ -45,13 +47,16 @@ public final class TempusAppController {
         switch model {
         case let .success(model):
             let launches = !isDemo
-            RootView(navigator: navigator)
-                .environment(model)
-                .task {
-                    if launches {
-                        await model.launch()
-                    }
+            let navigator = navigator
+            Themed(settings: model.settings) {
+                RootView(navigator: navigator)
+            }
+            .environment(model)
+            .task {
+                if launches {
+                    await model.launch()
                 }
+            }
         case let .failure(error):
             StartupFailureView(message: error.localizedDescription)
         }
@@ -64,14 +69,16 @@ public final class TempusAppController {
     /// The Settings window's content.
     @ViewBuilder public var settingsView: some View {
         if case let .success(model) = model {
-            SettingsView().environment(model).environment(updater).font(.inter(.body))
+            Themed(settings: model.settings) { SettingsView() }
+                .environment(model).environment(updater).font(.inter(.body))
         }
     }
 
     /// The menu bar mini player's content.
     @ViewBuilder public var menuBarContent: some View {
         if case let .success(model) = model {
-            MenuBarPlayer().environment(model).font(.inter(.body))
+            Themed(settings: model.settings) { MenuBarPlayer() }
+                .environment(model).font(.inter(.body))
         }
     }
 
@@ -121,6 +128,17 @@ public final class TempusAppController {
     #else
         static let isReleaseBuild = true
     #endif
+}
+
+/// A scene's content in the theme from Settings › Appearance. A view of its own, so a theme change
+/// redraws it.
+private struct Themed<Content: View>: View {
+    let settings: AppSettings
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        content().appTheme(settings.theme)
+    }
 }
 
 /// Runs an action the first time it's asked to.

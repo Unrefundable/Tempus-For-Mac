@@ -46,7 +46,7 @@ struct PlayerBar: View {
         }
         .padding(.horizontal, Theme.Spacing.large)
         .frame(height: Theme.Size.playerBarHeight)
-        .background(.bar)
+        .background(Theme.playerBar)
         .overlay(alignment: .top) { Divider() }
         .overlay(alignment: .bottom) { errorLine }
     }
@@ -66,7 +66,7 @@ struct PlayerBar: View {
                         .font(.inter(.callout, weight: .medium))
                     Text(player.queue.current?.song.artist ?? " ")
                         .font(.inter(.caption))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.secondaryText)
                 }
                 .lineLimit(1)
             }
@@ -87,7 +87,7 @@ struct PlayerBar: View {
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.borderless)
-        .foregroundStyle(starred ? Theme.accent : .secondary)
+        .foregroundStyle(starred ? Theme.accent : Theme.secondaryText)
         .help(starred ? "Unstar this track" : "Star this track")
         .disabled(!StarService.canStar(song))
     }
@@ -96,7 +96,7 @@ struct PlayerBar: View {
         if let message = player.errorMessage {
             Text(message)
                 .font(.inter(.caption2))
-                .foregroundStyle(.red)
+                .foregroundStyle(Theme.error)
                 .lineLimit(1)
                 .padding(.bottom, 2)
         }

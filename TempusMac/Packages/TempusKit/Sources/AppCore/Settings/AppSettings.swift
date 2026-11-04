@@ -1,13 +1,15 @@
 import Foundation
 import Observation
+import os
 
 /// Settings outside playback (which `PlaybackSettingsStore` keeps): scrobbling, queue sync, the
-/// library in use, Home's and the sidebar's layout, sorting, downloads and the update channel. Kept in UserDefaults;
-/// nothing here is secret.
+/// library in use, Home's and the sidebar's layout, sorting, downloads, the update channel, the theme
+/// and Discord. Kept in UserDefaults; nothing here is secret.
 @MainActor
 @Observable
 public final class AppSettings {
     static let prefix = "settings."
+    private static let logger = Logger(subsystem: "io.github.unrefundable.TempusMac", category: "Settings")
 
     @ObservationIgnored private let defaults: UserDefaults
 
@@ -76,6 +78,17 @@ public final class AppSettings {
         didSet { defaults.set(receivesBetaUpdates, forKey: Self.prefix + "receivesBetaUpdates") }
     }
 
+    /// The app's look: a preset, light or dark, and any custom colors.
+    public private(set) var theme: AppTheme {
+        didSet { storeTheme() }
+    }
+
+    /// Shows the track playing in the user's Discord status. Off by default, since it tells
+    /// everyone who can see the user on Discord what they listen to.
+    public var sharesNowPlayingOnDiscord: Bool {
+        didSet { defaults.set(sharesNowPlayingOnDiscord, forKey: Self.prefix + "sharesNowPlayingOnDiscord") }
+    }
+
     /// - Parameter isPrereleaseBuild: whether the app running is a beta, which makes beta updates
     ///   the default, so a beta tester keeps getting betas.
     public init(defaults: UserDefaults = .standard, isPrereleaseBuild: Bool = UpdateChannel.isRunningPrerelease) {
@@ -91,6 +104,8 @@ public final class AppSettings {
         transcodesDownloads = bool("transcodesDownloads", false)
         syncsStarredTracks = bool("syncsStarredTracks", false)
         receivesBetaUpdates = bool("receivesBetaUpdates", isPrereleaseBuild)
+        sharesNowPlayingOnDiscord = bool("sharesNowPlayingOnDiscord", false)
+        theme = Self.storedTheme(in: defaults)
         homeLayout = HomeLayout(stored: defaults.stringArray(forKey: Self.prefix + "homeSections"))
         sidebarLayout = SidebarLayout(
             storedOrder: defaults.stringArray(forKey: Self.prefix + "sidebarOrder"),
@@ -108,6 +123,28 @@ public final class AppSettings {
 
     public func setSidebarLayout(_ layout: SidebarLayout) {
         sidebarLayout = layout
+    }
+
+    public func setTheme(_ theme: AppTheme) {
+        self.theme = theme
+    }
+
+    private static func storedTheme(in defaults: UserDefaults) -> AppTheme {
+        guard let data = defaults.data(forKey: prefix + "theme") else { return .default }
+        do {
+            return try JSONDecoder().decode(AppTheme.self, from: data)
+        } catch {
+            logger.error("The saved theme couldn't be read, so the default is used: \(error)")
+            return .default
+        }
+    }
+
+    private func storeTheme() {
+        do {
+            try defaults.set(JSONEncoder().encode(theme), forKey: Self.prefix + "theme")
+        } catch {
+            Self.logger.error("Couldn't save the theme: \(error)")
+        }
     }
 
     // MARK: Per server

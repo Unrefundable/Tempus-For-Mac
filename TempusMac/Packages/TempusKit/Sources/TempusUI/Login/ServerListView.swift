@@ -72,14 +72,14 @@ struct ServerListView: View {
                 .resizable()
                 .frame(width: Theme.Size.loginLogo, height: Theme.Size.loginLogo)
             Text("Subsonic servers").font(.inter(.largeTitle, weight: .bold))
-            Text(subtitle).foregroundStyle(.secondary)
+            Text(subtitle).foregroundStyle(Theme.secondaryText)
         }
     }
 
     @ViewBuilder private var errorBanner: some View {
         if let message = model.errorMessage {
             Label(message, tempus: .error)
-                .foregroundStyle(.red)
+                .foregroundStyle(Theme.error)
                 .frame(width: Theme.Size.loginWidth, alignment: .leading)
         }
     }
@@ -104,7 +104,7 @@ private struct ServerRow: View {
             Text(server.name).font(.inter(.headline))
             Text(server.address.url.absoluteString)
                 .font(.inter(.subheadline))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.secondaryText)
         }
         .padding(.vertical, Theme.Spacing.xSmall)
     }

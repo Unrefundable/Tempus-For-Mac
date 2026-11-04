@@ -95,6 +95,8 @@ public final class AppModel {
     /// System monitors that live as long as the model (`AppModel.live()`).
     @ObservationIgnored var networkMonitor: NetworkMonitor?
     @ObservationIgnored var outputMonitor: OutputDeviceMonitor?
+    /// The Discord status, for its settings. Nil where nothing reaches Discord, as in tests.
+    @ObservationIgnored public internal(set) var discord: DiscordPresence?
 
     public init(environment: AppEnvironment, engine: any PolicySwitchingEngine, nowPlaying: SystemNowPlaying? = nil) {
         self.environment = environment

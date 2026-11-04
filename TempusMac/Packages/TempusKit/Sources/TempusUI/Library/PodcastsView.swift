@@ -47,7 +47,7 @@ struct PodcastsView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if let errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red).padding(Theme.Spacing.small)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error).padding(Theme.Spacing.small)
             }
         }
         .toolbar {
@@ -82,10 +82,10 @@ private struct AddPodcastSheet: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
             Text("Add a Podcast").font(.inter(.headline))
             Text("Paste the podcast's RSS feed address. Your server downloads its episodes.")
-                .font(.inter(.callout)).foregroundStyle(.secondary)
+                .font(.inter(.callout)).foregroundStyle(Theme.secondaryText)
             TextField("https://example.com/feed.xml", text: $address).textFieldStyle(.roundedBorder)
             if let errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error)
             }
             HStack {
                 Spacer()
@@ -144,12 +144,12 @@ struct PodcastChannelView: View {
                     }
                     if let description = channel.description, !description.isEmpty {
                         Text(ArtistDetailView.plainText(description))
-                            .font(.inter(.callout)).foregroundStyle(.secondary).lineLimit(3)
+                            .font(.inter(.callout)).foregroundStyle(Theme.secondaryText).lineLimit(3)
                             .padding(.horizontal, Theme.Spacing.xLarge)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     if let errorMessage {
-                        Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
+                        Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error)
                     }
                     List(episodes) { episode in
                         EpisodeRow(episode: episode, channelTitle: channel.title) { request in
@@ -198,7 +198,7 @@ private struct EpisodeRow: View {
                     episode.duration.map { TrackFormatting.time(TimeInterval($0)) },
                     Self.status(episode.status),
                 ].compactMap(\.self).joined(separator: " • "))
-                    .font(.inter(.caption)).foregroundStyle(.secondary)
+                    .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
             }
             Spacer()
             if song == nil, episode.status != "downloading" {

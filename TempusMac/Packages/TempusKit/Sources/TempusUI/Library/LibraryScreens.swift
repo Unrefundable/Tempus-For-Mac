@@ -130,7 +130,7 @@ struct ArtistRow: View {
             }
             Spacer()
             if let count = artist.albumCount {
-                Text("\(count) \(count == 1 ? "album" : "albums")").font(.inter(.caption)).foregroundStyle(.secondary)
+                Text("\(count) \(count == 1 ? "album" : "albums")").font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
             }
         }
         .contentShape(.rect)
@@ -152,7 +152,7 @@ struct GenresView: View {
                             Text(genre.name)
                             Spacer()
                             Text("\(genre.albumCount ?? 0) albums • \(genre.songCount ?? 0) songs")
-                                .font(.inter(.caption)).foregroundStyle(.secondary)
+                                .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
                         }
                         .contentShape(.rect)
                     }

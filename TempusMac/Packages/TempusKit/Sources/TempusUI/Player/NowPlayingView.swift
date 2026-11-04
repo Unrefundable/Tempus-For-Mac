@@ -33,12 +33,12 @@ struct NowPlayingView: View {
                     .buttonStyle(.plain)
                     .help("Go to the album")
                     Button { song.artistID.map { navigator.open(.artist(id: $0)) } } label: {
-                        Text(song.artist ?? "Unknown artist").font(.inter(.title3)).foregroundStyle(.secondary)
+                        Text(song.artist ?? "Unknown artist").font(.inter(.title3)).foregroundStyle(Theme.secondaryText)
                     }
                     .buttonStyle(.plain)
                     .help("Go to the artist")
                     if let album = song.album {
-                        Text(album).font(.inter(.callout)).foregroundStyle(.tertiary)
+                        Text(album).font(.inter(.callout)).foregroundStyle(Theme.tertiaryText)
                     }
                 }
                 .multilineTextAlignment(.center)
@@ -106,12 +106,12 @@ private struct TrackActions: View {
             Button(starred ? "Unstar" : "Star", tempus: starred ? .favorite : .favoritesOutlined) {
                 Task { await session.stars.toggle(song) }
             }
-            .foregroundStyle(starred ? Theme.accent : .primary)
+            .foregroundStyle(starred ? Theme.accent : Theme.primaryText)
             RatingControl(rating: session.stars.rating(of: song)) { rating in
                 Task { await session.stars.setRating(rating, for: song) }
             }
             if session.downloads.isDownloaded(song.id) {
-                TempusIconImage(.download, accessibilityName: Text("Downloaded")).foregroundStyle(.secondary)
+                TempusIconImage(.download, accessibilityName: Text("Downloaded")).foregroundStyle(Theme.secondaryText)
                     .help("Downloaded")
             } else if session.downloads.isPending(song.id) {
                 ProgressView().controlSize(.small)
@@ -135,7 +135,7 @@ private struct TrackActions: View {
         .tempusIconSize(Self.iconSize)
         .overlay(alignment: .bottom) {
             if let message = session.stars.errorMessage {
-                Text(message).font(.inter(.caption)).foregroundStyle(.red).offset(y: 20)
+                Text(message).font(.inter(.caption)).foregroundStyle(Theme.error).offset(y: 20)
             }
         }
     }

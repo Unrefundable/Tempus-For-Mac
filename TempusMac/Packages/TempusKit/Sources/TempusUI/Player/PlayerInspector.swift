@@ -55,7 +55,7 @@ struct QueuePanel: View {
                     Text("Playing Next").font(.inter(.headline))
                     Text(TrackFormatting.queueSummary(player.queue.items.map(\.song)))
                         .font(.inter(.caption))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.secondaryText)
                 }
                 Spacer()
                 Button("Shuffle Upcoming", tempus: .shuffle) { player.shuffleUpcoming() }
@@ -78,7 +78,7 @@ struct QueuePanel: View {
             }
             .padding(.horizontal, Theme.Spacing.medium)
             if let errorMessage {
-                Text(errorMessage).font(.inter(.caption)).foregroundStyle(.red).padding(
+                Text(errorMessage).font(.inter(.caption)).foregroundStyle(Theme.error).padding(
                     .horizontal,
                     Theme.Spacing.medium
                 )
@@ -155,11 +155,11 @@ private struct QueueRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title ?? "Untitled")
                     .font(.inter(.callout, weight: isCurrent ? .bold : .regular))
-                    .foregroundStyle(isCurrent ? Theme.accent : .primary)
+                    .foregroundStyle(isCurrent ? Theme.accent : Theme.primaryText)
                 Text([song.artist, song.duration.map { TrackFormatting.time(TimeInterval($0)) }]
                     .compactMap(\.self).joined(separator: "  •  "))
                     .font(.inter(.caption))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.secondaryText)
             }
             .lineLimit(1)
             Spacer(minLength: 0)

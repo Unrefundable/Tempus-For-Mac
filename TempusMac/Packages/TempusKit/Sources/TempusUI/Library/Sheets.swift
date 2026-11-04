@@ -78,7 +78,7 @@ struct AddToPlaylistSheet: View {
                         .frame(width: Theme.Size.trackCover, height: Theme.Size.trackCover)
                         Text(playlist.name ?? "Playlist")
                         Spacer()
-                        Text("\(playlist.songCount ?? 0)").foregroundStyle(.secondary)
+                        Text("\(playlist.songCount ?? 0)").foregroundStyle(Theme.secondaryText)
                     }
                     .contentShape(.rect)
                 }
@@ -86,7 +86,7 @@ struct AddToPlaylistSheet: View {
             }
             .frame(minHeight: 240)
             if let errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error)
             }
             HStack {
                 Button("New Playlist…") { sheets.present(.newPlaylist(songs)) }
@@ -135,10 +135,10 @@ struct NewPlaylistSheet: View {
             TextField("Name", text: $name).textFieldStyle(.roundedBorder).onSubmit(create)
             if !songs.isEmpty {
                 Text("With \(songs.count) \(songs.count == 1 ? "song" : "songs")").font(.inter(.callout))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.secondaryText)
             }
             if let errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error)
             }
             SheetButtons(
                 confirm: "Create",
@@ -176,13 +176,13 @@ struct TrackInfoSheet: View {
                     .frame(width: 72, height: 72)
                 VStack(alignment: .leading) {
                     Text(song.title ?? "Untitled").font(.inter(.headline))
-                    Text(song.artist ?? "").foregroundStyle(.secondary)
+                    Text(song.artist ?? "").foregroundStyle(Theme.secondaryText)
                 }
             }
             Grid(alignment: .leading, horizontalSpacing: Theme.Spacing.large, verticalSpacing: Theme.Spacing.xSmall) {
                 ForEach(Self.fields(of: song), id: \.0) { field in
                     GridRow {
-                        Text(field.0).foregroundStyle(.secondary)
+                        Text(field.0).foregroundStyle(Theme.secondaryText)
                         Text(field.1).textSelection(.enabled)
                     }
                 }
@@ -232,7 +232,7 @@ struct ShareSheet: View {
                     Text(link.absoluteString).textSelection(.enabled).lineLimit(1).truncationMode(.middle)
                     Button("Copy") { copy(link) }
                 }
-                Text("The link was copied.").font(.inter(.callout)).foregroundStyle(.secondary)
+                Text("The link was copied.").font(.inter(.callout)).foregroundStyle(Theme.secondaryText)
                 SheetButtons()
             } else {
                 TextField("Description (optional)", text: $note).textFieldStyle(.roundedBorder)
@@ -241,7 +241,7 @@ struct ShareSheet: View {
                     DatePicker("On", selection: $expiry, in: Date.now..., displayedComponents: .date)
                 }
                 if let errorMessage {
-                    Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
+                    Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error)
                 }
                 SheetButtons(confirm: "Create Link", isBusy: isBusy, action: create)
             }

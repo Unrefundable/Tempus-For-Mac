@@ -119,7 +119,7 @@ struct ServerEditorView: View {
                     .autocorrectionDisabled()
                 Text("One per line, e.g. CF-Access-Client-Id: value")
                     .font(.inter(.caption))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.secondaryText)
                 issueText(for: .customHeaders)
             }
         }
@@ -141,7 +141,7 @@ struct ServerEditorView: View {
     @ViewBuilder private var outcomeLabel: some View {
         if let outcome {
             Label(outcome.message, tempus: outcome.isSuccess ? .checkCircle : .error)
-                .foregroundStyle(outcome.isSuccess ? .green : .red)
+                .foregroundStyle(outcome.isSuccess ? Theme.success : Theme.error)
                 .padding(.horizontal, Theme.Spacing.small)
         }
     }
@@ -187,7 +187,7 @@ struct ServerEditorView: View {
     @ViewBuilder
     private func issueText(for field: ServerForm.Field) -> some View {
         if let issue, issue.field == field {
-            Text(issue.message).font(.inter(.caption)).foregroundStyle(.red)
+            Text(issue.message).font(.inter(.caption)).foregroundStyle(Theme.error)
         }
     }
 

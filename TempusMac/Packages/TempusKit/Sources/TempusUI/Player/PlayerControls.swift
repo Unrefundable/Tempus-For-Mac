@@ -21,7 +21,7 @@ struct TransportControls: View {
     var body: some View {
         HStack(spacing: large ? Theme.Spacing.xLarge : Theme.Spacing.large) {
             Button("Shuffle", tempus: .shuffle) { player.toggleShuffle() }
-                .foregroundStyle(player.queue.isShuffled ? Theme.accent : .secondary)
+                .foregroundStyle(player.queue.isShuffled ? Theme.accent : Theme.secondaryText)
                 .help(player.queue.isShuffled ? "Turn shuffle off" : "Turn shuffle on")
             Button("Previous", tempus: .skipPrevious) { player.previous() }
                 .disabled(player.queue.isEmpty)
@@ -36,7 +36,7 @@ struct TransportControls: View {
             Button("Repeat", tempus: player.queue.repeatMode == .one ? .repeatOne : .repeat) {
                 player.cycleRepeatMode()
             }
-            .foregroundStyle(player.queue.repeatMode == .off ? .secondary : Theme.accent)
+            .foregroundStyle(player.queue.repeatMode == .off ? Theme.secondaryText : Theme.accent)
             .help("Repeat: \(player.queue.repeatMode.rawValue)")
         }
         .labelStyle(.iconOnly)
@@ -84,7 +84,7 @@ struct SeekBar: View {
                 .frame(minWidth: 40, alignment: .leading)
         }
         .font(.inter(.caption).monospacedDigit())
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Theme.secondaryText)
     }
 }
 

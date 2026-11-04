@@ -24,7 +24,7 @@ struct CertificateField: View {
                 if let certificate {
                     Label(certificate.subject, systemImage: "checkmark.seal")
                 } else {
-                    Text("No certificate chosen").foregroundStyle(.secondary)
+                    Text("No certificate chosen").foregroundStyle(Theme.secondaryText)
                 }
                 Spacer()
                 Button(certificate == nil ? "Choose…" : "Replace…") { choosing = true }
@@ -33,7 +33,7 @@ struct CertificateField: View {
                 }
             }
             if let message {
-                Text(message).font(.inter(.caption)).foregroundStyle(.red)
+                Text(message).font(.inter(.caption)).foregroundStyle(Theme.error)
             }
         }
         .fileImporter(isPresented: $choosing, allowedContentTypes: [.pkcs12]) { result in

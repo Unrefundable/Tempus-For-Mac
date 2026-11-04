@@ -25,7 +25,7 @@ struct FavoritesView: View {
                     HStack {
                         VStack(alignment: .leading) {
                             Text("Favorites").font(.inter(.largeTitle, weight: .bold))
-                            Text(TrackFormatting.queueSummary(songs)).foregroundStyle(.secondary)
+                            Text(TrackFormatting.queueSummary(songs)).foregroundStyle(Theme.secondaryText)
                         }
                         Spacer()
                         PlayButtons { songs }

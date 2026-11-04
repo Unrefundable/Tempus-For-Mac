@@ -35,12 +35,25 @@ public struct RootView: View {
             }
         }
         .frame(minWidth: Theme.Size.windowMinWidth, minHeight: 560)
+        .background(model.phase == .signedIn ? nil : ThemedFill())
         // Another server's album and artist ids mean nothing here.
         .onChange(of: model.session?.profile.id) {
             navigator.path = []
             if navigator.selection != .nowPlaying {
                 navigator.selection = .home
             }
+        }
+    }
+}
+
+/// The theme's background behind the server list and the connecting screen. The signed-in window
+/// colors its sidebar and content itself.
+private struct ThemedFill: View {
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        if let color = theme.color(for: .background) {
+            Color(color).ignoresSafeArea()
         }
     }
 }
@@ -54,7 +67,7 @@ private struct ConnectingView: View {
         VStack(spacing: Theme.Spacing.large) {
             ProgressView()
             Text("Connecting to \(profile.name)…").font(.inter(.headline))
-            Text(profile.address.url.absoluteString).font(.inter(.subheadline)).foregroundStyle(.secondary)
+            Text(profile.address.url.absoluteString).font(.inter(.subheadline)).foregroundStyle(Theme.secondaryText)
             Button("Cancel") {
                 Task { await model.signOut() }
             }

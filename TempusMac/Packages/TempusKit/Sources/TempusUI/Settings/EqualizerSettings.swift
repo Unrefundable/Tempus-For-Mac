@@ -60,10 +60,10 @@ struct EqualizerPane: View {
                     LabeledContent("Profile", value: equalizer.parametricName ?? "None")
                     Button("Import ParametricEQ.txt…") { isImporting = true }
                     if let importError {
-                        Text(importError).font(.inter(.callout)).foregroundStyle(.red)
+                        Text(importError).font(.inter(.callout)).foregroundStyle(Theme.error)
                     }
                     Text("Download a headphone's “ParametricEQ.txt” from autoeq.app and import it here.")
-                        .font(.inter(.caption)).foregroundStyle(.secondary)
+                        .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
                 }
             }
             .formStyle(.grouped)

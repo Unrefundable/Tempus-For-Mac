@@ -5,8 +5,8 @@ import SecureStorage
 
 public extension AppModel {
     /// The app's model on real services: the database in Application Support, secrets in the
-    /// Keychain, covers in Caches, one streaming engine, and the system's Now Playing, network and
-    /// output-device monitors.
+    /// Keychain, covers in Caches, one streaming engine, the system's Now Playing (mirrored to
+    /// Discord when that's on), and the network and output-device monitors.
     static func live() throws -> AppModel {
         let files = FileManager.default
         let support = try files.url(
@@ -26,7 +26,11 @@ public extension AppModel {
             isOnConstrainedNetwork: { network.isConstrained },
             downloadsDirectory: support.appending(path: "Tempus/Downloads", directoryHint: .isDirectory)
         )
-        let model = AppModel(environment: environment, engine: StreamingEngine(), nowPlaying: SystemNowPlaying())
+        let nowPlaying = SystemNowPlaying()
+        let discord = DiscordPresence(settings: environment.settings)
+        nowPlaying.mirror = discord
+        let model = AppModel(environment: environment, engine: StreamingEngine(), nowPlaying: nowPlaying)
+        model.discord = discord
 
         // Pause when the output in use disappears (headphones unplugged, Bluetooth gone), as Music does.
         let output = OutputDeviceMonitor()

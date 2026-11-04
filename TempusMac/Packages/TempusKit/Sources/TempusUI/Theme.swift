@@ -1,3 +1,4 @@
+import AppCore
 import SwiftUI
 
 /// Design tokens. Corner radii follow upstream (12 dp artwork corners); text uses Tempus's
@@ -5,8 +6,18 @@ import SwiftUI
 public enum Theme {
     /// Where upstream uses `?attr/colorPrimary`. Upstream takes that from the wallpaper by default
     /// (`Preferences.isDynamicColorAccent()`); its `#6750A4` purple is only Material 3's fallback.
-    /// The Mac equivalent is the accent chosen in System Settings.
-    public static let accent = Color.accentColor
+    /// The Mac equivalent is the accent chosen in System Settings, unless the theme sets one.
+    public static let accent = ThemeStyle(role: .accent)
+    /// `.primary`, `.secondary` and `.tertiary` unless the theme sets them.
+    public static let primaryText = ThemeStyle(role: .primaryText)
+    public static let secondaryText = ThemeStyle(role: .secondaryText)
+    public static let tertiaryText = ThemeStyle(role: .tertiaryText)
+    /// The lyric line being sung.
+    public static let lyrics = ThemeStyle(role: .lyrics)
+    public static let error = ThemeStyle(role: .error)
+    public static let success = ThemeStyle(role: .success)
+    /// The player bar's material unless the theme sets a color.
+    public static let playerBar = ThemeStyle(role: .playerBar)
 
     public enum Radius {
         /// Small covers: player bar and queue rows.

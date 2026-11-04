@@ -13,6 +13,24 @@ public struct NowPlayingSnapshot: Sendable, Equatable {
     public let status: PlaybackStatus
     public let queueIndex: Int
     public let queueCount: Int
+
+    public init(
+        song: Song,
+        position: TimeInterval,
+        duration: TimeInterval,
+        rate: Double,
+        status: PlaybackStatus,
+        queueIndex: Int,
+        queueCount: Int
+    ) {
+        self.song = song
+        self.position = position
+        self.duration = duration
+        self.rate = rate
+        self.status = status
+        self.queueIndex = queueIndex
+        self.queueCount = queueCount
+    }
 }
 
 @MainActor
@@ -29,6 +47,9 @@ public final class SystemNowPlaying: NowPlayingPublishing {
     private weak var player: PlayerController?
     private var artwork: (songID: String, artwork: MPMediaItemArtwork)?
     private var lastSongID: String?
+
+    /// Also gets every snapshot published here, such as Discord's status. Its owner keeps it alive.
+    public weak var mirror: (any NowPlayingPublishing)?
 
     /// Registers the remote commands once. Create one for the life of the app and `attach` each
     /// player to it, since the command center keeps every handler ever added.
@@ -75,6 +96,7 @@ public final class SystemNowPlaying: NowPlayingPublishing {
     }
 
     public func publish(_ snapshot: NowPlayingSnapshot?) {
+        mirror?.publish(snapshot)
         guard let snapshot else {
             lastSongID = nil
             center.nowPlayingInfo = nil

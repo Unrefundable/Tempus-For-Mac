@@ -40,10 +40,10 @@ struct SidebarEditor: View {
             .toggleStyle(.checkbox)
             .disabled(!canToggle)
             if unavailable.contains(item) {
-                Text("Not on this server").font(.inter(.caption)).foregroundStyle(.secondary)
+                Text("Not on this server").font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
             }
             Spacer()
-            TempusIconImage(.dragHandle, accessibilityName: Text("Drag to reorder")).foregroundStyle(.tertiary)
+            TempusIconImage(.dragHandle, accessibilityName: Text("Drag to reorder")).foregroundStyle(Theme.tertiaryText)
         }
     }
 }
@@ -60,7 +60,7 @@ struct SidebarEditorSheet: View {
             Text("Edit Sidebar").font(.inter(.headline))
             Text("Choose what the sidebar shows. Drag items to change their order.")
                 .font(.inter(.callout))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.secondaryText)
             SidebarEditor(settings: settings, unavailable: unavailable)
                 .frame(minHeight: 420)
             HStack {

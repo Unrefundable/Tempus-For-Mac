@@ -2,9 +2,9 @@ import AppCore
 import DesignSystem
 import Playback
 import SwiftUI
-import UniformTypeIdentifiers
 
-/// The Settings window (⌘,): general, Home, sidebar, playback, equalizer, downloads, storage and updates.
+/// The Settings window (⌘,): general (with Discord and updates), appearance, Home and the sidebar,
+/// playback, the equalizer, and storage (with downloads).
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
     /// Kept here, not in the Storage tab, so a clear in progress survives switching tabs.
@@ -13,14 +13,13 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             Tab { GeneralSettings() } label: { Label("General", tempus: .settings) }
-            Tab { HomeSettings() } label: { Label("Home", tempus: .home) }
-            Tab { SidebarSettings() } label: { Label("Sidebar", systemImage: "sidebar.left") }
+            Tab { AppearanceSettings() } label: { Label("Appearance", systemImage: "paintpalette") }
+            Tab { LayoutSettings() } label: { Label("Home & Sidebar", tempus: .home) }
             Tab { PlaybackSettingsPane() } label: { Label("Playback", tempus: .play) }
             Tab { EqualizerPane() } label: { Label("Equalizer", tempus: .equalizer) }
-            Tab { DownloadSettings() } label: { Label("Downloads", tempus: .playForWork) }
             Tab { StorageSettings(viewer: caches) } label: { Label("Storage", systemImage: "internaldrive") }
-            Tab { UpdateSettings() } label: { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
         }
+        .themedBackground(.background)
         .frame(width: 560)
         .frame(minHeight: 420)
         .task {
@@ -28,101 +27,6 @@ struct SettingsView: View {
                 caches = CacheViewer(storage: model.cacheStorage)
             }
         }
-    }
-}
-
-private struct GeneralSettings: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        @Bindable var settings = model.settings
-        Form {
-            Section("Server") {
-                Toggle("Scrobble what I play", isOn: $settings.scrobbles)
-                Text("Tells your server what you play. It may pass it on to Last.fm or ListenBrainz if set up to.")
-                    .font(.inter(.caption)).foregroundStyle(.secondary)
-                Toggle("Sync the play queue with the server", isOn: $settings.syncsPlayQueue)
-                Text(
-                    "Saves your queue and position when you pause, change track and every 30 seconds, so another device can continue."
-                )
-                .font(.inter(.caption)).foregroundStyle(.secondary)
-                Toggle(
-                    "Remember where I stopped in podcasts, audiobooks and long tracks",
-                    isOn: $settings.savesBookmarks
-                )
-            }
-            Section("Display") {
-                Toggle("Show the track number in Now Playing", isOn: $settings.showsTrackNumber)
-            }
-            if let session = model.session, session.features.musicFolders.count > 1 {
-                Section("Music library") {
-                    Picker("Browse and search", selection: Binding(
-                        get: { session.musicFolderID },
-                        set: { settings.setMusicFolderID($0, server: session.profile.id) }
-                    )) {
-                        Text("All Libraries").tag(String?.none)
-                        ForEach(session.features.musicFolders) { folder in
-                            Text(folder.name ?? folder.id).tag(Optional(folder.id))
-                        }
-                    }
-                }
-            }
-        }
-        .formStyle(.grouped)
-    }
-}
-
-private struct HomeSettings: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        let layout = model.settings.homeLayout
-        Form {
-            Section("Shown, in this order") {
-                List {
-                    ForEach(layout.visible) { section in
-                        HStack {
-                            TempusIconImage(.dragHandle).foregroundStyle(.tertiary)
-                            Text(section.title)
-                            Spacer()
-                            Button("Hide") { model.settings.setHomeLayout(layout.hiding(section)) }
-                                .buttonStyle(.borderless)
-                        }
-                    }
-                    .onMove { model.settings.setHomeLayout(layout.moving(fromOffsets: $0, toOffset: $1)) }
-                }
-                .frame(minHeight: 220)
-            }
-            if !layout.hidden.isEmpty {
-                Section("Hidden") {
-                    ForEach(layout.hidden) { section in
-                        HStack {
-                            Text(section.title).foregroundStyle(.secondary)
-                            Spacer()
-                            Button("Show") { model.settings.setHomeLayout(layout.showing(section)) }
-                                .buttonStyle(.borderless)
-                        }
-                    }
-                }
-            }
-            Button("Restore Defaults") { model.settings.setHomeLayout(.default) }
-        }
-        .formStyle(.grouped)
-    }
-}
-
-private struct SidebarSettings: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.medium) {
-            Text("Choose what the sidebar shows. Drag items to change their order.")
-                .foregroundStyle(.secondary)
-            SidebarEditor(settings: model.settings, unavailable: model.session?.unavailableSidebarItems ?? [])
-                .frame(minHeight: 380)
-            Button("Restore Defaults") { model.settings.setSidebarLayout(.default) }
-        }
-        .padding(Theme.Spacing.xLarge)
     }
 }
 
@@ -182,7 +86,7 @@ private struct PlaybackSettingsPane: View {
                     Text(
                         "Changes apply from the next track. Opus and Vorbis are always converted, since macOS can't stream them."
                     )
-                    .font(.inter(.caption)).foregroundStyle(.secondary)
+                    .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
                 }
                 Section("ReplayGain") {
                     Picker("Mode", selection: Binding(
@@ -278,71 +182,5 @@ private struct QualityPicker: View {
                 .disabled(format == .original || format == .flac)
             }
         }
-    }
-}
-
-private struct UpdateSettings: View {
-    @Environment(AppUpdater.self) private var updater: AppUpdater?
-
-    var body: some View {
-        if let updater {
-            @Bindable var updater = updater
-            Form {
-                Section {
-                    Toggle("Download and install updates automatically", isOn: $updater.automaticallyUpdates)
-                    Text("Checks once a day. New versions install in the background when you quit Tempus.")
-                        .font(.inter(.caption)).foregroundStyle(.secondary)
-                    Toggle("Get beta updates", isOn: $updater.receivesBetaUpdates)
-                    Text("Betas are pre-releases of the next version. They come sooner, with rougher edges.")
-                        .font(.inter(.caption)).foregroundStyle(.secondary)
-                }
-                .disabled(!updater.isEnabled)
-                Section {
-                    LabeledContent("Version", value: AppUpdater.currentVersion)
-                    Button("Check for Updates Now") { updater.checkForUpdates() }
-                        .disabled(!updater.canCheckForUpdates)
-                    if !updater.isEnabled {
-                        Text("Development builds don't update themselves.")
-                            .font(.inter(.caption)).foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .formStyle(.grouped)
-        }
-    }
-}
-
-private struct DownloadSettings: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        @Bindable var settings = model.settings
-        Form {
-            Section("Downloading") {
-                Toggle(
-                    "Only on networks that aren't a hotspot or in Low Data Mode",
-                    isOn: $settings.downloadsOnlyUnconstrained
-                )
-                .onChange(of: settings.downloadsOnlyUnconstrained) { model.networkChanged() }
-                Toggle(
-                    "Download in the streaming quality instead of the original file",
-                    isOn: $settings.transcodesDownloads
-                )
-                Toggle("Keep starred tracks downloaded", isOn: $settings.syncsStarredTracks)
-                Text("Starred tracks and kept-synced playlists are checked each time you sign in.")
-                    .font(.inter(.caption)).foregroundStyle(.secondary)
-            }
-            if let session = model.session {
-                Section("On this Mac for \(session.profile.name)") {
-                    LabeledContent("Tracks", value: "\(session.downloads.records.count)")
-                    LabeledContent(
-                        "Size",
-                        value: ByteCountFormatter.string(fromByteCount: session.downloads.totalBytes, countStyle: .file)
-                    )
-                    RemoveDownloadsButton(downloads: session.downloads, serverName: session.profile.name)
-                }
-            }
-        }
-        .formStyle(.grouped)
     }
 }

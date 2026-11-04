@@ -87,7 +87,7 @@ private struct SyncedLyrics: View {
                         } label: {
                             Text(line.text.isEmpty ? "♪" : line.text)
                                 .font(.inter(.title3, weight: .bold))
-                                .foregroundStyle(index == current ? .primary : .tertiary)
+                                .foregroundStyle(index == current ? Theme.lyrics : Theme.tertiaryText)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity)
                         }
@@ -119,7 +119,7 @@ private struct LyricsNudgeBar: View {
                 .disabled(nudge >= AppSettings.lyricsNudgeLimit)
             Text(TrackFormatting.lyricsNudge(nudge))
                 .font(.inter(.caption))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.secondaryText)
                 .monospacedDigit()
                 .frame(minWidth: 90)
             Button("Show Lyrics Later", tempus: .add) { onChange(nudge - AppSettings.lyricsNudgeStep) }

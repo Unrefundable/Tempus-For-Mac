@@ -110,12 +110,12 @@ private struct TrackRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title ?? "Untitled")
                     .font(.inter(.body))
-                    .foregroundStyle(isCurrent ? Theme.accent : .primary)
+                    .foregroundStyle(isCurrent ? Theme.accent : Theme.primaryText)
                 let subtitle = TrackFormatting.listSubtitle(of: song, showingAlbum: subtitleShowsAlbum)
                 if !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.inter(.subheadline))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.secondaryText)
                 }
             }
             .lineLimit(1)
@@ -131,7 +131,7 @@ private struct TrackRow: View {
             if isCurrent {
                 nowPlaying.foregroundStyle(Theme.accent)
             } else {
-                Text(number).foregroundStyle(.secondary).monospacedDigit()
+                Text(number).foregroundStyle(Theme.secondaryText).monospacedDigit()
             }
         } else {
             ArtworkView(
@@ -165,7 +165,7 @@ private struct TrackRow: View {
             case .downloaded:
                 TempusIconImage(.download, accessibilityName: Text("Downloaded"))
                     .tempusIconSize(Theme.Size.trackMark)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.secondaryText)
             case .pending:
                 ProgressView().controlSize(.mini)
             case nil:

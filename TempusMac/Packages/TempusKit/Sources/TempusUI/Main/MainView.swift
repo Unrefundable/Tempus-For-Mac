@@ -86,6 +86,7 @@ struct MainView: View {
                         .transition(.move(edge: .trailing))
                 }
             }
+            .themedBackground(.background)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 PlayerBar(player: session.player, stars: session.stars, onTogglePanel: toggle) {
                     navigator.selection = .nowPlaying
@@ -182,6 +183,7 @@ struct MainView: View {
                 }
             }
         }
+        .themedBackground(.sidebar)
         .navigationSplitViewColumnWidth(min: Theme.Size.sidebarMinWidth, ideal: 220)
         .safeAreaInset(edge: .bottom) {
             VStack(alignment: .leading, spacing: 0) {
@@ -233,8 +235,8 @@ struct MainView: View {
             .font(.inter(.caption, weight: .medium))
             .frame(maxWidth: .infinity)
             .padding(.vertical, Theme.Spacing.xSmall)
-            .background(.red.opacity(0.15))
-            .foregroundStyle(.red)
+            .background(Theme.error.opacity(0.15))
+            .foregroundStyle(Theme.error)
         }
     }
 

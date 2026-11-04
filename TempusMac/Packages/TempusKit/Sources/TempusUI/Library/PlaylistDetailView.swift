@@ -34,7 +34,7 @@ struct PlaylistDetailView: View {
                         .fixedSize()
                 }
                 if let errorMessage {
-                    Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red).padding(
+                    Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error).padding(
                         .bottom,
                         Theme.Spacing.small
                     )
@@ -153,10 +153,10 @@ private struct PlaylistEditor: View {
             List {
                 ForEach(entries) { entry in
                     HStack {
-                        TempusIconImage(.dragHandle).foregroundStyle(.tertiary)
+                        TempusIconImage(.dragHandle).foregroundStyle(Theme.tertiaryText)
                         VStack(alignment: .leading) {
                             Text(entry.song.title ?? "Untitled")
-                            Text(entry.song.artist ?? "").font(.inter(.caption)).foregroundStyle(.secondary)
+                            Text(entry.song.artist ?? "").font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
                         }
                         Spacer()
                         Button("Remove", systemImage: "minus.circle.fill") {
@@ -164,7 +164,7 @@ private struct PlaylistEditor: View {
                         }
                         .labelStyle(.iconOnly)
                         .buttonStyle(.borderless)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.error)
                     }
                 }
                 .onMove { entries.move(fromOffsets: $0, toOffset: $1) }
@@ -172,7 +172,7 @@ private struct PlaylistEditor: View {
             }
             .frame(minHeight: 320)
             if let errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error)
             }
             HStack {
                 if isSaving {

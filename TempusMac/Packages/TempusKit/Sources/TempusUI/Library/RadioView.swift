@@ -44,7 +44,7 @@ struct RadioView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if let errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red).padding(Theme.Spacing.small)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error).padding(Theme.Spacing.small)
             }
         }
         .toolbar { Button("Add a New Radio", tempus: .add) { editing = .add } }
@@ -90,7 +90,7 @@ private struct StationRow: View {
                 .background(.quaternary, in: .rect(cornerRadius: Theme.Radius.artworkSmall))
             VStack(alignment: .leading) {
                 Text(station.name).font(.inter(.callout, weight: .medium))
-                Text(station.streamURL.host() ?? "").font(.inter(.caption)).foregroundStyle(.secondary)
+                Text(station.streamURL.host() ?? "").font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
             }
             if station.origin == .local {
                 Text("LOCAL").font(.inter(.caption2, weight: .bold)).padding(.horizontal, 4)
@@ -152,7 +152,7 @@ private struct RadioEditor: View {
                 lookup
             }
             if let errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error)
             }
             HStack {
                 Spacer()
@@ -198,7 +198,7 @@ private struct RadioEditor: View {
                                 Text(station.name)
                                 Text([station.country, station.codec, station.bitrate.map { "\($0) kbps" }]
                                     .compactMap(\.self).joined(separator: " • "))
-                                    .font(.inter(.caption)).foregroundStyle(.secondary)
+                                    .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
                             }
                             Spacer()
                             Button("Use") { form = station.form }

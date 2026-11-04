@@ -24,7 +24,7 @@ struct MenuBarPlayer: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(player.queue.current?.song.title ?? "Not Playing").font(.inter(.headline))
                         Text(player.queue.current?.song.artist ?? session.profile.name)
-                            .font(.inter(.callout)).foregroundStyle(.secondary)
+                            .font(.inter(.callout)).foregroundStyle(Theme.secondaryText)
                     }
                     .lineLimit(1)
                     Spacer(minLength: 0)
@@ -32,10 +32,10 @@ struct MenuBarPlayer: View {
                 SeekBar(player: player, compact: true)
                 TransportControls(player: player)
                 if let message = player.errorMessage {
-                    Text(message).font(.inter(.caption)).foregroundStyle(.red).lineLimit(2)
+                    Text(message).font(.inter(.caption)).foregroundStyle(Theme.error).lineLimit(2)
                 }
             } else {
-                Text("Not signed in").foregroundStyle(.secondary)
+                Text("Not signed in").foregroundStyle(Theme.secondaryText)
             }
             Divider()
             HStack {

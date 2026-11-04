@@ -46,7 +46,7 @@ struct EmptyState<Actions: View>: View {
         case let .icon(icon):
             TempusIconImage(icon)
                 .tempusIconSize(Self.iconSize)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.secondaryText)
         }
     }
 }

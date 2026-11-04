@@ -2,7 +2,8 @@ import AppCore
 import DesignSystem
 import SwiftUI
 
-/// Settings' Storage tab: the space each cache and the downloads take, and clearing them.
+/// Settings' Storage tab: the space each cache takes and clearing them, then how tracks download
+/// and the space downloads take.
 struct StorageSettings: View {
     /// Nil until the Settings window has made it.
     let viewer: CacheViewer?
@@ -44,7 +45,7 @@ private struct StorageForm: View {
                 Text(
                     "For every server. Tempus fetches what you clear again from your server when it's next needed."
                 )
-                .font(.inter(.caption)).foregroundStyle(.secondary)
+                .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
             }
             .confirmationDialog("Clear all caches?", isPresented: $confirmsClearAll) {
                 Button("Clear All Caches", role: .destructive) {
@@ -58,8 +59,10 @@ private struct StorageForm: View {
             }
 
             if let errorMessage = viewer.errorMessage {
-                Text(errorMessage).font(.inter(.callout)).foregroundStyle(.red)
+                Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error)
             }
+
+            DownloadingSection(settings: model.settings) { model.networkChanged() }
 
             if let session = model.session {
                 Section {
@@ -70,11 +73,38 @@ private struct StorageForm: View {
                     Text("Downloaded songs for \(session.profile.name)")
                 } footer: {
                     Text("Downloads aren't cache: they stay until you remove them.")
-                        .font(.inter(.caption)).foregroundStyle(.secondary)
+                        .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
                 }
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+/// When and how tracks download.
+private struct DownloadingSection: View {
+    @Bindable var settings: AppSettings
+    /// Downloads waiting on the network start or stop when the network rule changes.
+    let onNetworkRuleChange: () -> Void
+
+    var body: some View {
+        Section {
+            Toggle(
+                "Only on networks that aren't a hotspot or in Low Data Mode",
+                isOn: $settings.downloadsOnlyUnconstrained
+            )
+            .onChange(of: settings.downloadsOnlyUnconstrained) { onNetworkRuleChange() }
+            Toggle(
+                "Download in the streaming quality instead of the original file",
+                isOn: $settings.transcodesDownloads
+            )
+            Toggle("Keep starred tracks downloaded", isOn: $settings.syncsStarredTracks)
+        } header: {
+            Text("Downloading")
+        } footer: {
+            Text("Starred tracks and kept-synced playlists are checked each time you sign in.")
+                .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
+        }
     }
 }
 
