@@ -39,10 +39,10 @@
 Like Tempus, it doesn't rely on recommendation algorithms. Home is built from your own listening history, your favorites and a bit of randomness, and plays can be scrobbled to Last.fm or ListenBrainz through your server. Your music and account stay between your Mac and your server: there are no analytics or third-party accounts, and passwords are kept in the macOS Keychain.
 
 > [!NOTE]
-> This is an unofficial, community port and isn't affiliated with the Tempus project. Please report issues with the Mac app [here](https://github.com/Unrefundable/Tempus-For-Mac/issues), not upstream.
+> This is an unofficial, community port and isn't affiliated with the Tempus project, which can be found [here](https://github.com/eddyizm/tempus).
 
 > [!IMPORTANT]
-> Tempus for macOS is in **beta**. It's ready for everyday listening, but expect rough edges until 1.0.
+> Tempus for macOS is in **beta**. Expect bugs
 
 ## Features
 
