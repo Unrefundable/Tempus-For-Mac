@@ -14,7 +14,9 @@ struct SearchView: View {
     @FocusState private var isFocused: Bool
 
     var body: some View {
-        Group {
+        // A container, not a `Group`: a group hands its modifiers to each branch, so every switch
+        // between recents, loading and results built a new search field and lost the typing focus.
+        ZStack {
             if text.trimmingCharacters(in: .whitespaces).isEmpty {
                 recentList
             } else if let result {

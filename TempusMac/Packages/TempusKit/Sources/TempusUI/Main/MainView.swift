@@ -1,4 +1,5 @@
 import AppCore
+import AppKit
 import DesignSystem
 import SwiftUI
 
@@ -123,6 +124,8 @@ struct MainView: View {
             }
         }
         .onKeyPress(.space) {
+            // A text field inside the window (search, a playlist name) gets its space.
+            guard !Self.isEditingText else { return .ignored }
             session.player.togglePlayPause()
             return .handled
         }
@@ -159,6 +162,12 @@ struct MainView: View {
                 navigator.selection = .home
             }
         }
+    }
+
+    /// Whether the key window is typing into a text field, whose field editor is an `NSTextView`.
+    private static var isEditingText: Bool {
+        guard let editor = NSApp.keyWindow?.firstResponder as? NSTextView else { return false }
+        return editor.isEditable
     }
 
     /// The items `section` shows: the ones left on in Edit Sidebar that this server has.

@@ -62,6 +62,36 @@ struct NowPlayingTests {
         #expect(stream.headers == ["CF-Access-Client-Id": "abc"])
     }
 
+    @Test("Each status maps to the system's playback state", arguments: [
+        (PlaybackStatus.playing, MPNowPlayingPlaybackState.playing),
+        (.buffering, .playing),
+        (.paused, .paused),
+        (.stopped, .stopped),
+    ])
+    func playbackState(status: PlaybackStatus, expected: MPNowPlayingPlaybackState) {
+        #expect(SystemNowPlaying.playbackState(for: status) == expected)
+    }
+
+    @Test("A queue restored paused claims the media keys once, by reporting playing first")
+    func claimsMediaKeysOnce() {
+        #expect(SystemNowPlaying.claimsMediaKeys(reporting: .paused, hasClaimed: false))
+        #expect(!SystemNowPlaying.claimsMediaKeys(reporting: .paused, hasClaimed: true))
+        // Really playing claims them anyway, and nothing is left to claim with nothing queued.
+        #expect(!SystemNowPlaying.claimsMediaKeys(reporting: .playing, hasClaimed: false))
+        #expect(!SystemNowPlaying.claimsMediaKeys(reporting: .stopped, hasClaimed: false))
+    }
+
+    @Test("Only playing or the claim itself counts as having claimed the media keys", arguments: [
+        (PlaybackStatus.stopped, false),
+        (.paused, true),
+        (.playing, true),
+        (.buffering, true),
+    ])
+    func claimSticks(status: PlaybackStatus, claimed: Bool) {
+        #expect(SystemNowPlaying.hasClaimedMediaKeys(after: status, hadClaimed: false) == claimed)
+        #expect(SystemNowPlaying.hasClaimedMediaKeys(after: status, hadClaimed: true))
+    }
+
     @Test("The system dictionary carries the track's details and timing")
     func dictionary() throws {
         let snapshot = try NowPlayingSnapshot(

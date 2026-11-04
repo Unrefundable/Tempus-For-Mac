@@ -47,6 +47,10 @@ public final class SystemNowPlaying: NowPlayingPublishing {
     private weak var player: PlayerController?
     private var artwork: (songID: String, artwork: MPMediaItemArtwork)?
     private var lastSongID: String?
+    /// Whether this player has told the system it's playing, which wins it the media keys.
+    private var mediaKeysClaimed = false
+    private var reportedState = MPNowPlayingPlaybackState.stopped
+    private var claimRelease: Task<Void, Never>?
 
     /// Also gets every snapshot published here, such as Discord's status. Its owner keeps it alive.
     public weak var mirror: (any NowPlayingPublishing)?
@@ -66,6 +70,8 @@ public final class SystemNowPlaying: NowPlayingPublishing {
     public func attach(to player: PlayerController) {
         self.player?.setNowPlaying(nil)
         artwork = nil // song ids repeat across servers
+        endClaim()
+        mediaKeysClaimed = false
         self.player = player
         player.setNowPlaying(self)
     }
@@ -75,6 +81,7 @@ public final class SystemNowPlaying: NowPlayingPublishing {
         player?.setNowPlaying(nil)
         player = nil
         artwork = nil
+        endClaim()
         publish(nil)
     }
 
@@ -100,7 +107,7 @@ public final class SystemNowPlaying: NowPlayingPublishing {
         guard let snapshot else {
             lastSongID = nil
             center.nowPlayingInfo = nil
-            center.playbackState = .stopped
+            report(.stopped, claiming: false)
             return
         }
         lastSongID = snapshot.song.id
@@ -109,12 +116,58 @@ public final class SystemNowPlaying: NowPlayingPublishing {
             info[MPMediaItemPropertyArtwork] = artwork.artwork
         }
         center.nowPlayingInfo = info
-        center.playbackState = switch snapshot.status {
+        report(Self.playbackState(for: snapshot.status), claiming: Self.claimsMediaKeys(
+            reporting: snapshot.status,
+            hasClaimed: mediaKeysClaimed
+        ))
+        mediaKeysClaimed = Self.hasClaimedMediaKeys(after: snapshot.status, hadClaimed: mediaKeysClaimed)
+    }
+
+    static func playbackState(for status: PlaybackStatus) -> MPNowPlayingPlaybackState {
+        switch status {
         case .playing, .buffering: .playing
         case .paused: .paused
         case .stopped: .stopped
         }
     }
+
+    /// macOS sends the media keys to the app that last reported playing. A queue restored paused
+    /// at launch never has, so the keys went to another app (or opened Music) until Tempus was
+    /// clicked. Its first report says playing for a moment to claim them.
+    static func claimsMediaKeys(reporting status: PlaybackStatus, hasClaimed: Bool) -> Bool {
+        !hasClaimed && status == .paused
+    }
+
+    /// A stopped report (a queue still loading) leaves the claim for the paused one that follows.
+    static func hasClaimedMediaKeys(after status: PlaybackStatus, hadClaimed: Bool) -> Bool {
+        hadClaimed || status != .stopped
+    }
+
+    private func report(_ state: MPNowPlayingPlaybackState, claiming: Bool) {
+        reportedState = state
+        // While a claim is held, later reports wait for it to end, so the system sees playing.
+        guard claimRelease == nil else { return }
+        guard claiming else {
+            center.playbackState = state
+            return
+        }
+        center.playbackState = .playing
+        claimRelease = Task { [weak self] in
+            try? await Task.sleep(for: Self.claimHold)
+            guard !Task.isCancelled else { return }
+            self?.endClaim()
+        }
+    }
+
+    /// Ends any claim early or on time, and shows the state reported since.
+    private func endClaim() {
+        guard let claim = claimRelease else { return }
+        claim.cancel()
+        claimRelease = nil
+        center.playbackState = reportedState
+    }
+
+    private static let claimHold = Duration.milliseconds(300)
 
     static func info(for snapshot: NowPlayingSnapshot) -> [String: Any] {
         let song = snapshot.song
