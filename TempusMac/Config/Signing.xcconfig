@@ -1,0 +1,14 @@
+// Code signing for the Tempus app target.
+//
+// Builds are signed ad hoc by default, so anyone can build and run the app without an Apple
+// developer account. To sign Debug builds with your own Apple Development certificate (which
+// keeps Keychain "Always Allow" choices across rebuilds), create Signing.local.xcconfig next to
+// this file. It is ignored by git:
+//
+//     CODE_SIGN_IDENTITY[config=Debug] = Apple Development
+//     DEVELOPMENT_TEAM = <your team ID>
+
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+#include? "Signing.local.xcconfig"

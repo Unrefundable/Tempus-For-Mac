@@ -17,8 +17,19 @@
 set -euo pipefail
 
 REPO="Unrefundable/Tempus-For-Mac"
-TEAM="TEAMID"
 IDENTITY="Apple Development"
+# The signing team comes from TEMPUS_TEAM_ID or, failing that, the DEVELOPMENT_TEAM line in
+# TempusMac/Config/Signing.local.xcconfig, which git ignores. Keep it the same across releases:
+# the app's container and Keychain items follow the signature.
+LOCAL_SIGNING="$(cd "$(dirname "$0")/.." && pwd)/TempusMac/Config/Signing.local.xcconfig"
+TEAM=${TEMPUS_TEAM_ID:-}
+if [[ -z $TEAM && -f $LOCAL_SIGNING ]]; then
+    TEAM=$(sed -n 's/^[[:space:]]*DEVELOPMENT_TEAM[[:space:]]*=[[:space:]]*\([A-Z0-9]*\).*/\1/p' "$LOCAL_SIGNING" | tail -1)
+fi
+[[ -n $TEAM ]] || {
+    echo "Set TEMPUS_TEAM_ID, or DEVELOPMENT_TEAM in TempusMac/Config/Signing.local.xcconfig." >&2
+    exit 1
+}
 
 usage() {
     echo "Usage: scripts/release.sh <version> [--notes-file <file>]" >&2

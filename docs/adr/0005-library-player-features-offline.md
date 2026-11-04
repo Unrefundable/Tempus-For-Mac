@@ -65,7 +65,7 @@ Phases 5–9 turn the Phase 4 shell into the whole app: Home and the library, de
 - **Limitation:** App Transport Security refuses public `http` streams, and many directory entries are `http`. The app says so when such a station is played. Allowing arbitrary loads for every host is not worth weakening ATS for the whole app.
 
 ### 8. A stream that never starts gives up
-- AudioStreaming retries a dead stream forever (PLAN.md lists it under Engine).
+- AudioStreaming retries a dead stream forever.
 - `PlayerController` now stops an entry that hasn't started within 20 s and shows "The stream didn't start…".
 
 ### 9. Mac extras
@@ -77,7 +77,7 @@ Phases 5–9 turn the Phase 4 shell into the whole app: Home and the library, de
 
 ### 10. Debug builds are signed with the developer's certificate
 - Ad hoc signatures change on every build, so macOS asked again for the server's Keychain item each time.
-- Debug builds now use "Apple Development" for team TEAMID, which gives a stable designated requirement. Release stays ad hoc until Developer ID signing exists (Phase 10).
+- Debug builds can be signed with an "Apple Development" certificate through the git-ignored `TempusMac/Config/Signing.local.xcconfig`, which gives a stable designated requirement. Release stays ad hoc until Developer ID signing exists (Phase 10).
 - Builds from the command line pass `-disableAutomaticPackageResolution -skipPackageUpdates`, so they never contact GitHub. Package resolution through git's credential helper was what asked for a github.com Keychain item.
 
 ## Consequences

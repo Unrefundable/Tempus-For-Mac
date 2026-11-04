@@ -11,9 +11,6 @@ DerivedData/
 .build/
 .swiftpm/
 
-# Generated spike media
-TempusMac/Spike/Media/
-
 # Generated audio for scripts/mock-subsonic.py
 TempusMac/Packages/TempusKit/scripts/.mock-media/
 
@@ -21,3 +18,11 @@ TempusMac/Packages/TempusKit/scripts/.mock-media/
 /build/
 # Exported Sparkle signing keys (generate_keys -x) must never be committed
 *.sparkle-key*
+
+# Local code-signing settings (your Apple team ID)
+TempusMac/Config/Signing.local.xcconfig
+
+# Local development tooling and reference checkouts
+CLAUDE.md
+.claude/
+reference/
