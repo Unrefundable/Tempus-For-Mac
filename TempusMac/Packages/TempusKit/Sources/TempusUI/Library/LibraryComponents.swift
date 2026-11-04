@@ -310,6 +310,8 @@ struct PlayButtons: View {
     var body: some View {
         Button("Play", tempus: .play) { start(shuffled: false) }
             .buttonStyle(.borderedProminent)
+            // The button is filled with the accent, which is also the icons' color.
+            .tempusIconKeepsForeground()
         Button("Shuffle", tempus: .shuffle) { start(shuffled: true) }
             .buttonStyle(.bordered)
             .alert("Couldn't play", isPresented: .constant(errorMessage != nil)) {

@@ -62,8 +62,8 @@ public struct ThemeColor: Sendable, Hashable {
 
 /// Every color Tempus draws that the Appearance settings can change.
 public enum ThemeColorRole: String, CaseIterable, Sendable, Identifiable {
+    /// Also the icons' color: one choice tints buttons, toggles and icons alike.
     case accent
-    case icons
     case background
     case sidebar
     case playerBar
@@ -80,8 +80,7 @@ public enum ThemeColorRole: String, CaseIterable, Sendable, Identifiable {
 
     public var title: String {
         switch self {
-        case .accent: "Accent"
-        case .icons: "Icons"
+        case .accent: "Accent and icons"
         case .background: "Background"
         case .sidebar: "Sidebar"
         case .playerBar: "Player bar"
@@ -96,8 +95,7 @@ public enum ThemeColorRole: String, CaseIterable, Sendable, Identifiable {
 
     public var summary: String {
         switch self {
-        case .accent: "Buttons, toggles, the playing track and stars"
-        case .icons: "Sidebar, player controls, toolbar and other icons"
+        case .accent: "Buttons, toggles, the playing track, stars and icons"
         case .background: "Behind the library, lists and Now Playing"
         case .sidebar: "Behind the sidebar"
         case .playerBar: "Behind the player along the bottom"
@@ -267,6 +265,10 @@ extension AppTheme: Codable {
         case preset, appearance, colors
     }
 
+    /// Icons once had a color of their own. A theme saved then keeps it as the accent, unless it
+    /// also set an accent.
+    private static let legacyIconsKey = "icons"
+
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let preset = try (container.decodeIfPresent(String.self, forKey: .preset))
@@ -275,6 +277,9 @@ extension AppTheme: Codable {
             .flatMap(ThemeAppearance.init(rawValue:)) ?? preset.appearance
         let stored = try container.decodeIfPresent([String: String].self, forKey: .colors) ?? [:]
         var colors: [ThemeColorRole: ThemeColor] = [:]
+        if let hex = stored[Self.legacyIconsKey], let color = ThemeColor(hex: hex) {
+            colors[.accent] = color
+        }
         for (key, hex) in stored {
             if let role = ThemeColorRole(rawValue: key), let color = ThemeColor(hex: hex) {
                 colors[role] = color

@@ -135,12 +135,30 @@ struct AppThemeTests {
     }
 
     @Test
-    func `icons have their own color, unset by default`() throws {
+    func `accent and icons are one color, unset by default`() throws {
         let red = try #require(ThemeColor(hex: "#FF3B30"))
-        #expect(AppTheme.default.color(for: .icons, in: .dark) == nil)
-        let theme = AppTheme.default.setting(.icons, to: red)
-        #expect(theme.color(for: .icons, in: .light) == red)
+        #expect(!ThemeColorRole.allCases.map(\.rawValue).contains("icons"))
+        #expect(AppTheme.default.color(for: .accent, in: .dark) == nil)
+        let theme = AppTheme.default.setting(.accent, to: red)
+        #expect(theme.color(for: .accent, in: .light) == red)
         #expect(try JSONDecoder().decode(AppTheme.self, from: JSONEncoder().encode(theme)) == theme)
+    }
+
+    @Test
+    func `a saved icon color becomes the accent when the theme had none`() throws {
+        let json = Data(##"{"preset":"system","appearance":"system","colors":{"icons":"#FF3B30"}}"##.utf8)
+        let theme = try JSONDecoder().decode(AppTheme.self, from: json)
+        #expect(theme.color(for: .accent, in: .light) == ThemeColor(hex: "#FF3B30"))
+    }
+
+    @Test
+    func `a saved accent wins over a saved icon color`() throws {
+        let json = Data(##"""
+        {"preset":"system","appearance":"system","colors":{"icons":"#FF3B30","accent":"#123456"}}
+        """##.utf8)
+        let theme = try JSONDecoder().decode(AppTheme.self, from: json)
+        #expect(theme.color(for: .accent, in: .dark) == ThemeColor(hex: "#123456"))
+        #expect(theme.customColors.count == 1)
     }
 
     /// WCAG's minimum for body text.

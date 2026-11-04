@@ -94,6 +94,25 @@ struct MainView: View {
                 }
             }
             .animation(.snappy, value: showsInspector)
+            // On the detail column, so these come first in its part of the toolbar and each
+            // screen's own buttons follow them.
+            .toolbar {
+                // With no title showing, the buttons would sit beside the sidebar. This keeps them
+                // at the top right.
+                if #available(macOS 26, *) {
+                    ToolbarSpacer(.flexible)
+                } else {
+                    ToolbarItem { Spacer() }
+                }
+                ToolbarItem {
+                    Button { showsInspector.toggle() } label: {
+                        Label { Text("Lyrics and Queue") } icon: {
+                            Image(systemName: "sidebar.trailing").tempusIconTinted()
+                        }
+                    }
+                    .help("Show or hide lyrics and the queue")
+                }
+            }
         }
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -102,19 +121,15 @@ struct MainView: View {
                         .help("Back")
                 }
             }
-            ToolbarItem {
-                Button { showsInspector.toggle() } label: {
-                    Label { Text("Lyrics and Queue") } icon: { Image(systemName: "sidebar.trailing").tempusIconTinted()
-                    }
-                }
-                .help("Show or hide lyrics and the queue")
-            }
         }
         .onKeyPress(.space) {
             session.player.togglePlayPause()
             return .handled
         }
+        // The window keeps its title for the Window menu and Mission Control, but the toolbar
+        // doesn't show it: the sidebar already says where you are. Only the buttons remain.
         .navigationTitle(navigator.selection.title)
+        .toolbar(removing: .title)
         .environment(session)
         .environment(sheets)
         .sheet(item: $sheets.current) { sheet in
