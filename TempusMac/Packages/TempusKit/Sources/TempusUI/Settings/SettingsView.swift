@@ -4,9 +4,11 @@ import Playback
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The Settings window (⌘,): general, Home, sidebar, playback, equalizer, downloads and updates.
+/// The Settings window (⌘,): general, Home, sidebar, playback, equalizer, downloads, storage and updates.
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
+    /// Kept here, not in the Storage tab, so a clear in progress survives switching tabs.
+    @State private var caches: CacheViewer?
 
     var body: some View {
         TabView {
@@ -16,10 +18,16 @@ struct SettingsView: View {
             Tab { PlaybackSettingsPane() } label: { Label("Playback", tempus: .play) }
             Tab { EqualizerPane() } label: { Label("Equalizer", tempus: .equalizer) }
             Tab { DownloadSettings() } label: { Label("Downloads", tempus: .playForWork) }
+            Tab { StorageSettings(viewer: caches) } label: { Label("Storage", systemImage: "internaldrive") }
             Tab { UpdateSettings() } label: { Label("Updates", systemImage: "arrow.triangle.2.circlepath") }
         }
         .frame(width: 560)
         .frame(minHeight: 420)
+        .task {
+            if caches == nil {
+                caches = CacheViewer(storage: model.cacheStorage)
+            }
+        }
     }
 }
 
@@ -306,7 +314,6 @@ private struct UpdateSettings: View {
 
 private struct DownloadSettings: View {
     @Environment(AppModel.self) private var model
-    @State private var confirmsRemoval = false
 
     var body: some View {
         @Bindable var settings = model.settings
@@ -332,14 +339,7 @@ private struct DownloadSettings: View {
                         "Size",
                         value: ByteCountFormatter.string(fromByteCount: session.downloads.totalBytes, countStyle: .file)
                     )
-                    Button("Remove All Downloads…", role: .destructive) { confirmsRemoval = true }
-                        .disabled(session.downloads.records.isEmpty)
-                }
-                .confirmationDialog(
-                    "Remove every download for \(session.profile.name)?",
-                    isPresented: $confirmsRemoval
-                ) {
-                    Button("Remove All", role: .destructive) { Task { await session.downloads.deleteAll() } }
+                    RemoveDownloadsButton(downloads: session.downloads, serverName: session.profile.name)
                 }
             }
         }

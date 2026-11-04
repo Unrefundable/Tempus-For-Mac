@@ -38,6 +38,23 @@ public struct AppDatabase: Sendable {
         return configuration
     }
 
+    /// Free space below this isn't worth rewriting the whole file for.
+    static let compactionThreshold: Int64 = 1024 * 1024
+
+    /// Gives space freed by clearing caches back to the disk: rebuilds the file without its free
+    /// pages, then checkpoints and truncates the write-ahead log the rebuild went into. Skipped
+    /// when little is free, since it rewrites the whole file and holds the writer meanwhile.
+    public func compact() async throws {
+        try await writer.writeWithoutTransaction { db in
+            let freePages = try Int64.fetchOne(db, sql: "PRAGMA freelist_count") ?? 0
+            let pageSize = try Int64.fetchOne(db, sql: "PRAGMA page_size") ?? 0
+            guard freePages * pageSize >= Self.compactionThreshold else { return }
+            try db.execute(sql: "VACUUM")
+            // Harmless outside WAL mode (in-memory databases).
+            try db.execute(sql: "PRAGMA wal_checkpoint(TRUNCATE)")
+        }
+    }
+
     func appliedMigrations() throws -> [String] {
         try writer.read { try Self.migrator.appliedMigrations($0) }
     }
