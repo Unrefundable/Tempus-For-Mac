@@ -47,6 +47,7 @@ struct EmptyState<Actions: View>: View {
             TempusIconImage(icon)
                 .tempusIconSize(Self.iconSize)
                 .foregroundStyle(Theme.secondaryText)
+                .tempusIconKeepsForeground()
         }
     }
 }

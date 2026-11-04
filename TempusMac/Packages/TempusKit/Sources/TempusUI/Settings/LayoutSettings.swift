@@ -32,7 +32,7 @@ private struct HomeSections: View {
             List {
                 ForEach(layout.visible) { section in
                     HStack {
-                        TempusIconImage(.dragHandle).foregroundStyle(Theme.tertiaryText)
+                        TempusIconImage(.dragHandle).foregroundStyle(Theme.tertiaryText).tempusIconKeepsForeground()
                         Text(section.title)
                         Spacer()
                         Button("Hide") { settings.setHomeLayout(layout.hiding(section)) }

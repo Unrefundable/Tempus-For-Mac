@@ -31,8 +31,11 @@ struct AppearanceSettings: View {
             } header: {
                 Text("Theme")
             } footer: {
-                Text("Choosing a theme replaces the colors below.")
-                    .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
+                Text("""
+                Choosing a theme replaces the colors below. Each theme has light and dark colors, so it \
+                stays readable whichever appearance you pick.
+                """)
+                .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
             }
             Section {
                 ForEach(ThemeColorRole.allCases) { role in
@@ -97,8 +100,7 @@ private struct PresetCard: View {
     private var scheme: ColorScheme {
         switch preset.appearance {
         case .system: colorScheme
-        case .light: .light
-        case .dark: .dark
+        case .light, .dark: preset.variant == .light ? .light : .dark
         }
     }
 }
@@ -106,6 +108,8 @@ private struct PresetCard: View {
 /// A sidebar, two lines of text and an accent dot, in `theme`'s colors or the system's.
 private struct ThemePreview: View {
     let theme: AppTheme
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: 0) {
@@ -127,7 +131,7 @@ private struct ThemePreview: View {
     }
 
     private func color(_ role: ThemeColorRole) -> Color {
-        theme.color(for: role).map(Color.init) ?? .system(role)
+        theme.color(for: role, in: ThemeVariant(colorScheme)).map(Color.init) ?? .system(role)
     }
 }
 
@@ -144,13 +148,14 @@ private struct ThemeColorRow: View {
     /// The color being dragged in the color panel, saved once the dragging pauses.
     @State private var picking: ThemeColor?
     @State private var pickTask: Task<Void, Never>?
+    @Environment(\.colorScheme) private var colorScheme
 
     private static let fieldWidth: CGFloat = 104
     /// How long the color panel must rest before its color is saved and the app redrawn.
     private static let pickDelay = Duration.milliseconds(200)
 
     var body: some View {
-        let current = theme.color(for: role)
+        let current = currentColor
         let isCustom = theme.customColors[role] != nil
         LabeledContent {
             HStack(spacing: Theme.Spacing.small) {
@@ -210,14 +215,19 @@ private struct ThemeColorRow: View {
                 return
             }
             picking = nil
-            if color != theme.color(for: role) {
+            if color != currentColor {
                 onChange(color)
             }
         }
     }
 
+    /// The color showing now: the user's, else the preset's for the appearance in use.
+    private var currentColor: ThemeColor? {
+        theme.color(for: role, in: ThemeVariant(colorScheme))
+    }
+
     private func showCurrent() {
-        draft = theme.color(for: role)?.hex ?? ""
+        draft = currentColor?.hex ?? ""
         isInvalid = false
     }
 
@@ -236,7 +246,7 @@ private struct ThemeColorRow: View {
         }
         isInvalid = false
         draft = color.hex
-        if color != theme.color(for: role) {
+        if color != currentColor {
             onChange(color)
         }
     }

@@ -1,10 +1,24 @@
 import AppCore
 import AppKit
+import DesignSystem
 import SwiftUI
 
 public extension EnvironmentValues {
     /// The look chosen in Settings › Appearance.
     @Entry var appTheme: AppTheme = .default
+}
+
+extension EnvironmentValues {
+    /// The theme's color for `role` in the appearance showing, or nil to use the system's.
+    func themeColor(_ role: ThemeColorRole) -> ThemeColor? {
+        appTheme.color(for: role, in: ThemeVariant(colorScheme))
+    }
+}
+
+extension ThemeVariant {
+    init(_ scheme: ColorScheme) {
+        self = scheme == .dark ? .dark : .light
+    }
 }
 
 extension Color {
@@ -17,6 +31,7 @@ extension Color {
     static func system(_ role: ThemeColorRole) -> Color {
         switch role {
         case .accent: .accentColor
+        case .icons: .primary
         case .background: Color(nsColor: .textBackgroundColor)
         case .sidebar: Color(nsColor: .underPageBackgroundColor)
         case .playerBar: Color(nsColor: .windowBackgroundColor)
@@ -48,11 +63,13 @@ public struct ThemeStyle: ShapeStyle {
     let role: ThemeColorRole
 
     public func resolve(in environment: EnvironmentValues) -> AnyShapeStyle {
-        if let color = environment.appTheme.color(for: role) {
+        if let color = environment.themeColor(role) {
             return AnyShapeStyle(Color(color))
         }
         return switch role {
         case .accent: AnyShapeStyle(Color.accentColor)
+        // Icons take the foreground style when unset; see `tempusIconColor`.
+        case .icons: AnyShapeStyle(.foreground)
         // Backgrounds are only drawn when set; see `themedBackground(_:)`.
         case .background, .sidebar: AnyShapeStyle(Color.clear)
         case .playerBar: AnyShapeStyle(.bar)
@@ -78,15 +95,25 @@ extension View {
     func themedBackground(_ role: ThemeColorRole) -> some View {
         modifier(ThemedBackground(role: role))
     }
+
+    /// Paints the window's toolbar in the theme's background color, when it sets one. AppKit
+    /// otherwise draws the toolbar's own grey whenever no scroll view sits under it (an empty
+    /// state, a header above a table, Now Playing), so the bar changed color from screen to screen.
+    func themedToolbar() -> some View {
+        modifier(ThemedToolbar())
+    }
 }
 
 private struct AppThemeModifier: ViewModifier {
     let theme: AppTheme
+    @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
+        let variant = ThemeVariant(colorScheme)
         content
             .foregroundStyle(ThemeStyle(role: .primaryText))
-            .tint(theme.color(for: .accent).map(Color.init))
+            .tint(theme.color(for: .accent, in: variant).map(Color.init))
+            .tempusIconColor(theme.color(for: .icons, in: variant).map(Color.init))
             .environment(\.appTheme, theme)
             .onChange(of: theme.appearance, initial: true) { _, appearance in
                 appearance.apply()
@@ -94,10 +121,10 @@ private struct AppThemeModifier: ViewModifier {
     }
 }
 
+@MainActor
 extension ThemeAppearance {
     /// Sets light or dark on the app rather than each window, so menus, the menu bar player and
     /// Settings follow too.
-    @MainActor
     func apply() {
         NSApp.appearance = switch self {
         case .system: nil
@@ -107,12 +134,25 @@ extension ThemeAppearance {
     }
 }
 
+private struct ThemedToolbar: ViewModifier {
+    @Environment(\.appTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        let color = theme.color(for: .background, in: ThemeVariant(colorScheme))
+        content
+            .toolbarBackground(color.map(Color.init) ?? .clear, for: .windowToolbar)
+            .toolbarBackgroundVisibility(color == nil ? .automatic : .visible, for: .windowToolbar)
+    }
+}
+
 private struct ThemedBackground: ViewModifier {
     let role: ThemeColorRole
     @Environment(\.appTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
-        let color = theme.color(for: role)
+        let color = theme.color(for: role, in: ThemeVariant(colorScheme))
         content
             .scrollContentBackground(color == nil ? .automatic : .hidden)
             .background(color.map(Color.init) ?? .clear)

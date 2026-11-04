@@ -166,6 +166,7 @@ private struct TrackRow: View {
                 TempusIconImage(.download, accessibilityName: Text("Downloaded"))
                     .tempusIconSize(Theme.Size.trackMark)
                     .foregroundStyle(Theme.secondaryText)
+                    .tempusIconKeepsForeground()
             case .pending:
                 ProgressView().controlSize(.mini)
             case nil:

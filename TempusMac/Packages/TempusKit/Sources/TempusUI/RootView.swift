@@ -50,9 +50,10 @@ public struct RootView: View {
 /// colors its sidebar and content itself.
 private struct ThemedFill: View {
     @Environment(\.appTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        if let color = theme.color(for: .background) {
+        if let color = theme.color(for: .background, in: ThemeVariant(colorScheme)) {
             Color(color).ignoresSafeArea()
         }
     }

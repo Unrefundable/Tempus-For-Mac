@@ -22,8 +22,6 @@ struct HomeView: View {
         .toolbar {
             Button("Refresh", tempus: .refresh) { revision += 1 }
                 .help("Reload Home")
-            SettingsLink { Label("Customize Home", systemImage: "slider.horizontal.3") }
-                .help("Choose and order Home's sections in Settings")
         }
         .overlay {
             if session.settings.homeLayout.visible.isEmpty {

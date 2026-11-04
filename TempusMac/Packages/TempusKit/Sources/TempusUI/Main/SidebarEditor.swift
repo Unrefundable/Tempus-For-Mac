@@ -44,6 +44,7 @@ struct SidebarEditor: View {
             }
             Spacer()
             TempusIconImage(.dragHandle, accessibilityName: Text("Drag to reorder")).foregroundStyle(Theme.tertiaryText)
+                .tempusIconKeepsForeground()
         }
     }
 }

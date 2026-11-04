@@ -43,11 +43,8 @@ public final class StreamingEngine: PlayerEngine {
         self.policy = box
         player = AudioPlayer(
             configuration: AudioPlayerConfiguration(flushQueueOnSeek: false, enableLogs: false),
-            clientCertificateProvider: { challenge in box.current?.credential(for: challenge.protectionSpace) },
-            redirectHandler: { _, request in
-                box.current?.request(followingRedirectTo: request)
-                    ?? MediaRequestPolicy.requestWithoutPolicy(followingRedirectTo: request)
-            }
+            clientCertificateProvider: Self.clientCertificateProvider(reading: box),
+            redirectHandler: Self.redirectHandler(reading: box)
         )
         player.attach(node: equalizerNode)
         delegateProxy.engine = self
@@ -57,6 +54,21 @@ public final class StreamingEngine: PlayerEngine {
 
     /// Switches to another server's rules. Playback stops first, so no request still running for the
     /// old server is judged by the new server's rules.
+    /// AudioStreaming calls these on URLSession's delegate queue. A closure written inside this
+    /// main-actor class would be main-actor isolated, and Swift traps when one runs off the main
+    /// thread, which crashed the app on the first redirect (internet radio streams nearly always
+    /// redirect). Built here, outside the actor, they run on any thread.
+    nonisolated static func clientCertificateProvider(reading box: PolicyBox) -> ClientCertificateProvider {
+        { challenge in box.current?.credential(for: challenge.protectionSpace) }
+    }
+
+    nonisolated static func redirectHandler(reading box: PolicyBox) -> RedirectHandler {
+        { _, request in
+            box.current?.request(followingRedirectTo: request)
+                ?? MediaRequestPolicy.requestWithoutPolicy(followingRedirectTo: request)
+        }
+    }
+
     public func setPolicy(_ policy: MediaRequestPolicy?) {
         stop()
         self.policy.current = policy
@@ -251,7 +263,7 @@ public final class StreamingEngine: PlayerEngine {
 }
 
 /// The current server's media policy, read from AudioStreaming's network queue.
-private final class PolicyBox: Sendable {
+final class PolicyBox: Sendable {
     private let state: Mutex<MediaRequestPolicy?>
 
     init(_ policy: MediaRequestPolicy?) {

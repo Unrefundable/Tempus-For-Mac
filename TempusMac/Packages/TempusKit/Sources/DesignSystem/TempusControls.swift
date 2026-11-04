@@ -6,13 +6,54 @@ public extension EnvironmentValues {
     @Entry var tempusIconSize: CGFloat = TempusIconImage.defaultSize
 }
 
+public extension EnvironmentValues {
+    /// The color icons are drawn in, or nil to draw them in the foreground style like text.
+    @Entry var tempusIconColor: Color?
+    /// True where an icon's own foreground style carries meaning (an error, a toggle that's off,
+    /// a drag handle), so `tempusIconColor` doesn't replace it.
+    @Entry var tempusIconKeepsForeground = false
+}
+
 public extension View {
     func tempusIconSize(_ size: CGFloat) -> some View {
         environment(\.tempusIconSize, size)
     }
+
+    /// Draws icons inside this view in `color`; nil leaves them in the foreground style.
+    func tempusIconColor(_ color: Color?) -> some View {
+        environment(\.tempusIconColor, color)
+    }
+
+    /// Keeps icons inside this view in the foreground style set on them, whatever
+    /// `tempusIconColor` says. Use it where the icon's color means something.
+    func tempusIconKeepsForeground(_ keeps: Bool = true) -> some View {
+        environment(\.tempusIconKeepsForeground, keeps)
+    }
+
+    /// Applies `tempusIconColor` to an image that isn't a `TempusIconImage`, such as an SF Symbol.
+    func tempusIconTinted() -> some View {
+        modifier(TempusIconTint())
+    }
 }
 
-/// One of upstream's icons at the environment's `tempusIconSize`, tinted by the foreground style.
+/// `tempusIconColor`, unless the icon keeps its foreground or sits in a disabled control, where
+/// the system's dimmed style must show that it can't be used.
+private struct TempusIconTint: ViewModifier {
+    @Environment(\.tempusIconColor) private var color
+    @Environment(\.tempusIconKeepsForeground) private var keepsForeground
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if let color, !keepsForeground, isEnabled {
+            content.foregroundStyle(color)
+        } else {
+            content
+        }
+    }
+}
+
+/// One of upstream's icons at the environment's `tempusIconSize`, in `tempusIconColor` when the
+/// theme sets one and the foreground style otherwise.
 public struct TempusIconImage: View {
     /// About the size of a body-text SF Symbol.
     public nonisolated static let defaultSize: CGFloat = 16
@@ -33,6 +74,7 @@ public struct TempusIconImage: View {
             .resizable()
             .scaledToFit()
             .frame(width: size, height: size)
+            .tempusIconTinted()
     }
 
     /// A decorative image ignores a label added later, so a named icon is built with its label.

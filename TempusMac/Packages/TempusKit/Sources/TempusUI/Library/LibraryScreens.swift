@@ -130,7 +130,8 @@ struct ArtistRow: View {
             }
             Spacer()
             if let count = artist.albumCount {
-                Text("\(count) \(count == 1 ? "album" : "albums")").font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
+                Text("\(count) \(count == 1 ? "album" : "albums")").font(.inter(.caption))
+                    .foregroundStyle(Theme.secondaryText)
             }
         }
         .contentShape(.rect)
@@ -178,7 +179,7 @@ struct PlaylistsView: View {
             let sorted = settings.playlistSort.sorted(playlists, faves: faves)
             if sorted.isEmpty {
                 ContentUnavailableView {
-                    Label("No playlists", tempus: .playlist)
+                    Label("No playlists", tempus: .playlist).tempusIconKeepsForeground()
                 } actions: {
                     Button("New Playlist…") { sheets.present(.newPlaylist([])) }
                 }

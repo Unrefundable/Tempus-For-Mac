@@ -96,7 +96,7 @@ struct SnapshotView<Value: Decodable & Sendable, Content: View>: View {
                     }
             } else if let errorMessage {
                 ContentUnavailableView {
-                    Label("Couldn't load", tempus: .error)
+                    Label("Couldn't load", tempus: .error).tempusIconKeepsForeground()
                 } description: {
                     Text(errorMessage)
                 } actions: {
