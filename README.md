@@ -47,8 +47,6 @@ Like Tempus, it doesn't rely on recommendation algorithms. Home is built from yo
 
 ## Screenshots
 
-Pick a theme in **Settings › Appearance**. Each theme comes in a light and a dark version.
-
 <p align="center">
   <b>Light theme</b>
 </p>
