@@ -5,7 +5,7 @@ import os
 let persistenceLogger = Logger(subsystem: "io.github.unrefundable.TempusMac", category: "Persistence")
 
 /// The app's SQLite database. Mirrors the parts of upstream's Room schema (v24) the Mac needs,
-/// scoped per server, plus a response cache for library browsing. See docs/PLAN.md, Phase 2.
+/// scoped per server, plus a response cache for library browsing.
 public struct AppDatabase: Sendable {
     let writer: any DatabaseWriter
 

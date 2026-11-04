@@ -93,7 +93,7 @@ public struct PlaylistService: Sendable {
 }
 
 /// What the server offers beyond browsing. Navidrome answers HTTP 501 for podcasts and shares, so
-/// those screens hide (docs/PLAN.md, Phases 5 and 7).
+/// those screens hide.
 @MainActor
 @Observable
 public final class ServerFeatures {

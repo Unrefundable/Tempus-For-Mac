@@ -111,8 +111,8 @@ public struct TempusCommands: Commands {
     }
 }
 
-/// The standard About panel with upstream's description, the licence and credits, as GPL-3.0 and
-/// CLAUDE.md require.
+/// The standard About panel with upstream's description, the licence and credits, as GPL-3.0
+/// requires.
 enum AboutPanel {
     static let credits = """
     An open source, lightweight music client for Subsonic, OpenSubsonic and Navidrome, built natively \

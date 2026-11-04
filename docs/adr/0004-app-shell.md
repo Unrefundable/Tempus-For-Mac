@@ -32,7 +32,7 @@ Phase 4 turns the Phase 1–3 packages into an app: a login and server list, the
 ### 3. Connecting follows upstream, but an unreachable server opens offline
 - `AddressSwitcher` picks the local or public address; the address in use is kept per server in UserDefaults.
 - A server that answers with an error refuses the sign-in, shown on the server list as upstream's toast does. This includes wrong credentials and a proxy's 401 or 403.
-- A server that doesn't answer still opens, with an "Offline mode" banner, so cached data shows. This departs from upstream, which stays on the login screen. PLAN.md's cache-first principle asks for it.
+- A server that doesn't answer still opens, with an "Offline mode" banner, so cached data shows. This departs from upstream, which stays on the login screen. The app's cache-first design asks for it.
 - Credentials only move to the local address after a real Subsonic answer from it: `ping` succeeds, or a Subsonic error comes back. Any device can answer a 401 on someone else's LAN IP. The public address still counts a proxy's 401 or 403 as reachable, so the user sees why.
 - A remembered address is used only while it is still the profile's local address, and saving a server forgets it. An offline session therefore never sends credentials to an address the profile has dropped.
 

@@ -10,16 +10,16 @@ Tempus for macOS ports an Android Subsonic client (about 450 Java/Kotlin files) 
 ## Decisions
 
 ### 1. Minimum macOS 15, Liquid Glass on macOS 26+
-Deploy to macOS 15 as CLAUDE.md specifies. Standard controls pick up Liquid Glass automatically when built with the macOS 26+ SDK. Custom glass effects go behind `if #available(macOS 26, *)`.
+Deploy to macOS 15. Standard controls pick up Liquid Glass automatically when built with the macOS 26+ SDK. Custom glass effects go behind `if #available(macOS 26, *)`.
 
 ### 2. GRDB for persistence
-GRDB maps directly onto the Room schema (`reference/tempus/app/schemas/.../24.json`). It gives plain SQL and migrations, and it stays fast on libraries with tens of thousands of tracks. SwiftData was rejected because it is slower on large datasets and harder to control from actors.
+GRDB maps directly onto the Room schema (upstream's `app/schemas/.../24.json`). It gives plain SQL and migrations, and it stays fast on libraries with tens of thousands of tracks. SwiftData was rejected because it is slower on large datasets and harder to control from actors.
 
 ### 3. AudioStreaming for playback
 [AudioStreaming](https://github.com/dimitris-c/AudioStreaming) (MIT) is built on AVAudioEngine. It streams over HTTP, queues tracks gaplessly, and accepts custom `AVAudioNode`s. Amperfy, a shipping GPL Subsonic client, uses it with an `AVAudioUnitEQ` for the equalizer, a mixer node for ReplayGain, and the player's `rate` for speed. Formats it can't decode (Opus, and Vorbis where seeking matters) are requested from the server transcoded with the Subsonic `format` parameter. A custom engine was rejected, and so was SFBAudioEngine, which plays local files only.
 
 ### 4. Nuke for artwork
-Memory and disk caching, downsampling, prefetching and SwiftUI image views. This replaces the custom image cache actor in CLAUDE.md's mapping table.
+Memory and disk caching, downsampling, prefetching and SwiftUI image views. This replaces a hand-written image cache actor.
 
 ### 5. Developer ID distribution with Sparkle
 Upstream is GPL-3.0, and the Mac App Store's terms are widely considered incompatible with it. Ship a notarized DMG and update it with Sparkle.
@@ -37,7 +37,7 @@ Logic lives in the `TempusKit` Swift package so it builds and tests with `swift 
 
 ## Spike result (decision 3)
 
-**Method.** I tested AudioStreaming 1.4.5 with the harness in `TempusMac/Spike/AudioSpike`. It plays a 6 s, 440 Hz sine split exactly in half: a.<ext> is queued, then b.<ext>, served over HTTP from 127.0.0.1 by a server that supports Range requests. A frame-filter tap on the main mixer records the output. If playback is gapless, there is no silence at the join, and the "click ratio" stays at 1.0. The click ratio compares the largest break from the sine's recurrence at the join with the largest break anywhere else. To reproduce it, run `scripts/make-media.sh`, then `scripts/range_server.py`, then `swift run AudioSpike`.
+**Method.** I tested AudioStreaming 1.4.5 with a throwaway test harness, since removed from the repository. It plays a 6 s, 440 Hz sine split exactly in half: a.<ext> is queued, then b.<ext>, served over HTTP from 127.0.0.1 by a server that supports Range requests. A frame-filter tap on the main mixer records the output. If playback is gapless, there is no silence at the join, and the "click ratio" stays at 1.0. The click ratio compares the largest break from the sine's recurrence at the join with the largest break anywhere else.
 
 | Format | Gapless join | Seek over HTTP | Notes |
 |---|---|---|---|

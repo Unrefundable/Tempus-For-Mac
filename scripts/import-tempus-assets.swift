@@ -1,7 +1,8 @@
 #!/usr/bin/env swift
 // Imports upstream Tempus's drawables, theme colors, fonts and launcher icon into the macOS asset catalogs.
 //
-//   swift scripts/import-tempus-assets.swift reference/tempus
+//   git clone https://github.com/eddyizm/tempus.git /tmp/tempus
+//   swift scripts/import-tempus-assets.swift /tmp/tempus
 //
 // Android vector drawables become SVGs (asset catalogs keep them as vectors), Material theme
 // colors become color sets with a dark variant, and the adaptive launcher icon becomes the
@@ -589,7 +590,7 @@ func importFonts(resources: URL, destination: URL) throws {
 let arguments = CommandLine.arguments
 guard arguments.count == 2 else {
     FileHandle.standardError
-        .write(Data("usage: swift scripts/import-tempus-assets.swift <path to reference/tempus>\n".utf8))
+        .write(Data("usage: swift scripts/import-tempus-assets.swift <path to a Tempus checkout>\n".utf8))
     exit(64)
 }
 

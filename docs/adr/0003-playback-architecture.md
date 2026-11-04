@@ -50,4 +50,4 @@ Upstream has separate Wi-Fi and mobile quality settings. On the Mac, the "mobile
 ## Consequences
 
 - Scrobbling, history and Continue Listening (Phase 6) consume `PlayerController.events` rather than reaching into the player.
-- The patches must be carried forward when AudioStreaming is updated. `GaplessTrimTests` and the spike (`TempusMac/Spike/AudioSpike`, now pointed at the vendored copy) check the gapless patch.
+- The patches must be carried forward when AudioStreaming is updated. `GaplessTrimTests` checks the gapless patch.

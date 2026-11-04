@@ -12,7 +12,7 @@ The app is sandboxed. A sandboxed process can't replace its own bundle, and ever
 ## Decisions
 
 ### 1. Sparkle 2, not a hand-written updater
-- PLAN.md already names Sparkle. It is the standard Mac updater. It ships an installer XPC service that launchd runs outside the sandbox. That service replaces the app and clears the quarantine flag the sandbox puts on downloads.
+- ADR 0001 already chose Sparkle. It is the standard Mac updater. It ships an installer XPC service that launchd runs outside the sandbox. That service replaces the app and clears the quarantine flag the sandbox puts on downloads.
 - A hand-written updater would have to rebuild that installer, which is the hard part. Reading the GitHub Releases API directly is easy, but it doesn't solve installation.
 - Sparkle comes from SwiftPM (2.10.1) and is linked by `TempusUI` only. Xcode embeds `Sparkle.framework` with its `Installer.xpc` automatically.
 - `Info.plist` sets `SUEnableInstallerLauncherService`. The entitlements add the two `mach-lookup` exceptions (`$(PRODUCT_BUNDLE_IDENTIFIER)-spks`, `-spki`) that sandboxed Sparkle needs. The downloader service isn't needed, because the app already has `network.client`.
