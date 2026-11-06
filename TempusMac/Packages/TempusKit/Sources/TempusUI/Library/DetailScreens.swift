@@ -210,7 +210,7 @@ struct FolderDetailView: View {
                             }
                             .contentShape(.rect)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.tempusPlain)
                     }
                     .frame(minHeight: tracks.isEmpty ? 300 : 160, maxHeight: tracks.isEmpty ? .infinity : 260)
                 }

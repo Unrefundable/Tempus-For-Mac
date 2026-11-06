@@ -36,7 +36,7 @@ private struct HomeSections: View {
                         Text(section.title)
                         Spacer()
                         Button("Hide") { settings.setHomeLayout(layout.hiding(section)) }
-                            .buttonStyle(.borderless)
+                            .buttonStyle(.tempusBorderless)
                     }
                 }
                 .onMove { settings.setHomeLayout(layout.moving(fromOffsets: $0, toOffset: $1)) }
@@ -52,7 +52,7 @@ private struct HomeSections: View {
                         Text(section.title).foregroundStyle(Theme.secondaryText)
                         Spacer()
                         Button("Show") { settings.setHomeLayout(layout.showing(section)) }
-                            .buttonStyle(.borderless)
+                            .buttonStyle(.tempusBorderless)
                     }
                 }
             }

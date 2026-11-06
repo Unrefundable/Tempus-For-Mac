@@ -163,7 +163,7 @@ private struct PlaylistEditor: View {
                             entries.removeAll { $0.id == entry.id }
                         }
                         .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
+                        .buttonStyle(.tempusBorderless)
                         .foregroundStyle(Theme.error)
                     }
                 }

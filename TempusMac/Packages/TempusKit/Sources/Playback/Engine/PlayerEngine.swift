@@ -47,7 +47,7 @@ public protocol PlayerEngine: AnyObject {
     var progress: TimeInterval { get }
     /// The playing entry's length in seconds, or 0 while unknown.
     var duration: TimeInterval { get }
-    /// 0–1, used by the sleep timer's fade.
+    /// 0–1: the player's volume setting, scaled down during the sleep timer's fade.
     var volume: Float { get set }
 
     /// Stops whatever is playing and plays `item`. Any upcoming entry is dropped.

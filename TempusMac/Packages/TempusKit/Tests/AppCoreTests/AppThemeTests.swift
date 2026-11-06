@@ -4,6 +4,21 @@ import Testing
 
 struct ThemeColorTests {
     @Test(arguments: [
+        ("#000000", true), ("#121212", true), ("#1E1B2E", true), ("#6750A4", true),
+        ("#FFFFFF", false), ("#F2F2F7", false), ("#FFD60A", false), ("#808080", false),
+    ])
+    func `dark colors take a lighter press ripple, light ones a darker one`(hex: String, isDark: Bool) throws {
+        let color = try #require(ThemeColor(hex: hex))
+        #expect(color.isDark == isDark)
+    }
+
+    @Test
+    func `luminance runs from black to white`() throws {
+        #expect(try #require(ThemeColor(hex: "#000")).relativeLuminance == 0)
+        #expect(try abs(#require(ThemeColor(hex: "#FFF")).relativeLuminance - 1) < 0.000_1)
+    }
+
+    @Test(arguments: [
         ("#FF8800", ThemeColor(red: 255, green: 136, blue: 0)),
         ("ff8800", ThemeColor(red: 255, green: 136, blue: 0)),
         ("#f80", ThemeColor(red: 255, green: 136, blue: 0)),

@@ -30,12 +30,12 @@ struct NowPlayingView: View {
                     Button { song.albumID.map { navigator.open(.album(id: $0)) } } label: {
                         Text(title(of: song)).font(.inter(.title, weight: .bold))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.tempusPlain)
                     .help("Go to the album")
                     Button { song.artistID.map { navigator.open(.artist(id: $0)) } } label: {
                         Text(song.artist ?? "Unknown artist").font(.inter(.title3)).foregroundStyle(Theme.secondaryText)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.tempusPlain)
                     .help("Go to the artist")
                     if let album = song.album {
                         Text(album).font(.inter(.callout)).foregroundStyle(Theme.tertiaryText)
@@ -132,7 +132,7 @@ private struct TrackActions: View {
             .help("Play this again, then similar songs")
         }
         .labelStyle(.iconOnly)
-        .buttonStyle(.borderless)
+        .buttonStyle(.tempusBorderless)
         .tempusIconSize(Self.iconSize)
         .overlay(alignment: .bottom) {
             if let message = session.stars.errorMessage {
@@ -156,7 +156,7 @@ struct RatingControl: View {
                 Button { onChange(value == rating ? 0 : value) } label: {
                     TempusIconImage(value <= rating ? .star : .starOutlined)
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.tempusBorderless)
                 .accessibilityLabel("\(value) stars")
             }
         }

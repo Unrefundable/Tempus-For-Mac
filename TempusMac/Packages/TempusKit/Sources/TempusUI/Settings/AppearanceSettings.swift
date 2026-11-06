@@ -92,7 +92,7 @@ private struct PresetCard: View {
             }
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.tempusPlain)
         .accessibilityLabel("\(preset.title) theme")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -180,7 +180,7 @@ private struct ThemeColorRow: View {
                     .labelsHidden()
                 Button("Use the Theme's \(role.title) Color", systemImage: "arrow.uturn.backward") { onChange(nil) }
                     .labelStyle(.iconOnly)
-                    .buttonStyle(.borderless)
+                    .buttonStyle(.tempusBorderless)
                     .disabled(!isCustom)
                     .help("Use the theme's color")
             }

@@ -178,7 +178,7 @@ struct AlbumTile: View {
                 size: size
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.tempusPlain)
         .contextMenu { AlbumMenu(album: album) }
     }
 }
@@ -206,7 +206,7 @@ struct ArtistTile: View {
             .frame(width: size)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.tempusPlain)
         .contextMenu { ArtistMenu(artist: artist) }
     }
 }

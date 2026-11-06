@@ -46,6 +46,17 @@ public enum LyricsContent: Sendable, Equatable {
     public static func currentLineIndex(in lines: [Line], at position: TimeInterval) -> Int? {
         lines.lastIndex { $0.start <= position }
     }
+
+    /// Whether `line` sits in the middle half of the lines on screen, `visible` in any order: where
+    /// a reader who scrolled away and back has put the line being sung, so the lyrics can follow
+    /// the song again. With only a couple of lines showing, any of them counts.
+    public static func isLine(_ line: Int, nearMiddleOf visible: some Collection<Int>) -> Bool {
+        let sorted = visible.sorted()
+        guard let first = sorted.first, let last = sorted.last else { return false }
+        let margin = sorted.count / 4
+        guard margin > 0 else { return (first ... last).contains(line) }
+        return (sorted[margin] ... sorted[sorted.count - 1 - margin]).contains(line)
+    }
 }
 
 /// Lyrics for the playing song: from the cache when there, else from the server, then cached.

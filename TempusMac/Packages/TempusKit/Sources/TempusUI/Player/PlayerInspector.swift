@@ -60,7 +60,7 @@ struct QueuePanel: View {
                 Spacer()
                 Button("Shuffle Upcoming", tempus: .shuffle) { player.shuffleUpcoming() }
                     .labelStyle(.iconOnly)
-                    .buttonStyle(.borderless)
+                    .buttonStyle(.tempusBorderless)
                     .disabled(player.queue.items.count < 3)
                 Menu("Queue", tempus: .moreVert) {
                     Button("Save as Playlist…") { sheets.present(.newPlaylist(player.queue.items.map(\.song))) }
@@ -164,7 +164,7 @@ private struct QueueRow: View {
             .lineLimit(1)
             Spacer(minLength: 0)
             if isCurrent {
-                TempusIconImage(.equalizer, accessibilityName: Text("Now playing"))
+                NowPlayingBars()
                     .foregroundStyle(Theme.accent)
             }
         }

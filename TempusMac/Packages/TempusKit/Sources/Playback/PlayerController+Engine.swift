@@ -258,14 +258,14 @@ extension PlayerController {
                 for step in 1 ... SleepTimer.fadeSteps {
                     try await environment.sleep(SleepTimer.fadeStepInterval)
                     try Task.checkCancellation()
-                    self?.engine.volume = SleepTimer.fadeVolume(afterStep: step)
+                    self?.applyFade(step: step)
                 }
                 self?.finishFade()
                 try await environment.sleep(PlayerController.volumeRestoreDelay)
             } catch {
                 return // cancelled by a pause or a timer change; `cancelFade` restored the volume
             }
-            self?.engine.volume = 1
+            self?.restoreVolume()
         }
     }
 
@@ -280,7 +280,17 @@ extension PlayerController {
         guard let fade else { return }
         fade.cancel()
         self.fade = nil
-        engine.volume = 1
+        restoreVolume()
+    }
+
+    /// The fade's level for `step`, scaled to the player's own volume.
+    private func applyFade(step: Int) {
+        engine.volume = Float(settings.volume) * SleepTimer.fadeVolume(afterStep: step)
+    }
+
+    /// Back to the player's own volume after a fade.
+    func restoreVolume() {
+        engine.volume = Float(settings.volume)
     }
 
     // MARK: Saving

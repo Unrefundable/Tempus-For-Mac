@@ -46,7 +46,7 @@ struct MenuBarPlayer: View {
                 Spacer()
                 Button("Quit") { NSApplication.shared.terminate(nil) }
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.tempusBorderless)
         }
         .padding(Theme.Spacing.large)
         .frame(width: 300)

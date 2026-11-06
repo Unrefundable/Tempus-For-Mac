@@ -100,6 +100,8 @@ public final class PlayerController {
     @ObservationIgnored var lastProgressSave = Date.distantPast
     @ObservationIgnored var ticker: Task<Void, Never>?
     @ObservationIgnored var fade: Task<Void, Never>?
+    /// The volume to unmute to.
+    @ObservationIgnored var volumeBeforeMute: Double?
     @ObservationIgnored var persistence: Task<Void, Never>?
     @ObservationIgnored var nowPlaying: (any NowPlayingPublishing)?
     /// Gives up on an entry that hasn't started by then: AudioStreaming retries a dead stream (a
@@ -129,6 +131,7 @@ public final class PlayerController {
         engine.onEvent = { [weak self] event in self?.handle(event) }
         engine.apply(speed: settings.speed)
         engine.apply(equalizer: settings.equalizer)
+        engine.volume = Float(settings.volume)
     }
 
     deinit {
@@ -329,6 +332,30 @@ public final class PlayerController {
     public func setStreamSettings(_ stream: StreamSettings) {
         updateSettings { $0.stream = stream }
         refreshUpcoming(force: true)
+    }
+
+    /// Sets the player's volume, 0–1. A sleep-timer fade in progress carries on from the new level.
+    public func setVolume(_ volume: Double) {
+        let clamped = PlaybackSettings.clampedVolume(volume)
+        guard clamped != settings.volume else { return }
+        if clamped > 0 {
+            volumeBeforeMute = nil
+        }
+        updateSettings { $0.volume = clamped }
+        if fade == nil {
+            engine.volume = Float(clamped)
+        }
+    }
+
+    /// Mutes, or puts back the volume from before muting (full volume if it was muted at launch).
+    public func toggleMute() {
+        if settings.volume > 0 {
+            let previous = settings.volume
+            setVolume(0)
+            volumeBeforeMute = previous
+        } else {
+            setVolume(volumeBeforeMute ?? 1)
+        }
     }
 
     public func setSleepTimer(_ timer: SleepTimer) {

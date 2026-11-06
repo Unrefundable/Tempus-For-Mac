@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Upstream's mini player, laid out the Mac way across the bottom of the window: cover and titles
 /// (click to open Now Playing) with a heart to star the track, transport and seek bar in the
-/// middle, then lyrics, queue and AirPlay.
+/// middle, then volume, lyrics, queue and AirPlay.
 struct PlayerBar: View {
     let player: PlayerController
     let stars: StarService
@@ -34,6 +34,7 @@ struct PlayerBar: View {
                 SeekBar(player: player, compact: true)
             }
             HStack(spacing: Theme.Spacing.medium) {
+                VolumeControl(player: player)
                 Button("Lyrics", tempus: .lyrics) { onTogglePanel(.lyrics) }
                 Button("Queue", tempus: .queue) { onTogglePanel(.queue) }
                 RoutePicker()
@@ -41,12 +42,13 @@ struct PlayerBar: View {
                     .help("AirPlay and output devices")
             }
             .labelStyle(.iconOnly)
-            .buttonStyle(.borderless)
+            .buttonStyle(.tempusBorderless)
             .fixedSize()
         }
         .padding(.horizontal, Theme.Spacing.large)
         .frame(height: Theme.Size.playerBarHeight)
         .background(Theme.playerBar)
+        .environment(\.rippleSurface, .playerBar)
         .overlay(alignment: .top) { Divider() }
         .overlay(alignment: .bottom) { errorLine }
     }
@@ -72,7 +74,7 @@ struct PlayerBar: View {
             }
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.tempusPlain)
         .help("Show Now Playing")
     }
 
@@ -86,7 +88,7 @@ struct PlayerBar: View {
             }
         }
         .labelStyle(.iconOnly)
-        .buttonStyle(.borderless)
+        .buttonStyle(.tempusBorderless)
         .foregroundStyle(starred ? Theme.accent : Theme.secondaryText)
         .tempusIconKeepsForeground(!starred)
         .help(starred ? "Unstar this track" : "Star this track")

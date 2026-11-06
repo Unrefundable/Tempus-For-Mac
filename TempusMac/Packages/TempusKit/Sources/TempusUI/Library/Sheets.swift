@@ -82,7 +82,7 @@ struct AddToPlaylistSheet: View {
                     }
                     .contentShape(.rect)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.tempusPlain)
             }
             .frame(minHeight: 240)
             if let errorMessage {

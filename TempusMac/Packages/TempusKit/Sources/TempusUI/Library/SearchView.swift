@@ -61,7 +61,7 @@ struct SearchView: View {
                 }
                 ForEach(recent, id: \.self) { query in
                     Button(query) { text = query }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.tempusPlain)
                         .contextMenu {
                             Button("Remove") {
                                 Task {
@@ -152,7 +152,7 @@ private struct SearchField: View {
                 Button { text = "" } label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(Theme.secondaryText)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.tempusBorderless)
                 .help("Clear the search")
                 .accessibilityLabel("Clear")
             }

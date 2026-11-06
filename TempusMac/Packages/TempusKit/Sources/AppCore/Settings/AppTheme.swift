@@ -58,6 +58,23 @@ public struct ThemeColor: Sendable, Hashable {
     public var unitComponents: [Double] {
         [red, green, blue, alpha].map { Double($0) / 255 }
     }
+
+    /// How bright the color looks, from 0 (black) to 1 (white): WCAG's relative luminance.
+    public var relativeLuminance: Double {
+        func linear(_ channel: UInt8) -> Double {
+            let value = Double(channel) / 255
+            return value <= 0.039_28 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue)
+    }
+
+    /// True when white stands out against the color better than black does.
+    public var isDark: Bool {
+        // Where black and white have equal contrast: (L + 0.05) / 0.05 == 1.05 / (L + 0.05).
+        relativeLuminance < Self.equalContrastLuminance
+    }
+
+    private static let equalContrastLuminance = 0.179
 }
 
 /// Every color Tempus draws that the Appearance settings can change.
@@ -95,7 +112,7 @@ public enum ThemeColorRole: String, CaseIterable, Sendable, Identifiable {
 
     public var summary: String {
         switch self {
-        case .accent: "Buttons, toggles, the playing track, stars and icons"
+        case .accent: "Buttons, toggles, the open sidebar item, the playing track, stars and icons"
         case .background: "Behind the library, lists and Now Playing"
         case .sidebar: "Behind the sidebar"
         case .playerBar: "Behind the player along the bottom"

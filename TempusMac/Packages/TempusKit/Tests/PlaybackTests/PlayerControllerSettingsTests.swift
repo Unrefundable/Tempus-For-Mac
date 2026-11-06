@@ -93,4 +93,68 @@ extension PlayerControllerTests {
         #expect(engine.calls.last == "pause")
         #expect(player.settings.sleepTimer == .off)
     }
+
+    @Test("Volume reaches the engine, is saved, and is restored at launch")
+    func volumeSaved() {
+        let player = controller()
+        player.setVolume(0.4)
+
+        #expect(engine.volume == 0.4)
+        #expect(PlaybackSettingsStore(defaults: defaults).load().volume == 0.4)
+
+        let relaunchedEngine = FakeEngine()
+        _ = PlayerController(
+            engine: relaunchedEngine,
+            source: FakeSource(),
+            queueSaver: nil,
+            serverID: "srv",
+            settingsStore: PlaybackSettingsStore(defaults: defaults),
+            environment: .test(now: now)
+        )
+        #expect(relaunchedEngine.volume == 0.4)
+    }
+
+    @Test("Volume stays within 0–1")
+    func volumeClamped() {
+        let player = controller()
+        player.setVolume(3)
+        #expect(player.settings.volume == 1)
+        player.setVolume(-1)
+        #expect(player.settings.volume == 0)
+        #expect(PlaybackSettings(volume: .nan).volume == 1)
+    }
+
+    @Test("Muting remembers the volume to go back to")
+    func muteToggle() {
+        let player = controller()
+        player.setVolume(0.6)
+
+        player.toggleMute()
+        #expect(player.settings.volume == 0)
+        #expect(engine.volume == 0)
+
+        player.toggleMute()
+        #expect(player.settings.volume == 0.6)
+        #expect(engine.volume == 0.6)
+    }
+
+    @Test("Unmuting with no earlier volume goes to full volume")
+    func unmuteAtLaunch() {
+        let player = controller(PlaybackSettings(volume: 0))
+        player.toggleMute()
+        #expect(player.settings.volume == 1)
+    }
+
+    @Test("The sleep timer fades from the chosen volume and puts it back")
+    func sleepFadeKeepsVolume() async throws {
+        let player = try playing(["a"])
+        player.setVolume(0.5)
+        player.setSleepTimer(.until(now))
+
+        player.tick()
+        await player.settled()
+
+        #expect(player.status == .paused)
+        #expect(engine.volume == 0.5)
+    }
 }

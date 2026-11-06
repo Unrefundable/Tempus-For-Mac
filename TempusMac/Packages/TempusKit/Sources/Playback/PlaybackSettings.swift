@@ -10,6 +10,8 @@ public struct PlaybackSettings: Codable, Sendable, Equatable {
     public var equalizer: EqualizerSettings
     public var stream: StreamSettings
     public var sleepTimer: SleepTimer
+    /// The player's own volume from 0 to 1, on top of the system's. See `clampedVolume(_:)`.
+    public var volume: Double
 
     public init(
         repeatMode: RepeatMode = .off,
@@ -17,7 +19,8 @@ public struct PlaybackSettings: Codable, Sendable, Equatable {
         replayGain: ReplayGainSettings = ReplayGainSettings(),
         equalizer: EqualizerSettings = EqualizerSettings(),
         stream: StreamSettings = StreamSettings(),
-        sleepTimer: SleepTimer = .off
+        sleepTimer: SleepTimer = .off,
+        volume: Double = 1
     ) {
         self.repeatMode = repeatMode
         self.speed = speed
@@ -25,6 +28,12 @@ public struct PlaybackSettings: Codable, Sendable, Equatable {
         self.equalizer = equalizer
         self.stream = stream
         self.sleepTimer = sleepTimer
+        self.volume = Self.clampedVolume(volume)
+    }
+
+    /// `volume` within 0–1; anything unreadable (NaN, say) is full volume.
+    public static func clampedVolume(_ volume: Double) -> Double {
+        volume.isFinite ? min(max(volume, 0), 1) : 1
     }
 
     /// Each setting falls back to its default on its own, so one unreadable or newly added
@@ -41,7 +50,8 @@ public struct PlaybackSettings: Codable, Sendable, Equatable {
             replayGain: value(.replayGain, defaults.replayGain),
             equalizer: value(.equalizer, defaults.equalizer),
             stream: value(.stream, defaults.stream),
-            sleepTimer: value(.sleepTimer, defaults.sleepTimer)
+            sleepTimer: value(.sleepTimer, defaults.sleepTimer),
+            volume: value(.volume, defaults.volume)
         )
     }
 }

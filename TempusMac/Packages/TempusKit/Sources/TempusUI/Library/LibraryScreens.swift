@@ -99,7 +99,7 @@ struct ArtistsView: View {
                         Section(index.name ?? "#") {
                             ForEach(index.artists) { artist in
                                 Button { navigator.open(.artist(id: artist.id)) } label: { ArtistRow(artist: artist) }
-                                    .buttonStyle(.plain)
+                                    .buttonStyle(.tempusPlain)
                                     .contextMenu { ArtistMenu(artist: artist) }
                             }
                         }
@@ -157,7 +157,7 @@ struct GenresView: View {
                         }
                         .contentShape(.rect)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.tempusPlain)
                 }
             }
         }
@@ -199,7 +199,7 @@ struct PlaylistsView: View {
                                     placeholder: .playlist
                                 )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.tempusPlain)
                             .contextMenu { menu(for: playlist) }
                             .dropDestination(for: SongTransfer.self) { items, _ in
                                 let songs = items.flatMap(\.songs)
@@ -301,7 +301,7 @@ struct FoldersView: View {
                             Button { navigator.open(.folder(id: entry.id, name: entry.name ?? "Folder")) } label: {
                                 Label(entry.name ?? "Folder", tempus: .folder).contentShape(.rect)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.tempusPlain)
                         }
                     }
                 }

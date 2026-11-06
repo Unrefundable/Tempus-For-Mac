@@ -42,7 +42,7 @@ struct DownloadsView: View {
                                 }
                                 .contentShape(.rect)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.tempusPlain)
                             .contextMenu { SongMenu(songs: [song]) }
                         }
                     } label: {
@@ -51,7 +51,7 @@ struct DownloadsView: View {
                             Text("\(group.songs.count)").foregroundStyle(Theme.secondaryText)
                             Spacer()
                             Button("Play", tempus: .play) { session.player.play(group.songs) }
-                                .labelStyle(.iconOnly).buttonStyle(.borderless)
+                                .labelStyle(.iconOnly).buttonStyle(.tempusBorderless)
                         }
                         .contextMenu {
                             Button("Play") { session.player.play(group.songs) }

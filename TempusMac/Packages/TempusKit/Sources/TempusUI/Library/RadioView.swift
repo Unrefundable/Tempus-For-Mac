@@ -27,7 +27,7 @@ struct RadioView: View {
             } else {
                 List(stations) { station in
                     Button { play(station) } label: { StationRow(station: station) }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.tempusPlain)
                         .contextMenu {
                             Button("Play") { play(station) }
                             Button("Edit…") { editing = .edit(station) }
@@ -98,7 +98,7 @@ private struct StationRow: View {
             }
             Spacer()
             if session.player.queue.current?.song.id == station.song.id {
-                TempusIconImage(.equalizer, accessibilityName: Text("Now playing")).foregroundStyle(Theme.accent)
+                NowPlayingBars().foregroundStyle(Theme.accent)
             }
         }
         .contentShape(.rect)

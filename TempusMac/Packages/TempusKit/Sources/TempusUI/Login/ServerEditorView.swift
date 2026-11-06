@@ -91,7 +91,7 @@ struct ServerEditorView: View {
                     systemImage: showsPassword ? "eye.slash" : "eye"
                 ) { showsPassword.toggle() }
                     .labelStyle(.iconOnly)
-                    .buttonStyle(.borderless)
+                    .buttonStyle(.tempusBorderless)
             }
             issueText(for: .password)
             field("Public URL", $form.address, .address, hint: "https://music.example.com")

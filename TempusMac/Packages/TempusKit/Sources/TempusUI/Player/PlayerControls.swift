@@ -42,7 +42,7 @@ struct TransportControls: View {
             .help("Repeat: \(player.queue.repeatMode.rawValue)")
         }
         .labelStyle(.iconOnly)
-        .buttonStyle(.borderless)
+        .buttonStyle(.tempusBorderless)
         .tempusIconSize(large ? IconSize.largeControl : IconSize.control)
     }
 }
@@ -87,6 +87,41 @@ struct SeekBar: View {
         }
         .font(.inter(.caption).monospacedDigit())
         .foregroundStyle(Theme.secondaryText)
+    }
+}
+
+/// The player's volume: a speaker that mutes and unmutes, and a slider. The speaker's waves fill
+/// with the level, as in Music.
+struct VolumeControl: View {
+    private static let sliderWidth: CGFloat = 80
+    /// Wide enough for the fullest speaker, so the slider doesn't shift as the waves change.
+    private static let speakerWidth: CGFloat = 22
+
+    let player: PlayerController
+
+    var body: some View {
+        let volume = player.settings.volume
+        HStack(spacing: Theme.Spacing.xSmall) {
+            Button { player.toggleMute() } label: {
+                Label {
+                    Text(volume > 0 ? "Mute" : "Unmute")
+                } icon: {
+                    Image(systemName: volume > 0 ? "speaker.wave.3.fill" : "speaker.slash.fill", variableValue: volume)
+                        .tempusIconTinted()
+                        .frame(width: Self.speakerWidth)
+                }
+            }
+            .help(volume > 0 ? "Mute" : "Unmute")
+            Slider(
+                value: Binding(get: { player.settings.volume }, set: { player.setVolume($0) }),
+                in: 0 ... 1
+            )
+            .controlSize(.mini)
+            .frame(width: Self.sliderWidth)
+            .accessibilityLabel("Volume")
+            .accessibilityValue("\(Int((volume * 100).rounded())) percent")
+            .help("Volume")
+        }
     }
 }
 

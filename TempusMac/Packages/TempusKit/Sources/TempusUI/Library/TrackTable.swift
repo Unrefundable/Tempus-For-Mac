@@ -155,7 +155,7 @@ struct TrackRow: View {
     }
 
     private var nowPlaying: some View {
-        TempusIconImage(.equalizer, accessibilityName: Text("Now playing"))
+        NowPlayingBars()
     }
 
     private var marks: some View {

@@ -204,7 +204,7 @@ struct SongRow: View {
                         placeholder: .song
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.tempusPlain)
                 .contextMenu { SongMenu(songs: [item.song]) }
                 .draggable(SongTransfer(songs: [item.song]))
             }
@@ -237,7 +237,7 @@ private struct ContinueListeningRow: View {
                             placeholder: .song
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.tempusPlain)
                     .contextMenu {
                         Button("Remove from Continue Listening") {
                             Task {
@@ -292,7 +292,7 @@ private struct PlaylistRow: View {
                             placeholder: .playlist
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.tempusPlain)
                 }
             }
         }

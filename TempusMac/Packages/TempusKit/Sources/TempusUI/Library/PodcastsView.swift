@@ -33,7 +33,7 @@ struct PodcastsView: View {
                                     placeholder: .podcast
                                 )
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.tempusPlain)
                             .contextMenu {
                                 Button("Delete Podcast", role: .destructive) {
                                     Task { await perform(.deletePodcastChannel(id: channel.id)) }
@@ -188,7 +188,7 @@ private struct EpisodeRow: View {
         HStack(spacing: Theme.Spacing.medium) {
             Button("Play", tempus: .play) { song.map(play) }
                 .labelStyle(.iconOnly)
-                .buttonStyle(.borderless)
+                .buttonStyle(.tempusBorderless)
                 .tempusIconSize(Theme.Size.titleIcon)
                 .disabled(song == nil)
             VStack(alignment: .leading, spacing: 2) {

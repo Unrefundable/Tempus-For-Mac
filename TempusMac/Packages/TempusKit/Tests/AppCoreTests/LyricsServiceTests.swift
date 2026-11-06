@@ -118,6 +118,24 @@ struct LyricsServiceTests {
     }
 
     @Test
+    func `the lyrics follow again once the sung line is back near the middle`() {
+        let visible = Set(10 ... 19)
+        #expect(LyricsContent.isLine(14, nearMiddleOf: visible))
+        #expect(LyricsContent.isLine(12, nearMiddleOf: visible))
+        #expect(LyricsContent.isLine(17, nearMiddleOf: visible))
+        #expect(!LyricsContent.isLine(10, nearMiddleOf: visible))
+        #expect(!LyricsContent.isLine(19, nearMiddleOf: visible))
+        #expect(!LyricsContent.isLine(30, nearMiddleOf: visible))
+    }
+
+    @Test
+    func `with few lines showing, any visible line counts as the middle`() {
+        #expect(LyricsContent.isLine(3, nearMiddleOf: [3, 4]))
+        #expect(!LyricsContent.isLine(5, nearMiddleOf: [3, 4]))
+        #expect(!LyricsContent.isLine(0, nearMiddleOf: [Int]()))
+    }
+
+    @Test
     func `a failed lookup is reported and not cached as "no lyrics"`() async throws {
         let (service, database) = try await service([:]) // every request fails
         let untitled = Song(id: "9")

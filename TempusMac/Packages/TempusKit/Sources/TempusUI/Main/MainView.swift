@@ -95,6 +95,8 @@ struct MainView: View {
                 }
             }
             .animation(.snappy, value: showsInspector)
+            // The playing track's bars dance only while it's audible.
+            .environment(\.isPlaybackActive, session.player.status == .playing)
             // On the detail column, so these come first in its part of the toolbar and each
             // screen's own buttons follow them.
             .toolbar {
@@ -188,6 +190,7 @@ struct MainView: View {
                         ForEach(items) { item in
                             SidebarLabel(item: item)
                                 .badge(item == .downloads ? downloadBadge : 0)
+                                .themedSidebarSelection(isSelected: item == navigator.selection)
                                 .tag(item)
                                 .contextMenu {
                                     Button("Hide “\(item.title)” from Sidebar") {
