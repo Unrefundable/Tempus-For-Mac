@@ -42,10 +42,6 @@ Like Tempus, it doesn't rely on recommendation algorithms. Home is built from yo
 > [!NOTE]
 > This is an unofficial, community port and isn't affiliated with eddyizm’s Tempus, which can be found [here](https://github.com/eddyizm/tempus).
 
-> [!IMPORTANT]
-> Tempus for macOS is in **beta**. Expect bugs
-
-
 <p align="center">
   <b>Light theme</b>
 </p>
@@ -138,7 +134,7 @@ Requires **macOS 15 Sequoia or newer**, on Apple silicon or Intel.
 
 1. Download the latest `Tempus-<version>-macOS.zip` from [Releases](https://github.com/Unrefundable/Tempus-For-Mac/releases) and unzip it.
 2. Move **Tempus.app** to your Applications folder.
-3. Open Tempus. Beta builds aren't notarized yet, so macOS blocks the app the first time. Go to **System Settings › Privacy & Security** and click **Open Anyway**.
+3. Open Tempus. Tempus isn't notarized yet, so macOS blocks the app the first time. Go to **System Settings › Privacy & Security** and click **Open Anyway**.
 4. Enter your server's address, username and password, and start listening.
 
 From then on, Tempus keeps itself up to date. To get pre-releases too, turn on **Settings › Updates › Get beta updates**. To check right away, choose **Tempus › Check for Updates…**
