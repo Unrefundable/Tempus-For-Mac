@@ -19,10 +19,7 @@ struct HomeView: View {
             .padding(.vertical, Theme.Spacing.xLarge)
             .id(revision)
         }
-        .toolbar {
-            Button("Refresh", tempus: .refresh) { revision += 1 }
-                .help("Reload Home")
-        }
+        .onScreenCommand(.refresh) { revision += 1 }
         .overlay {
             if session.settings.homeLayout.visible.isEmpty {
                 EmptyState(

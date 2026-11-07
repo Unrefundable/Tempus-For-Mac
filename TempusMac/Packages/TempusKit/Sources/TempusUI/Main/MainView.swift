@@ -56,6 +56,7 @@ struct MainView: View {
     @Environment(Navigator.self) private var navigator
     @Environment(AppModel.self) private var model
     @State private var sheets = SheetPresenter()
+    @State private var commands = ScreenCommands()
     @SceneStorage("inspectorShown") private var showsInspector = false
     @SceneStorage("inspectorPanel") private var panel = InspectorPanel.queue
 
@@ -124,6 +125,7 @@ struct MainView: View {
         .toolbar(removing: .title)
         .environment(session)
         .environment(sheets)
+        .environment(commands)
         .sheet(item: $sheets.current) { sheet in
             PresentedSheet(sheet: sheet)
                 .environment(session)
@@ -273,18 +275,21 @@ struct MainView: View {
         .layoutPriority(1)
         .allowsHitTesting(showsInspector)
         .accessibilityHidden(!showsInspector)
-        // On the panel, which follows the screen in the layout, so its button comes after the
-        // screen's own (Refresh, Sort…) and stays at the right edge as they come and go, instead of
-        // sliding over to make room for them.
+        // The screen's controls and the panel button, one item at the right edge so they can
+        // animate as screens change. It draws its own glass, so the toolbar's is turned off.
         .toolbar {
-            ToolbarItem {
-                Button { setInspectorShown(!showsInspector) } label: {
-                    Label { Text("Lyrics and Queue") } icon: {
-                        Image(systemName: "sidebar.trailing").tempusIconTinted()
-                    }
-                }
-                .help("Show or hide lyrics and the queue")
+            if #available(macOS 26, *) {
+                ToolbarItem { screenToolbar }
+                    .sharedBackgroundVisibility(.hidden)
+            } else {
+                ToolbarItem { screenToolbar }
             }
+        }
+    }
+
+    private var screenToolbar: some View {
+        ScreenToolbar(screen: ToolbarScreen(selection: navigator.selection, route: navigator.path.last)) {
+            setInspectorShown(!showsInspector)
         }
     }
 

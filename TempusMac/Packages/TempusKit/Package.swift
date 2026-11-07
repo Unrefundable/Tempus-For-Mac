@@ -66,5 +66,6 @@ let package = Package(
             resources: [.copy("Fixtures")]
         ),
         .testTarget(name: "DesignSystemTests", dependencies: ["DesignSystem"]),
+        .testTarget(name: "TempusUITests", dependencies: ["TempusUI", "AppCore"]),
     ]
 )

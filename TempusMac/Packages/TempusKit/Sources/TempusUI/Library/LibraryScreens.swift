@@ -15,7 +15,7 @@ struct AlbumsView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        @Bindable var settings = session.settings
+        let settings = session.settings
         ScrollView {
             AlbumGrid(albums: albums) { Task { await loadMore() } }
             if isLoading {
@@ -25,12 +25,6 @@ struct AlbumsView: View {
             } else if albums.isEmpty, reachedEnd {
                 EmptyState(art: .icon(.albums), title: "No albums")
             }
-        }
-        .toolbar {
-            Picker("Sort", selection: $settings.albumSort) {
-                ForEach(AlbumSort.allCases) { Text($0.title).tag($0) }
-            }
-            .help("Sort albums")
         }
         .task(id: [AnyHashable(settings.albumSort), AnyHashable(session.musicFolderID)]) {
             await reload()
@@ -174,7 +168,7 @@ struct PlaylistsView: View {
     @State private var deleting: Playlist?
 
     var body: some View {
-        @Bindable var settings = session.settings
+        let settings = session.settings
         SnapshotView(request: .playlists, reloadKey: revision) { playlists in
             let sorted = settings.playlistSort.sorted(playlists, faves: faves)
             if sorted.isEmpty {
@@ -223,13 +217,8 @@ struct PlaylistsView: View {
             }
         }
         .task { faves = await session.playlists.faves() }
-        .toolbar {
-            Picker("Sort", selection: $settings.playlistSort) {
-                ForEach(PlaylistSort.allCases) { Text($0.title).tag($0) }
-            }
-            Button("New Playlist", tempus: .add) { sheets.present(.newPlaylist([])) }
-            Button("Refresh", tempus: .refresh) { revision += 1 }
-        }
+        .onScreenCommand(.add) { sheets.present(.newPlaylist([])) }
+        .onScreenCommand(.refresh) { revision += 1 }
         .onChange(of: sheets.current == nil) {
             _, closed in if closed {
                 revision += 1

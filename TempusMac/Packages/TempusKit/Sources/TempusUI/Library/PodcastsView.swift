@@ -50,12 +50,8 @@ struct PodcastsView: View {
                 Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error).padding(Theme.Spacing.small)
             }
         }
-        .toolbar {
-            Button("Add Podcast", tempus: .add) { isAdding = true }
-            Button("Check for New Episodes", tempus: .refresh) {
-                Task { await perform(.refreshPodcasts) }
-            }
-        }
+        .onScreenCommand(.add) { isAdding = true }
+        .onScreenCommand(.refresh) { Task { await perform(.refreshPodcasts) } }
         .sheet(isPresented: $isAdding) { AddPodcastSheet { revision += 1 } }
     }
 

@@ -18,7 +18,7 @@ struct DownloadsView: View {
     }
 
     var body: some View {
-        @Bindable var settings = session.settings
+        let settings = session.settings
         let downloads = session.downloads
         VStack(spacing: 0) {
             status
@@ -63,13 +63,7 @@ struct DownloadsView: View {
                 }
             }
         }
-        .toolbar {
-            Picker("Group by", selection: $settings.downloadGrouping) {
-                ForEach(DownloadGrouping.allCases) { Text($0.title).tag($0) }
-            }
-            Button("Remove All Downloads", tempus: .delete) { confirmsDeleteAll = true }
-                .disabled(downloads.records.isEmpty)
-        }
+        .onScreenCommand(.removeAll) { confirmsDeleteAll = true }
         .confirmationDialog("Remove all downloads for \(session.profile.name)?", isPresented: $confirmsDeleteAll) {
             Button("Remove All", role: .destructive) { Task { await downloads.deleteAll() } }
         }
@@ -203,6 +197,6 @@ struct SharesView: View {
                 Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error).padding(Theme.Spacing.small)
             }
         }
-        .toolbar { Button("Refresh", tempus: .refresh) { revision += 1 } }
+        .onScreenCommand(.refresh) { revision += 1 }
     }
 }

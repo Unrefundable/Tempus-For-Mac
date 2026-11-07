@@ -47,7 +47,7 @@ struct RadioView: View {
                 Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error).padding(Theme.Spacing.small)
             }
         }
-        .toolbar { Button("Add a New Radio", tempus: .add) { editing = .add } }
+        .onScreenCommand(.add) { editing = .add }
         .sheet(item: $editing) { mode in
             RadioEditor(mode: mode, serverHasRadio: serverError == nil) { Task { await reload() } }
         }
