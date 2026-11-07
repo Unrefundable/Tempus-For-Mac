@@ -34,8 +34,8 @@ struct AlbumDetailView: View {
                             Button("Go to Artist") { navigator.open(.artist(id: artistID)) }
                         }
                     }
-                    .menuStyle(.borderlessButton)
-                    .fixedSize()
+                    .labelStyle(.iconOnly)
+                    .tempusMenu()
                 }
                 TrackTable(songs: album.songs, showsArtwork: false)
             }

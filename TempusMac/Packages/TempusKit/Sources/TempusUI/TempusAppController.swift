@@ -18,6 +18,7 @@ public final class TempusAppController {
     private let isDemo: Bool
     private let navigator = Navigator()
     private let windows = WindowLink()
+    private let titlebar = TitlebarDoubleClick()
     private let updater: AppUpdater
     private lazy var dock = DockMenu(model: try? model.get())
 
@@ -50,10 +51,14 @@ public final class TempusAppController {
             let launches = !isDemo
             let navigator = navigator
             let windows = windows
+            let titlebar = titlebar
             Themed(settings: model.settings) {
                 RootView(navigator: navigator)
             }
-            .onWindowChange { windows.setMain($0) }
+            .onWindowChange { window in
+                windows.setMain(window)
+                titlebar.attach(to: window)
+            }
             .environment(model)
             .task {
                 if launches {

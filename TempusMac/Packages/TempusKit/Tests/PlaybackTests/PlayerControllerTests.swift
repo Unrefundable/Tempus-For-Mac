@@ -245,6 +245,26 @@ struct PlayerControllerTests {
         #expect(engine.upcoming?.id == player.queue.items[1].id)
     }
 
+    @Test("A mix of the playing song replaces the queue and keeps that song playing without repeating it")
+    func mixOfPlayingSong() throws {
+        let player = try playing(["p", "a", "b"], at: 1)
+        let current = player.queue.current?.id
+        try player.playMix(songs("a", "x", "y"))
+        #expect(player.queue.items.map(\.song.id) == ["a", "x", "y"])
+        #expect(player.queue.current?.id == current)
+        #expect(engine.playedSongIDs == ["a"])
+        #expect(engine.upcoming?.url.lastPathComponent == "x")
+    }
+
+    @Test("A mix of another song replaces the queue and plays that song from the start")
+    func mixOfOtherSong() throws {
+        let player = try playing(["p", "a"])
+        try player.playMix(songs("s", "x"))
+        #expect(player.queue.items.map(\.song.id) == ["s", "x"])
+        #expect(player.queue.current?.song.id == "s")
+        #expect(engine.playedSongIDs == ["p", "s"])
+    }
+
     @Test("Shuffle play starts from the top of a shuffled copy of the list")
     func playShuffled() throws {
         let player = controller()

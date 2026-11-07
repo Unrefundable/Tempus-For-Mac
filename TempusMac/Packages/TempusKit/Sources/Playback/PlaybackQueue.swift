@@ -120,6 +120,19 @@ public struct PlaybackQueue: Sendable, Equatable {
         return copy.startingIfIdle(with: added)
     }
 
+    /// Keeps only the current entry, then `songs` after it, in order and unshuffled; repeat stays.
+    /// With nothing current, `songs` become the queue from the first. For a mix of the song already
+    /// playing, so it carries on rather than starting over or coming round again.
+    public func replacingAllButCurrent(with songs: [Song]) -> Self {
+        let added = songs.map { QueueItem(song: $0) }
+        var copy = self
+        copy.items = (current.map { [$0] } ?? []) + added
+        copy.addedOrder = copy.items
+        copy.isShuffled = false
+        copy.currentID = current?.id ?? added.first?.id
+        return copy
+    }
+
     /// Removes an entry. The current entry can't be removed, as upstream: skip it first.
     public func removing(_ id: QueueItem.ID) -> Self {
         guard id != currentID else { return self }

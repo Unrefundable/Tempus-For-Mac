@@ -79,13 +79,7 @@ struct MainView: View {
                 // player bar out of the window.
                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
                 .safeAreaInset(edge: .top, spacing: 0) { offlineBanner }
-                if showsInspector {
-                    Divider()
-                    PlayerInspector(session: session, panel: $panel)
-                        .frame(width: Theme.Size.inspectorWidth)
-                        .layoutPriority(1)
-                        .transition(.move(edge: .trailing))
-                }
+                inspector
             }
             .themedBackground(.background)
             .themedToolbar()
@@ -94,26 +88,19 @@ struct MainView: View {
                     navigator.selection = .nowPlaying
                 }
             }
-            .animation(.snappy, value: showsInspector)
             // The playing track's bars dance only while it's audible.
             .environment(\.isPlaybackActive, session.player.status == .playing)
-            // On the detail column, so these come first in its part of the toolbar and each
-            // screen's own buttons follow them.
+            // Its own minimum, so the sidebar and this always fit the window together. Without
+            // one, the column took the whole window's minimum: showing the sidebar in a narrow
+            // window then pushed this past the window's right edge.
+            .navigationSplitViewColumnWidth(min: Theme.Size.detailMinWidth, ideal: Theme.Size.detailMinWidth)
+            // On the detail column, so this comes first in its part of the toolbar: with no title
+            // showing, the buttons would sit beside the sidebar. This keeps them at the top right.
             .toolbar {
-                // With no title showing, the buttons would sit beside the sidebar. This keeps them
-                // at the top right.
                 if #available(macOS 26, *) {
                     ToolbarSpacer(.flexible)
                 } else {
                     ToolbarItem { Spacer() }
-                }
-                ToolbarItem {
-                    Button { showsInspector.toggle() } label: {
-                        Label { Text("Lyrics and Queue") } icon: {
-                            Image(systemName: "sidebar.trailing").tempusIconTinted()
-                        }
-                    }
-                    .help("Show or hide lyrics and the queue")
                 }
             }
         }
@@ -215,7 +202,7 @@ struct MainView: View {
             }
         }
         .themedBackground(.sidebar)
-        .navigationSplitViewColumnWidth(min: Theme.Size.sidebarMinWidth, ideal: 220)
+        .navigationSplitViewColumnWidth(min: Theme.Size.sidebarMinWidth, ideal: Theme.Size.sidebarIdealWidth)
         .safeAreaInset(edge: .bottom) {
             VStack(alignment: .leading, spacing: 0) {
                 LibraryPicker(session: session)
@@ -271,13 +258,48 @@ struct MainView: View {
         }
     }
 
+    /// The lyrics/queue panel, always built so its lyrics and queue scroll are ready when it opens.
+    /// Hidden, it's clipped to no width. Its contents keep their full width and are pinned to the
+    /// leading edge, so as that edge moves they slide in from the right with the dividing line,
+    /// rather than appearing in place or squeezing.
+    private var inspector: some View {
+        HStack(spacing: 0) {
+            Divider()
+            PlayerInspector(session: session, panel: $panel)
+        }
+        .frame(width: Theme.Size.inspectorWidth)
+        .frame(width: showsInspector ? Theme.Size.inspectorWidth : 0, alignment: .leading)
+        .clipped()
+        .layoutPriority(1)
+        .allowsHitTesting(showsInspector)
+        .accessibilityHidden(!showsInspector)
+        // On the panel, which follows the screen in the layout, so its button comes after the
+        // screen's own (Refresh, Sort…) and stays at the right edge as they come and go, instead of
+        // sliding over to make room for them.
+        .toolbar {
+            ToolbarItem {
+                Button { setInspectorShown(!showsInspector) } label: {
+                    Label { Text("Lyrics and Queue") } icon: {
+                        Image(systemName: "sidebar.trailing").tempusIconTinted()
+                    }
+                }
+                .help("Show or hide lyrics and the queue")
+            }
+        }
+    }
+
+    /// Animated here rather than with `.animation` on the layout, which also animated the toolbar.
+    private func setInspectorShown(_ shown: Bool) {
+        withAnimation(.snappy) { showsInspector = shown }
+    }
+
     /// The bar's lyrics and queue buttons open that panel, or close it if it's already showing.
     private func toggle(_ requested: InspectorPanel) {
         if showsInspector, panel == requested {
-            showsInspector = false
+            setInspectorShown(false)
         } else {
             panel = requested
-            showsInspector = true
+            setInspectorShown(true)
         }
     }
 }
@@ -322,9 +344,14 @@ private struct ServerMenu: View {
             Button("Edit \(session.profile.name)…") { editing = true }
             Button("Sign Out") { Task { await model.signOut() } }
         } label: {
-            Label(session.profile.name, systemImage: session.isOffline ? "bolt.horizontal.circle" : "server.rack")
+            Label {
+                Text(session.profile.name)
+            } icon: {
+                Image(systemName: session.isOffline ? "bolt.horizontal.circle" : "server.rack").tempusIconTinted()
+            }
         }
-        .menuStyle(.borderlessButton)
+        .foregroundStyle(Theme.accent)
+        .tempusMenu()
         .padding(Theme.Spacing.medium)
         .sheet(isPresented: $editing) {
             ServerEditorView(existing: session.profile) { editing = false }

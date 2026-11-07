@@ -104,8 +104,6 @@ private struct SyncedLyrics: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: Theme.Spacing.medium) {
-                    // Room above the first line and below the last, so either can sit in the middle.
-                    halfHeightSpacer
                     ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
                         Button {
                             // Upstream seeks a millisecond in, so the line is current at once.
@@ -121,10 +119,11 @@ private struct SyncedLyrics: View {
                         .buttonStyle(.tempusPlain)
                         .id(index)
                     }
-                    halfHeightSpacer
                 }
                 .scrollTargetLayout()
+                // The first and last lines sit at the edges; lines in between are centred.
                 .padding(.horizontal, Theme.Spacing.xLarge)
+                .padding(.vertical, Theme.Spacing.medium)
             }
             .onAppear { scroll(proxy, to: current, animated: false) }
             .onChange(of: current) { _, index in
@@ -150,10 +149,6 @@ private struct SyncedLyrics: View {
             .onScrollTargetVisibilityChange(idType: Int.self) { visibleLines = Set($0) }
             .task(id: scrollGeneration) { await resumeFollowing(with: proxy) }
         }
-    }
-
-    private var halfHeightSpacer: some View {
-        Color.clear.containerRelativeFrame(.vertical) { height, _ in height / 2 }
     }
 
     /// Once the reader has stopped scrolling: follow if they left the sung line near the middle,

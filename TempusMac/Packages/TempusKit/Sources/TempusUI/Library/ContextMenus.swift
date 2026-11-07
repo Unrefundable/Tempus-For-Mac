@@ -55,7 +55,7 @@ struct SongMenu: View {
     private func instantMix(_ song: Song) async {
         do throws(SubsonicError) {
             let mix = try await session.sources.instantMix(for: song)
-            session.player.playNext(mix)
+            session.player.playMix(mix)
         } catch {
             sheets.present(.message(title: "Instant Mix", text: error.userMessage))
         }

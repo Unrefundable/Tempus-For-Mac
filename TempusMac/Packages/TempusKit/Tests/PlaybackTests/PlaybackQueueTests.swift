@@ -57,6 +57,31 @@ struct PlayQueueTests {
         #expect(edited.current?.song.id == "a")
     }
 
+    @Test("Replacing all but the current track keeps it playing, then the new songs, and nothing else")
+    func replaceAroundCurrent() throws {
+        let original = try queue("p", "a", "b", "c", at: 1)
+        let edited = try original.replacingAllButCurrent(with: songs("x", "y"))
+        #expect(ids(edited.items) == ["a", "x", "y"])
+        #expect(edited.currentID == original.currentID)
+        #expect(ids(edited.unshuffled().items) == ["a", "x", "y"])
+    }
+
+    @Test("Replacing all but the current track turns shuffle off and keeps repeat")
+    func replaceAroundCurrentResetsShuffle() throws {
+        var generator = SeededGenerator(seed: 3)
+        let shuffled = try queue("a", "b", "c", repeat: .all).shuffled(using: &generator)
+        let edited = try shuffled.replacingAllButCurrent(with: songs("x"))
+        #expect(!edited.isShuffled)
+        #expect(edited.repeatMode == .all)
+    }
+
+    @Test("Replacing all but the current track of an empty queue starts the new songs")
+    func replaceAroundCurrentWhenEmpty() throws {
+        let edited = try PlaybackQueue().replacingAllButCurrent(with: songs("x", "y"))
+        #expect(ids(edited.items) == ["x", "y"])
+        #expect(edited.current?.song.id == "x")
+    }
+
     @Test("Adding to an empty queue makes the first added track current")
     func addToEmpty() throws {
         #expect(try PlaybackQueue().appending(songs("x", "y")).current?.song.id == "x")

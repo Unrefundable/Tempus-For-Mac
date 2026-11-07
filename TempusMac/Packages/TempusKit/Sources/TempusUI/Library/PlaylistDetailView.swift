@@ -28,10 +28,12 @@ struct PlaylistDetailView: View {
                         + (session.downloads.isKeptSynced(playlist.id) ? " • Kept synced" : "")
                 ) {
                     PlayButtons { playlist.entries }
-                    Button("Edit", systemImage: "pencil") { Task { await beginEditing() } }
+                    Button { Task { await beginEditing() } } label: {
+                        Label { Text("Edit") } icon: { Image(systemName: "pencil").tempusIconTinted() }
+                    }
                     Menu("More", tempus: .moreVert) { menu(for: playlist) }
-                        .menuStyle(.borderlessButton)
-                        .fixedSize()
+                        .labelStyle(.iconOnly)
+                        .tempusMenu()
                 }
                 if let errorMessage {
                     Text(errorMessage).font(.inter(.callout)).foregroundStyle(Theme.error).padding(

@@ -123,13 +123,13 @@ private struct TrackActions: View {
             Button("Instant Mix", tempus: .mixFromHere) {
                 Task {
                     do throws(SubsonicError) {
-                        try await session.player.playNext(session.sources.instantMix(for: song))
+                        try await session.player.playMix(session.sources.instantMix(for: song))
                     } catch {
                         sheets.present(.message(title: "Instant Mix", text: error.userMessage))
                     }
                 }
             }
-            .help("Play this again, then similar songs")
+            .help("Replace the queue with songs similar to this one")
         }
         .labelStyle(.iconOnly)
         .buttonStyle(.tempusBorderless)
@@ -179,8 +179,9 @@ private struct SpeedMenu: View {
                 }
             }
         }
-        .menuStyle(.borderlessButton)
-        .fixedSize()
+        // In the accent, as the borderless menu's text was before.
+        .foregroundStyle(Theme.accent)
+        .tempusMenu()
         .help("Playback speed")
     }
 }
@@ -208,8 +209,8 @@ private struct SleepTimerMenu: View {
                 Label(label(now: context.date), tempus: .timer)
             }
         }
-        .menuStyle(.borderlessButton)
-        .fixedSize()
+        .foregroundStyle(Theme.accent)
+        .tempusMenu()
         .help("Sleep timer")
     }
 

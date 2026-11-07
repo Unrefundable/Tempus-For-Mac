@@ -42,10 +42,14 @@ public enum Theme {
         public static let queueCover: CGFloat = 40
         public static let nowPlayingArtwork: CGFloat = 440
         public static let sidebarMinWidth: CGFloat = 200
+        public static let sidebarIdealWidth: CGFloat = 220
         public static let inspectorWidth: CGFloat = 320
         /// Fits the sidebar, the content (player bar included) and the inspector, so opening the
         /// inspector never pushes columns past the window's edges.
         public static let windowMinWidth: CGFloat = 900
+        /// The content column's least width: what's left of the narrowest window beside the
+        /// sidebar, so showing the sidebar never needs more room than the window has.
+        public static let detailMinWidth: CGFloat = windowMinWidth - sidebarIdealWidth
         public static let loginWidth: CGFloat = 480
         /// Upstream's disc logo above the server list.
         public static let loginLogo: CGFloat = 64

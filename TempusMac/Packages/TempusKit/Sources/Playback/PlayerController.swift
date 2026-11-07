@@ -368,3 +368,16 @@ public final class PlayerController {
         settingsStore.save(settings)
     }
 }
+
+public extension PlayerController {
+    /// A mix (Instant Mix) as the whole queue: its first song, then the rest. When that first song is
+    /// the one playing, it carries on where it is instead of starting over or playing twice.
+    func playMix(_ songs: [Song]) {
+        guard let seed = songs.first else { return }
+        guard queue.current?.song.id == seed.id else {
+            play(songs)
+            return
+        }
+        edit { $0.replacingAllButCurrent(with: Array(songs.dropFirst())) }
+    }
+}

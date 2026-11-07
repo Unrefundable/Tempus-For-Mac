@@ -134,6 +134,11 @@ extension ThemeAppearance {
     }
 }
 
+/// Colors the window behind a transparent titlebar and hides the toolbar's own background, rather
+/// than painting the toolbar with `toolbarBackground`: SwiftUI's painted toolbar took the titlebar's
+/// clicks, so double-clicking it no longer zoomed the window, and it didn't reach the toolbar AppKit
+/// shows separately in full screen, which stayed grey. Left alone, AppKit drew its own grey toolbar
+/// on hover wherever no scroll view sat under it.
 private struct ThemedToolbar: ViewModifier {
     @Environment(\.appTheme) private var theme
     @Environment(\.colorScheme) private var colorScheme
@@ -141,8 +146,64 @@ private struct ThemedToolbar: ViewModifier {
     func body(content: Content) -> some View {
         let color = theme.color(for: .background, in: ThemeVariant(colorScheme))
         content
-            .toolbarBackground(color.map(Color.init) ?? .clear, for: .windowToolbar)
-            .toolbarBackgroundVisibility(color == nil ? .automatic : .visible, for: .windowToolbar)
+            .toolbarBackgroundVisibility(color == nil ? .automatic : .hidden, for: .windowToolbar)
+            .background(WindowBackground(color: color.map { NSColor(Color($0)) }))
+    }
+}
+
+/// Paints its window in `color` behind a transparent titlebar, or gives the window back the
+/// system's look when `color` is nil.
+private struct WindowBackground: NSViewRepresentable {
+    let color: NSColor?
+
+    func makeNSView(context _: Context) -> PainterView {
+        PainterView()
+    }
+
+    func updateNSView(_ view: PainterView, context _: Context) {
+        view.color = color
+    }
+
+    final class PainterView: NSView {
+        var color: NSColor? {
+            didSet { paint() }
+        }
+
+        private var fullScreenObserver: (any NSObjectProtocol)?
+        private let backstop = FullScreenToolbarBackstop()
+
+        override func viewWillMove(toWindow newWindow: NSWindow?) {
+            super.viewWillMove(toWindow: newWindow)
+            if let fullScreenObserver {
+                NotificationCenter.default.removeObserver(fullScreenObserver)
+            }
+            fullScreenObserver = nil
+        }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let window {
+                // The full-screen toolbar's window only exists once the window is in full screen.
+                fullScreenObserver = NotificationCenter.default.addObserver(
+                    forName: NSWindow.didEnterFullScreenNotification,
+                    object: window,
+                    queue: .main
+                ) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.paint() }
+                }
+            }
+            paint()
+        }
+
+        private func paint() {
+            guard let window else { return }
+            window.titlebarAppearsTransparent = color != nil
+            // The line AppKit draws under the toolbar while a list is scrolled beneath it came and
+            // went as the lyrics and queue swapped places.
+            window.titlebarSeparatorStyle = color == nil ? .automatic : .none
+            window.backgroundColor = color ?? .windowBackgroundColor
+            backstop.paint(color, behindToolbarOf: window)
+        }
     }
 }
 

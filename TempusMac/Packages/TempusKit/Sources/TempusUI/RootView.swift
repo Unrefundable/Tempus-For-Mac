@@ -34,7 +34,10 @@ public struct RootView: View {
                 }
             }
         }
-        .frame(minWidth: Theme.Size.windowMinWidth, minHeight: 560)
+        // Signed in, the split view's columns set the least width themselves. A minimum here, on
+        // the whole split view, became the content column's own, so showing the sidebar in a
+        // narrow window pushed the content past the window's right edge.
+        .frame(minWidth: model.phase == .signedIn ? nil : Theme.Size.windowMinWidth, minHeight: 560)
         .background(model.phase == .signedIn ? nil : ThemedFill())
         // Another server's album and artist ids mean nothing here.
         .onChange(of: model.session?.profile.id) {

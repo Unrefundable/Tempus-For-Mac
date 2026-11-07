@@ -3,6 +3,7 @@ import DesignSystem
 import Playback
 import SubsonicAPI
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// The inspector beside the content: lyrics or the queue.
 struct PlayerInspector: View {
@@ -21,28 +22,45 @@ struct PlayerInspector: View {
             .pickerStyle(.segmented)
             .labelsHidden()
             .padding(Theme.Spacing.medium)
-            switch panel {
-            case .lyrics:
+            // Both stay built and only the chosen one shows, so switching doesn't rebuild either:
+            // rebuilt, the lyrics went back to loading and the lists redrew their lines, which
+            // flashed for a moment.
+            ZStack(alignment: .top) {
                 LyricsPanel(
                     player: player,
                     service: session.lyrics,
                     settings: session.settings,
                     serverID: session.profile.id
                 )
-            case .queue: QueuePanel(session: session)
+                .shown(panel == .lyrics)
+                QueuePanel(session: session, isShown: panel == .queue)
+                    .shown(panel == .queue)
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
     }
 }
 
+private extension View {
+    /// Shows this view, or keeps it in place but invisible and out of reach.
+    func shown(_ isShown: Bool) -> some View {
+        opacity(isShown ? 1 : 0)
+            .allowsHitTesting(isShown)
+            .accessibilityHidden(!isShown)
+    }
+}
+
 /// Upstream's "Playing Next": count and length, then each entry. Earlier tracks are dimmed and the
-/// current one highlighted. Double-click plays an entry; Delete or the context menu removes one.
+/// current one highlighted. Double-click plays an entry, dragging one onto another moves it there,
+/// and the context menu removes one.
 struct QueuePanel: View {
     let session: ServerSession
+    /// Whether the queue is the panel showing. Coming into view brings the playing song back to the top.
+    let isShown: Bool
 
     @Environment(SheetPresenter.self) private var sheets
     @State private var errorMessage: String?
+    @State private var position = ScrollPosition(idType: QueueItem.ID.self)
 
     private var player: PlayerController {
         session.player
@@ -73,8 +91,7 @@ struct QueuePanel: View {
                         .disabled(player.queue.isEmpty)
                 }
                 .labelStyle(.iconOnly)
-                .menuStyle(.borderlessButton)
-                .fixedSize()
+                .tempusMenu()
             }
             .padding(.horizontal, Theme.Spacing.medium)
             if let errorMessage {
@@ -113,14 +130,46 @@ struct QueuePanel: View {
         }
     }
 
+    /// Opens on the playing song at the top, goes back to it each time the queue is shown, and
+    /// keeps it there as the queue moves on.
     private var list: some View {
+        rows
+            .scrollPosition($position, anchor: .top)
+            .onAppear { scrollToCurrent(animated: false) }
+            .onChange(of: isShown) { _, shown in
+                if shown {
+                    scrollToCurrent(animated: false)
+                }
+            }
+            .onChange(of: player.queue.currentID) { scrollToCurrent(animated: true) }
+    }
+
+    private func scrollToCurrent(animated: Bool) {
+        guard let id = player.queue.currentID else { return }
+        if animated {
+            withAnimation(.smooth) { position.scrollTo(id: id, anchor: .top) }
+        } else {
+            position.scrollTo(id: id, anchor: .top)
+        }
+    }
+
+    /// A scroll view rather than a `List`: on the Mac a list can't be scrolled to an entry with an
+    /// animation, and jumps to entries it hasn't drawn land off target. Rows here are all one
+    /// height, so a scroll to the playing song lands exactly and glides there.
+    private var rows: some View {
+        let items = player.queue.items
         let currentIndex = player.queue.currentIndex ?? 0
-        return List {
-            ForEach(Array(player.queue.items.enumerated()), id: \.element.id) { index, item in
-                QueueRow(song: item.song, isCurrent: item.id == player.queue.currentID)
-                    .opacity(index < currentIndex ? Theme.playedOpacity : 1)
-                    .contentShape(.rect)
-                    .onTapGesture(count: 2) { player.jump(to: item.id) }
+        return ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                    QueueEntry(
+                        item: item,
+                        isCurrent: item.id == player.queue.currentID,
+                        isPlayed: index < currentIndex,
+                        isLast: index == items.count - 1
+                    ) { moved in
+                        player.move(moved, to: index)
+                    }
                     .contextMenu {
                         Button("Play") { player.jump(to: item.id) }
                         Button("Remove from Queue") { player.remove(item.id) }
@@ -128,15 +177,69 @@ struct QueuePanel: View {
                         Divider()
                         SongMenu(songs: [item.song])
                     }
+                    .onTapGesture(count: 2) { player.jump(to: item.id) }
+                }
             }
-            .onMove { source, destination in
-                guard let from = source.first else { return }
-                let id = player.queue.items[from].id
-                player.move(id, to: destination > from ? destination - 1 : destination)
-            }
+            .scrollTargetLayout()
         }
-        .listStyle(.plain)
     }
+}
+
+/// A queue entry to drag onto another to take its place.
+struct QueueItemTransfer: Codable, Transferable {
+    let id: QueueItem.ID
+
+    static var transferRepresentation: some TransferRepresentation {
+        CodableRepresentation(contentType: .tempusQueueItem)
+    }
+}
+
+extension UTType {
+    /// A queue entry being moved within the queue (declared in the app's Info.plist).
+    static let tempusQueueItem = UTType(exportedAs: "io.github.unrefundable.TempusMac.queue-item")
+}
+
+/// One row of the queue: dimmed once played, a line under it as a list draws, and a drop target
+/// for moving another entry into its place.
+private struct QueueEntry: View {
+    let item: QueueItem
+    let isCurrent: Bool
+    let isPlayed: Bool
+    let isLast: Bool
+    let onMoveHere: (QueueItem.ID) -> Void
+
+    @State private var isTargeted = false
+
+    var body: some View {
+        QueueRow(song: item.song, isCurrent: isCurrent)
+            .opacity(isPlayed ? Theme.playedOpacity : 1)
+            .padding(.horizontal, Theme.Spacing.medium)
+            .padding(.vertical, Theme.Spacing.xSmall)
+            .contentShape(.rect)
+            .background {
+                if isTargeted {
+                    Rectangle().fill(Theme.accent).opacity(Self.dropHighlightOpacity)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if !isLast {
+                    Divider().padding(.leading, Self.separatorInset)
+                }
+            }
+            .draggable(QueueItemTransfer(id: item.id)) {
+                QueueRow(song: item.song, isCurrent: false)
+                    .frame(width: Theme.Size.inspectorWidth - 2 * Theme.Spacing.medium)
+            }
+            .dropDestination(for: QueueItemTransfer.self) { moved, _ in
+                guard let id = moved.first?.id, id != item.id else { return false }
+                onMoveHere(id)
+                return true
+            } isTargeted: { isTargeted = $0 }
+    }
+
+    private static let dropHighlightOpacity = 0.18
+    /// Lines start under the titles, past the cover, as a list's separators do.
+    private static let separatorInset = Theme.Spacing.medium + Theme.Size.queueCover + Theme.Spacing.medium
 }
 
 private struct QueueRow: View {

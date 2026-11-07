@@ -19,6 +19,16 @@
 				<string>public.data</string>
 			</array>
 		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>io.github.unrefundable.TempusMac.queue-item</string>
+			<key>UTTypeDescription</key>
+			<string>Tempus Queue Entry</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+		</dict>
 	</array>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/Unrefundable/Tempus-For-Mac/main/appcast.xml</string>

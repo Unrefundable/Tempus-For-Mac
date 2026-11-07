@@ -22,6 +22,18 @@ extension ButtonStyle where Self == RippleButtonStyle {
     }
 }
 
+extension View {
+    /// For a `Menu` among buttons. SwiftUI draws it like a `.tempusBorderless` button, so its icon
+    /// takes the theme's icon color and ripples like its neighbours. `.borderlessButton` left the
+    /// drawing to AppKit, which drew the icon grey with a chevron beside it.
+    func tempusMenu() -> some View {
+        menuStyle(.button)
+            .buttonStyle(.tempusBorderless)
+            .menuIndicator(.hidden)
+            .fixedSize()
+    }
+}
+
 /// Upstream's Material press ripple: the click shows as a circle of a lighter or darker shade of
 /// the surface behind the button, which grows and fades.
 struct RippleButtonStyle: ButtonStyle {
@@ -43,32 +55,35 @@ private struct RippleButton: View {
     /// Counts presses; each one plays a ripple.
     @State private var pressCount = 0
     /// Where the pointer was last seen over the button: the next ripple's center, for a bounded one.
-    @State private var pointer: CGPoint?
+    @State private var pointer = PointerLocation()
 
     var body: some View {
         let ripple = RippleLayer(
             pressCount: pressCount,
             isBounded: isBounded,
-            origin: pointer
+            origin: pointer.location
         )
+        // Only built once the button has been pressed: a grid of tiles scrolling past would
+        // otherwise make an AppKit view for every tile that comes into view.
+        let hasRipple = pressCount > 0
         configuration.label
             .contentShape(.rect)
             .opacity(isEnabled ? 1 : Self.disabledOpacity)
             // An icon's ripple spreads behind it, so the icon stays crisp. A row's covers it, so a
             // cover or tile image can't hide it.
             .background {
-                if !isBounded {
+                if hasRipple, !isBounded {
                     ripple
                 }
             }
             .overlay {
-                if isBounded {
+                if hasRipple, isBounded {
                     ripple
                 }
             }
             .onContinuousHover { phase in
                 if case let .active(location) = phase {
-                    pointer = location
+                    pointer.location = location
                 }
             }
             .onChange(of: configuration.isPressed) { _, isPressed in
@@ -77,6 +92,14 @@ private struct RippleButton: View {
                 }
             }
     }
+}
+
+/// The pointer's last place over a button. A reference rather than state, so following the pointer
+/// doesn't redraw the button on every move: scrolling a grid under a still pointer counts as moving
+/// over the tiles, and redrew the one under it every frame. A press redraws the button anyway, and
+/// reads the latest place then.
+private final class PointerLocation {
+    var location: CGPoint?
 }
 
 /// The ripple itself: a circle that grows from a point and fades, played once per press. It's a
@@ -113,7 +136,8 @@ private struct RippleLayer: View {
     }
 }
 
-/// Plays a ripple each time `pressCount` goes up, none when it first appears.
+/// Plays a ripple each time `pressCount` goes up. It's first built by the press that plays the
+/// first ripple, so it plays one for each press up to `pressCount` it hasn't shown yet.
 private struct RippleView: NSViewRepresentable {
     let pressCount: Int
     let isBounded: Bool
@@ -129,7 +153,8 @@ private struct RippleView: NSViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(playedCount: pressCount)
+        // Built by a press, which still has to play.
+        Coordinator(playedCount: pressCount - 1)
     }
 
     func makeNSView(context _: Context) -> RippleNSView {
@@ -174,13 +199,28 @@ private final class RippleNSView: NSView {
         fatalError("init(coder:) is not used")
     }
 
+    /// A ripple asked for before the view had a size: it's built by the press it plays for, which
+    /// happens before SwiftUI lays it out.
+    private var pending: (point: CGPoint?, color: NSColor)?
+
     override func hitTest(_: NSPoint) -> NSView? {
         nil // never takes the button's clicks
     }
 
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        guard let pending, !bounds.isEmpty else { return }
+        self.pending = nil
+        ripple(from: pending.point, color: pending.color)
+    }
+
     /// A circle from `point` (the middle when nil) that grows to cover the view, then fades.
     func ripple(from point: CGPoint?, color: NSColor) {
-        guard let layer, bounds.width > 0, bounds.height > 0 else { return }
+        guard !bounds.isEmpty else {
+            pending = (point, color)
+            return
+        }
+        guard let layer else { return }
         let center = point ?? CGPoint(x: bounds.midX, y: bounds.midY)
         let radius = isBounded ? Self.farthestCornerDistance(from: center, in: bounds.size)
             : max(bounds.width, bounds.height) / 2
