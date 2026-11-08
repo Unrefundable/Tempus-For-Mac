@@ -79,7 +79,7 @@ Like Tempus, it doesn't rely on recommendation algorithms. Home is built from yo
 ### Library and discovery
 - **Subsonic integration.** Connect to one or more Subsonic, OpenSubsonic or Navidrome servers and switch between them. Supports token and legacy authentication, separate local and public addresses, custom request headers and client certificates (mTLS).
 - **Home.** Up to 17 sections you can show, hide and reorder: Continue Listening, Discover, Recently Played, Recently Added, Most Played, Top Rated, starred tracks, albums and artists, Your Week, Flashback, Random Albums, pinned playlists, genres, newest podcasts and more.
-- **Browse and search.** Artists, albums, genres, playlists, music folders and multiple libraries, each with its own detail page, and search across your whole library.
+- **Browse and search.** Lyrics, Artists, albums, genres, playlists, music folders and multiple libraries, each with its own detail page, and search across your whole library.
 - **Favorites and ratings.** Star songs, albums and artists, rate tracks, and keep your starred songs one click away in the sidebar.
 - **Instant Mix.** Start a mix from any song, album or artist using your server's similar-songs data.
 - **Cache-first.** Every screen shows cached data immediately, then refreshes from the server, so the library opens instantly even on a large collection.
