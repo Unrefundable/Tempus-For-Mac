@@ -141,7 +141,7 @@ NOTES_ARGS=(--generate-notes)
 PRERELEASE_ARGS=()
 [[ $PRERELEASE == true ]] && PRERELEASE_ARGS=(--prerelease)
 gh release create "$TAG" "$ZIP" --repo "$REPO" --target "$(git rev-parse HEAD)" \
-    --title "Tempus for macOS $VERSION" "${NOTES_ARGS[@]}" "${PRERELEASE_ARGS[@]+"${PRERELEASE_ARGS[@]}"}"
+    --title "$VERSION" "${NOTES_ARGS[@]}" "${PRERELEASE_ARGS[@]+"${PRERELEASE_ARGS[@]}"}"
 
 git add appcast.xml
 git commit --quiet -m "chore: publish $VERSION to the update feed"
