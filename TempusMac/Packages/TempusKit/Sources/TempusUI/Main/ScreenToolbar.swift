@@ -91,24 +91,31 @@ private struct ScreenCommandHandler: ViewModifier {
 
 /// The toolbar's trailing controls: the screen's own, then the lyrics and queue button.
 ///
-/// One toolbar item draws them all, with its own glass, because the toolbar itself swaps items
-/// in and out with no animation. Here they fade and the glass stretches between screens.
+/// One toolbar item draws them all, with capsules of its own, because the toolbar itself swaps
+/// items in and out with no animation. Here they fade and the capsules stretch between screens.
 struct ScreenToolbar: View {
     let screen: ToolbarScreen
+    /// Owned by the window, not this view: the toolbar resizes its item only when the window's
+    /// toolbar content changes, so a width this view kept to itself would never shrink the item.
+    let reservedWidth: CGFloat
+    let reserve: @MainActor (CGFloat) -> Void
     let togglePanel: @MainActor () -> Void
 
     @Environment(ServerSession.self) private var session
     @Environment(ScreenCommands.self) private var commands
-    @Namespace private var glass
     /// Follows `screen` a step behind, so the width below is held before the controls change.
     @State private var shownScreen: ToolbarScreen
     @State private var contentWidth: CGFloat = 0
-    /// The toolbar sizes the item to its new width at once. Holding the old width until the
-    /// animation ends keeps the controls on their way out from being cut off.
-    @State private var reservedWidth: CGFloat = 0
 
-    init(screen: ToolbarScreen, togglePanel: @escaping @MainActor () -> Void) {
+    init(
+        screen: ToolbarScreen,
+        reservedWidth: CGFloat,
+        reserve: @escaping @MainActor (CGFloat) -> Void,
+        togglePanel: @escaping @MainActor () -> Void
+    ) {
         self.screen = screen
+        self.reservedWidth = reservedWidth
+        self.reserve = reserve
         self.togglePanel = togglePanel
         _shownScreen = State(initialValue: screen)
     }
@@ -120,25 +127,28 @@ struct ScreenToolbar: View {
     private static let groupSpacing = Theme.Spacing.small
 
     var body: some View {
-        ToolbarGlassContainer(spacing: Self.groupSpacing) {
-            HStack(spacing: Self.groupSpacing) {
-                picker
-                HStack(spacing: 0) {
-                    buttons
-                    panelButton
-                }
+        HStack(spacing: Self.groupSpacing) {
+            picker
+            HStack(spacing: 0) {
+                buttons
+                panelButton
             }
+            .toolbarCapsule()
         }
+        // A group of its own, so each button keeps its own name: the toolbar otherwise names the
+        // whole item after its first button.
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Page controls")
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { contentWidth = $0 }
         .frame(minWidth: reservedWidth, alignment: .trailing)
         .animation(Self.animation, value: shownScreen)
         .onChange(of: screen) { _, newScreen in
-            reservedWidth = max(reservedWidth, contentWidth)
+            reserve(max(reservedWidth, contentWidth))
             shownScreen = newScreen
         }
         .task(id: shownScreen) {
             guard await (try? Task.sleep(for: Self.settleDelay)) != nil else { return }
-            reservedWidth = 0
+            reserve(0)
         }
     }
 
@@ -150,19 +160,19 @@ struct ScreenToolbar: View {
                 ForEach(AlbumSort.allCases) { Text($0.title).tag($0) }
             }
             .help("Sort albums")
-            .modifier(PickerGlass(id: "albumSort", namespace: glass, height: Self.buttonSize.height))
+            .modifier(ToolbarMenu(height: Self.buttonSize.height))
         case .playlists:
             Picker("Sort", selection: $settings.playlistSort) {
                 ForEach(PlaylistSort.allCases) { Text($0.title).tag($0) }
             }
             .help("Sort playlists")
-            .modifier(PickerGlass(id: "playlistSort", namespace: glass, height: Self.buttonSize.height))
+            .modifier(ToolbarMenu(height: Self.buttonSize.height))
         case .downloads:
             Picker("Group by", selection: $settings.downloadGrouping) {
                 ForEach(DownloadGrouping.allCases) { Text($0.title).tag($0) }
             }
             .help("Group downloads")
-            .modifier(PickerGlass(id: "downloadGrouping", namespace: glass, height: Self.buttonSize.height))
+            .modifier(ToolbarMenu(height: Self.buttonSize.height))
         default:
             EmptyView()
         }
@@ -171,26 +181,22 @@ struct ScreenToolbar: View {
     /// In fixed places, so a button two screens share (Refresh) stays put between them.
     @ViewBuilder private var buttons: some View {
         if let title = shownScreen.addTitle {
-            button(title, icon: .add, id: "add") { commands.send(.add) }
+            button(title, icon: .add) { commands.send(.add) }
         }
         if let title = shownScreen.refreshTitle {
-            button(title, icon: .refresh, id: "refresh") { commands.send(.refresh) }
+            button(title, icon: .refresh) { commands.send(.refresh) }
         }
         if shownScreen == .downloads {
-            button("Remove All Downloads", icon: .delete, id: "removeAll") { commands.send(.removeAll) }
+            button("Remove All Downloads", icon: .delete) { commands.send(.removeAll) }
                 .disabled(session.downloads.records.isEmpty)
         }
     }
 
-    private func button(
-        _ title: String,
-        icon: TempusIcon,
-        id: String,
-        action: @escaping @MainActor () -> Void
-    ) -> some View {
+    private func button(_ title: String, icon: TempusIcon, action: @escaping @MainActor () -> Void) -> some View {
         Button(title, tempus: icon, action: action)
             .help(title)
-            .modifier(ButtonGlass(id: id, namespace: glass, size: Self.buttonSize))
+            .accessibilityLabel(title)
+            .modifier(ToolbarButton(size: Self.buttonSize))
     }
 
     private var panelButton: some View {
@@ -200,63 +206,59 @@ struct ScreenToolbar: View {
             }
         }
         .help("Show or hide lyrics and the queue")
-        .modifier(ButtonGlass(id: "panel", namespace: glass, size: Self.buttonSize))
+        .modifier(ToolbarButton(size: Self.buttonSize))
     }
 }
 
-/// Lets nearby glass shapes merge and morph on macOS 26 and later; just the content before.
-private struct ToolbarGlassContainer<Content: View>: View {
-    let spacing: CGFloat
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        if #available(macOS 26, *) {
-            GlassEffectContainer(spacing: spacing) { content }
-        } else {
-            content
-        }
-    }
-}
-
-/// The buttons share one capsule, as the toolbar groups adjacent buttons.
-private struct ButtonGlass: ViewModifier {
-    let id: String
-    let namespace: Namespace.ID
+/// A button the size of the toolbar's own, fading in and out between screens.
+private struct ToolbarButton: ViewModifier {
     let size: CGSize
 
     func body(content: Content) -> some View {
-        let sized = content
+        content
             .frame(width: size.width, height: size.height)
             .contentShape(.rect)
             .transition(.opacity.combined(with: .scale(scale: 0.6)))
-        if #available(macOS 26, *) {
-            sized
-                .glassEffect(.regular.interactive())
-                .glassEffectID(id, in: namespace)
-                .glassEffectUnion(id: "buttons", namespace: namespace)
-        } else {
-            sized
-        }
     }
 }
 
-/// A menu gets a capsule of its own, as in the toolbar.
-private struct PickerGlass: ViewModifier {
-    let id: String
-    let namespace: Namespace.ID
+/// A menu in a capsule of its own, as in the toolbar.
+private struct ToolbarMenu: ViewModifier {
     let height: CGFloat
 
     func body(content: Content) -> some View {
-        let shown = content
+        content
             .fixedSize()
+            .frame(height: height)
+            .toolbarCapsule()
             .transition(.opacity.combined(with: .scale(scale: 0.8)))
+    }
+}
+
+extension View {
+    /// The toolbar's capsule behind these controls, on macOS 26 and later.
+    func toolbarCapsule() -> some View {
+        modifier(ToolbarCapsule())
+    }
+}
+
+/// The toolbar's glass capsule, drawn as plain shapes. SwiftUI's glass effect adds views of its
+/// own that kept the places controls had on earlier screens and swallowed clicks meant for the
+/// controls that replaced them; shapes are drawn only, so clicks always reach the buttons.
+private struct ToolbarCapsule: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
         if #available(macOS 26, *) {
-            shown
-                .frame(height: height)
-                .glassEffect(.regular.interactive())
-                .glassEffectID(id, in: namespace)
+            content.background {
+                Capsule()
+                    .fill(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.7))
+                    .overlay(Capsule().strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5))
+                    .shadow(color: .black.opacity(colorScheme == .dark ? 0 : 0.08), radius: 2, y: 1)
+                    .allowsHitTesting(false)
+            }
         } else {
-            shown
+            content
         }
     }
 }

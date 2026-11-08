@@ -5,11 +5,10 @@ import SwiftUI
 
 /// Upstream's mini player, laid out the Mac way across the bottom of the window: cover and titles
 /// (click to open Now Playing) with a heart to star the track, transport and seek bar in the
-/// middle, then volume, lyrics, queue and AirPlay.
+/// middle, then volume beside it and AirPlay at the edge. Lyrics and the queue open from the toolbar's panel button.
 struct PlayerBar: View {
     let player: PlayerController
     let stars: StarService
-    let onTogglePanel: (InspectorPanel) -> Void
     let onOpenNowPlaying: () -> Void
 
     /// The transport and seek bar take this share of the bar, between these widths. Below the
@@ -33,17 +32,17 @@ struct PlayerBar: View {
                 TransportControls(player: player)
                 SeekBar(player: player, compact: true)
             }
+            // Volume beside the transport it belongs with; AirPlay out at the bar's edge.
             HStack(spacing: Theme.Spacing.medium) {
                 VolumeControl(player: player)
-                Button("Lyrics", tempus: .lyrics) { onTogglePanel(.lyrics) }
-                Button("Queue", tempus: .queue) { onTogglePanel(.queue) }
+                    .fixedSize()
+                Spacer(minLength: 0)
                 RoutePicker()
                     .frame(width: 24, height: 24)
                     .help("AirPlay and output devices")
             }
             .labelStyle(.iconOnly)
             .buttonStyle(.tempusBorderless)
-            .fixedSize()
         }
         .padding(.horizontal, Theme.Spacing.large)
         .frame(height: Theme.Size.playerBarHeight)

@@ -57,6 +57,8 @@ struct MainView: View {
     @Environment(AppModel.self) private var model
     @State private var sheets = SheetPresenter()
     @State private var commands = ScreenCommands()
+    /// The width the toolbar's trailing item holds while its controls animate. See `ScreenToolbar`.
+    @State private var toolbarReservedWidth: CGFloat = 0
     @SceneStorage("inspectorShown") private var showsInspector = false
     @SceneStorage("inspectorPanel") private var panel = InspectorPanel.queue
 
@@ -85,7 +87,7 @@ struct MainView: View {
             .themedBackground(.background)
             .themedToolbar()
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                PlayerBar(player: session.player, stars: session.stars, onTogglePanel: toggle) {
+                PlayerBar(player: session.player, stars: session.stars) {
                     navigator.selection = .nowPlaying
                 }
             }
@@ -288,24 +290,17 @@ struct MainView: View {
     }
 
     private var screenToolbar: some View {
-        ScreenToolbar(screen: ToolbarScreen(selection: navigator.selection, route: navigator.path.last)) {
-            setInspectorShown(!showsInspector)
-        }
+        ScreenToolbar(
+            screen: ToolbarScreen(selection: navigator.selection, route: navigator.path.last),
+            reservedWidth: toolbarReservedWidth,
+            reserve: { toolbarReservedWidth = $0 },
+            togglePanel: { setInspectorShown(!showsInspector) }
+        )
     }
 
     /// Animated here rather than with `.animation` on the layout, which also animated the toolbar.
     private func setInspectorShown(_ shown: Bool) {
         withAnimation(.snappy) { showsInspector = shown }
-    }
-
-    /// The bar's lyrics and queue buttons open that panel, or close it if it's already showing.
-    private func toggle(_ requested: InspectorPanel) {
-        if showsInspector, panel == requested {
-            setInspectorShown(false)
-        } else {
-            panel = requested
-            setInspectorShown(true)
-        }
     }
 }
 
