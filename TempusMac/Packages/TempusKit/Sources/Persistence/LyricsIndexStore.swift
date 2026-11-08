@@ -129,18 +129,24 @@ public struct LyricsIndexStore: Sendable {
         }
     }
 
-    /// Songs whose lyrics contain `query`'s words, best first: the words as a phrase, then the
-    /// words anywhere. The last word matches as a prefix while it may still be being typed, that
-    /// is unless the query ends in a space or punctuation, or it is a single letter, which would
-    /// match nearly every song. Search syntax in `query` is taken as plain words.
+    /// Songs whose lyrics contain `query`'s words, best first by how close together the words
+    /// are: as typed, then with a couple of words between, then within about a line. Songs that
+    /// only have the words scattered through the lyrics are shown only when nothing closer is, so
+    /// they never crowd out the song being looked for. The last word matches as a prefix while it
+    /// may still be being typed, that is unless the query ends in a space or punctuation, or it is
+    /// a single letter, which would match nearly every song. Search syntax in `query` is taken as
+    /// plain words.
     public func search(_ query: String, server: String, limit: Int = defaultLimit) async throws -> [LyricsIndexMatch] {
         try await writer.read { db in
             guard limit > 0, let patterns = try LyricsPatterns(query: query, db: db) else { return [] }
-            var matches = try Self.matches(db, pattern: patterns.phrase, server: server, limit: limit)
-            if matches.count < limit, let allWords = patterns.allWords {
+            var matches: [LyricsIndexMatch] = []
+            for pattern in patterns.byCloseness where matches.count < limit {
                 let found = Set(matches.map(\.song.id))
-                let more = try Self.matches(db, pattern: allWords, server: server, limit: limit + found.count)
+                let more = try Self.matches(db, pattern: pattern, server: server, limit: limit + found.count)
                 matches += more.lazy.filter { !found.contains($0.song.id) }.prefix(limit - matches.count)
+            }
+            if matches.isEmpty, let scattered = patterns.scattered {
+                matches = try Self.matches(db, pattern: scattered, server: server, limit: limit)
             }
             return matches
         }
@@ -226,10 +232,20 @@ public struct LyricsIndexStore: Sendable {
 /// FTS5 queries built from what the user typed. Each word is quoted, so nothing typed is read as
 /// search syntax.
 struct LyricsPatterns: Equatable {
-    /// The words in order.
-    let phrase: String
-    /// Every word, anywhere; nil for a single word, where it would equal `phrase`.
-    let allWords: String?
+    /// Closest first: the words in order, then every word with at most `closeExtraWords` other
+    /// words among them, then with at most `nearbyExtraWords`, in any order. One pattern for a
+    /// single word.
+    let byCloseness: [String]
+    /// Every word, anywhere in the lyrics; nil for a single word.
+    let scattered: String?
+
+    /// Other words allowed among the typed ones for a close match: a word misremembered or left
+    /// out ("kiss me before you go" for "kiss me hard before you go").
+    static let closeExtraWords = 2
+    /// Other words allowed for a nearby match: about a line of lyrics.
+    static let nearbyExtraWords = 8
+    /// Fewer letters than this are matched as a whole word.
+    private static let shortestPrefix = 2
 
     /// Nil when `query` has no words.
     init?(query: String, db: Database) throws {
@@ -238,14 +254,23 @@ struct LyricsPatterns: Equatable {
         guard let last = tokens.last else { return nil }
         let isLastWordFinished = query.last.map { $0.isWhitespace || $0.isPunctuation } ?? true
         let prefix = isLastWordFinished || last.count < Self.shortestPrefix ? "" : "*"
-        phrase = Self.quoted(tokens.joined(separator: " ")) + prefix
-        allWords = tokens.count > 1
-            ? (tokens.dropLast().map(Self.quoted) + [Self.quoted(last) + prefix]).joined(separator: " ")
-            : nil
+        let phrase = Self.quoted(tokens.joined(separator: " ")) + prefix
+        guard tokens.count > 1 else {
+            byCloseness = [phrase]
+            scattered = nil
+            return
+        }
+        let words = (tokens.dropLast().map(Self.quoted) + [Self.quoted(last) + prefix]).joined(separator: " ")
+        // NEAR's distance counts every token between the first word and the last, the other typed
+        // words among them, so each tier allows the words in between plus its extra words.
+        let between = tokens.count - 2
+        byCloseness = [
+            phrase,
+            "NEAR(\(words), \(between + Self.closeExtraWords))",
+            "NEAR(\(words), \(between + Self.nearbyExtraWords))",
+        ]
+        scattered = words
     }
-
-    /// Fewer letters than this are matched as a whole word.
-    private static let shortestPrefix = 2
 
     private static func quoted(_ text: String) -> String {
         "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\""

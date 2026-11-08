@@ -33,16 +33,70 @@ struct LyricsIndexStoreTests {
         #expect(matches.map(\.song.id) == ["1"])
     }
 
-    @Test("Songs with the exact phrase rank above songs that only have the words")
+    /// The words far apart: in the first line, the middle and the last line, with filler between.
+    private static let scattered = """
+    Kiss the sky tonight
+    la la la la la la la la la la
+    you were never me before
+    la la la la la la la la la la
+    and then we go home
+    """
+
+    @Test("Songs with the exact phrase rank above songs with the words close together")
     func phraseRanksFirst() async throws {
         let store = try await store(with: [
-            entry("scattered", "The night is young\nand we are running home"),
+            entry("close", "The night is young\nand we are running home"),
             entry("phrase", "We are young tonight"),
         ])
 
         let matches = try await store.search("we are young", server: "s")
 
-        #expect(matches.map(\.song.id) == ["phrase", "scattered"])
+        #expect(matches.map(\.song.id) == ["phrase", "close"])
+    }
+
+    @Test("A line typed with a word missing finds the song, and songs with the words scattered stay out")
+    func missingWordBeatsScattered() async throws {
+        let store = try await store(with: [
+            entry("scattered", Self.scattered),
+            entry("summertime", "Kiss me hard before you go\nSummertime sadness"),
+        ])
+
+        let matches = try await store.search("kiss me before you go", server: "s")
+
+        #expect(matches.map(\.song.id) == ["summertime"])
+    }
+
+    @Test("An exact phrase isn't followed by songs that only have the words scattered")
+    func phraseHidesScattered() async throws {
+        let store = try await store(with: [
+            entry("scattered", Self.scattered + "\nhard times"),
+            entry("summertime", "Kiss me hard before you go"),
+        ])
+
+        let matches = try await store.search("kiss me hard before", server: "s")
+
+        #expect(matches.map(\.song.id) == ["summertime"])
+    }
+
+    @Test("Words a couple apart rank above words a line apart")
+    func closeRanksAboveNearby() async throws {
+        let store = try await store(with: [
+            entry("nearby", "Kiss the girl in the rain, said me"),
+            entry("close", "Kiss her and me"),
+        ])
+
+        let matches = try await store.search("kiss me", server: "s")
+
+        #expect(matches.map(\.song.id) == ["close", "nearby"])
+    }
+
+    @Test("Songs with the words scattered are shown when nothing closer matches")
+    func scatteredAsLastResort() async throws {
+        let store = try await store(with: [entry("scattered", Self.scattered)])
+
+        let matches = try await store.search("kiss me before you go", server: "s")
+
+        #expect(matches.map(\.song.id) == ["scattered"])
     }
 
     @Test("Accents and case don't matter")
