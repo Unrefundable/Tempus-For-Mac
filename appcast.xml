@@ -9,6 +9,15 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
         <description>Updates for Tempus for macOS. scripts/release.sh adds each release; don't edit by hand.</description>
         <language>en</language>
         <item>
+            <title>Version 1.1.2</title>
+            <pubDate>Sat, 07 Nov 2026 19:29:43 -0600</pubDate>
+            <sparkle:version>73</sparkle:version>
+            <sparkle:shortVersionString>1.1.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <sparkle:fullReleaseNotesLink>https://github.com/Unrefundable/Tempus-For-Mac/releases/tag/v1.1.2</sparkle:fullReleaseNotesLink>
+            <enclosure url="https://github.com/Unrefundable/Tempus-For-Mac/releases/download/v1.1.2/Tempus-1.1.2-macOS.zip" length="14116790" type="application/octet-stream" sparkle:edSignature="3PtQVUK2aG5ciOly9BsvdbCER8dItu+MqHmCZ3th8vi+NhKLLIQ5cgUrWj1iPtlqjxqBBUoN32jljz/24k/mBg=="></enclosure>
+        </item>
+        <item>
             <title>Version 1.1.1-Dev</title>
             <pubDate>Sat, 07 Nov 2026 18:49:27 -0600</pubDate>
             <sparkle:version>70</sparkle:version>
@@ -50,6 +59,6 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: np/qBR0eM+1r1BCNb/gdY8KE8ZBrESGAFYpSbfhGN/yy7T55TVMcgd+NHwnqFKkKeUGwAKENvjnCRtgG03nKCw==
-length: 4017
+edSignature: x1a13NNEnb1yTzES15nCb3IRLJ5j2oIO74+Bf01melsgsR0M6dO/iSOmrrgUEl0VQwf/+joCbfQYTjNVnaUBAg==
+length: 4793
 -->
