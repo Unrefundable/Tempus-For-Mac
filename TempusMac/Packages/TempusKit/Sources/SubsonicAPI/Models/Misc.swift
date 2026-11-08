@@ -75,14 +75,18 @@ public struct SearchResult: Decodable, Sendable, Hashable {
 public struct ScanStatus: Decodable, Sendable, Hashable {
     public let isScanning: Bool
     public let count: Int64?
+    /// When the last scan finished, as the server wrote it; OpenSubsonic servers such as
+    /// Navidrome send it. Compared only to tell whether the library changed.
+    public let lastScan: String?
 
-    public init(isScanning: Bool, count: Int64?) {
+    public init(isScanning: Bool, count: Int64?, lastScan: String? = nil) {
         self.isScanning = isScanning
         self.count = count
+        self.lastScan = lastScan
     }
 
     private enum CodingKeys: String, CodingKey {
-        case count
+        case count, lastScan
         case isScanning = "scanning"
     }
 }

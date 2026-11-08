@@ -11,7 +11,7 @@ public enum CacheCategory: String, CaseIterable, Sendable, Identifiable {
     case artwork
     /// Saved server responses that let library screens draw at once and offline.
     case library
-    /// Lyrics fetched for songs played.
+    /// Lyrics fetched for songs played, and the lyrics search index.
     case lyrics
 
     public var id: Self {
@@ -30,7 +30,7 @@ public enum CacheCategory: String, CaseIterable, Sendable, Identifiable {
         switch self {
         case .artwork: "Album, artist and playlist images."
         case .library: "Albums, artists and playlists saved so screens open at once and work offline."
-        case .lyrics: "Lyrics of songs you've played."
+        case .lyrics: "Lyrics of songs you've played, and the lyrics that lyrics search looks through."
         }
     }
 }
@@ -69,6 +69,7 @@ public struct CacheStorage: Sendable {
         let artwork = artworkCaches.diskBytes()
         let library = try await ResponseCache(database: database).totalBytes()
         let lyrics = try await LyricsStore(database: database).totalBytes()
+            + LyricsIndexStore(database: database).totalBytes()
         return CacheUsage([.artwork: artwork, .library: library, .lyrics: lyrics])
     }
 
@@ -102,7 +103,9 @@ public struct CacheStorage: Sendable {
         switch category {
         case .artwork: artworkCaches.removeAll()
         case .library: try await ResponseCache(database: database).clearAll()
-        case .lyrics: try await LyricsStore(database: database).clearAll()
+        case .lyrics:
+            try await LyricsStore(database: database).clearAll()
+            try await LyricsIndexStore(database: database).clearAll()
         }
     }
 }

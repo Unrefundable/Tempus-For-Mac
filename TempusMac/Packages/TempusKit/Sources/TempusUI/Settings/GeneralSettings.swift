@@ -26,6 +26,16 @@ struct GeneralSettings: View {
             Section("Display") {
                 Toggle("Show the track number in Now Playing", isOn: $settings.showsTrackNumber)
             }
+            Section("Search") {
+                Toggle("Search lyrics", isOn: $settings.searchesLyrics)
+                    .onChange(of: settings.searchesLyrics) { model.session?.lyricsSearch.update() }
+                Text("""
+                Find songs by typing words from their lyrics. Tempus gets each song's lyrics from your \
+                server once, then only fetches what changes. Turning this off stops fetching and keeps \
+                the lyrics; clear them in Storage.
+                """)
+                .font(.inter(.caption)).foregroundStyle(Theme.secondaryText)
+            }
             if let session = model.session, session.features.musicFolders.count > 1 {
                 Section("Music library") {
                     Picker("Browse and search", selection: Binding(

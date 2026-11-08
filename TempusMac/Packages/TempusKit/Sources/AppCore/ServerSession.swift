@@ -32,6 +32,8 @@ public final class ServerSession: Identifiable {
     public let artwork: ArtworkPipeline
     public let library: CachedLibrary
     public let lyrics: LyricsService
+    /// Finds songs by their lyrics, while the user has it on.
+    public let lyricsSearch: LyricsSearch
     public let settings: AppSettings
     public let stars: StarService
     public let downloads: DownloadManager
@@ -73,6 +75,14 @@ public final class ServerSession: Identifiable {
             // Unknown while offline: try the OpenSubsonic call and fall back.
             supportsSongLyrics: serverInfo?.isOpenSubsonic ?? true
         )
+        let lyricsIndex = LyricsIndexStore(database: database)
+        lyricsSearch = LyricsSearch(
+            indexer: LyricsIndexer(client: client, lyrics: lyrics, index: lyricsIndex, serverID: profile.id, now: now),
+            index: lyricsIndex,
+            serverID: profile.id,
+            settings: settings,
+            isOffline: serverInfo == nil
+        )
         stars = StarService(
             client: client,
             pending: PendingStarStore(database: database),
@@ -90,11 +100,13 @@ public final class ServerSession: Identifiable {
     }
 
     /// Starts the session's background work: scrobbling, the listening sync, and, when the
-    /// server answered, sending queued stars, probing features and syncing downloads.
+    /// server answered, sending queued stars, probing features, syncing downloads and, if the user
+    /// turned it on, keeping the lyrics search index up to date.
     func start() {
         let events = player.events
         tasks.append(Task { [scrobbler] in await scrobbler.run(events: events) })
         listening.start()
+        lyricsSearch.update()
         // The parts, not the session, so an ended session is released while these finish.
         tasks.append(Task { [downloads, stars, features, isOffline] in
             await downloads.load()
@@ -108,6 +120,7 @@ public final class ServerSession: Identifiable {
     /// Stops the background work and waits for the last position saves to go out.
     func end() async {
         listening.stop()
+        await lyricsSearch.stop()
         downloads.end()
         for task in tasks {
             task.cancel()

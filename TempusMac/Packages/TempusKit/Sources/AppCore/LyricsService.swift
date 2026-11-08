@@ -42,6 +42,15 @@ public enum LyricsContent: Sendable, Equatable {
         }
     }
 
+    /// Every line as plain text, one per line; empty when there are no lyrics.
+    public var text: String {
+        switch self {
+        case .none: ""
+        case let .plain(text): text
+        case let .synced(lines): lines.map(\.text).joined(separator: "\n")
+        }
+    }
+
     /// The line being sung at `position`: the last one that has started, nil before the first.
     public static func currentLineIndex(in lines: [Line], at position: TimeInterval) -> Int? {
         lines.lastIndex { $0.start <= position }
@@ -94,6 +103,11 @@ public struct LyricsService: Sendable {
         } catch {
             Self.logger.error("Couldn't read cached lyrics: \(error)")
         }
+        return try await fetch(for: song)
+    }
+
+    /// Asks the server, skipping the cache, and caches the answer as `lyrics(for:)` does.
+    public func fetch(for song: Song) async throws(SubsonicError) -> LyricsContent {
         var structured: [StructuredLyrics] = []
         var songLyricsError: SubsonicError?
         if supportsSongLyrics {

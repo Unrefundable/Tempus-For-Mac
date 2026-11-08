@@ -6,6 +6,8 @@ extension AppDatabase {
         var migrator = DatabaseMigrator()
         migrator.registerMigration("v1", migrate: createVersion1)
         migrator.registerMigration("v2", migrate: createVersion2)
+        migrator.registerMigration("v3", migrate: createVersion3)
+        migrator.registerMigration("v4", migrate: createVersion4)
         return migrator
     }
 
@@ -13,8 +15,14 @@ extension AppDatabase {
     /// when the server's account or address changes (`ServerStore.save`).
     static let perServerTables = [
         "queue", "queue_state", "play_history", "pending_star", "pinned_playlist", "lyrics_cache", "response_cache",
-        "download", "synced_playlist",
+        "download", "synced_playlist", "lyrics_index", "lyrics_index_state",
     ]
+
+    /// The tokenizer the lyrics search table indexes with, and queries are split with: Unicode
+    /// words, lowercased, accents removed. SQLite's own, so any connection, older app versions
+    /// included, can write and delete the table's rows. Letters with no accent to remove (ø, æ, ß)
+    /// are folded before text reaches it (`LyricsFolding`).
+    static let lyricsTokenizer = FTS5TokenizerDescriptor.unicode61(diacritics: .remove)
 
     private static func createVersion1(_ db: Database) throws {
         // Passwords and custom headers live in the Keychain, never here.
@@ -118,6 +126,45 @@ extension AppDatabase {
             table.column("name", .text).notNull()
             table.primaryKey(["server_id", "playlist_id"])
         }
+    }
+
+    /// Lyrics search: each song's lyrics as plain text to show, and folded to search
+    /// (`lyrics_index`); a full-text table over the folded text, kept in step by triggers
+    /// (`lyrics_index_fts`); and when each server's index was last brought up to date
+    /// (`lyrics_index_state`).
+    private static func createVersion3(_ db: Database) throws {
+        // An integer primary key keeps rowids stable through VACUUM; the full-text table finds
+        // its rows by rowid.
+        try db.create(table: "lyrics_index") { table in
+            table.autoIncrementedPrimaryKey("id")
+            serverColumn(table)
+            table.column("song_id", .text).notNull()
+            table.column("song", .text).notNull()
+            table.column("fingerprint", .text).notNull()
+            table.column("lyrics", .text).notNull()
+            table.column("search_text", .text).notNull()
+            table.column("checked_at", .datetime).notNull()
+            table.uniqueKey(["server_id", "song_id"])
+        }
+        try db.create(virtualTable: "lyrics_index_fts", using: FTS5()) { table in
+            table.synchronize(withTable: "lyrics_index")
+            table.tokenizer = lyricsTokenizer
+            table.column("search_text")
+        }
+        try db.create(table: "lyrics_index_state") { table in
+            serverColumn(table).primaryKey()
+            table.column("last_scan", .text)
+            table.column("synced_at", .datetime).notNull()
+        }
+    }
+
+    /// Whether each indexed song has lyrics, kept apart from the lyrics so a sync's check of every
+    /// song doesn't read every lyric.
+    private static func createVersion4(_ db: Database) throws {
+        try db.alter(table: "lyrics_index") { table in
+            table.add(column: "has_lyrics", .boolean).notNull().defaults(to: false)
+        }
+        try db.execute(sql: "UPDATE lyrics_index SET has_lyrics = lyrics <> ''")
     }
 
     /// `server_id`, deleted along with its server.

@@ -60,6 +60,17 @@ struct EndpointRequestTests {
         ])
     }
 
+    @Test("A page of every song is an empty search3 that asks for no artists or albums")
+    func allSongs() {
+        let request = SubsonicRequest.allSongs(offset: 1000, count: 500)
+
+        #expect(request.method == "search3")
+        #expect(pairs(request) == [
+            "query=", "artistCount=0", "artistOffset=0", "albumCount=0", "albumOffset=0",
+            "songCount=500", "songOffset=1000",
+        ])
+    }
+
     @Test("Playlists")
     func playlists() {
         #expect(SubsonicRequest.playlists.method == "getPlaylists")

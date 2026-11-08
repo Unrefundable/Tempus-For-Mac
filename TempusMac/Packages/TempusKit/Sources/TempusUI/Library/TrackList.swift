@@ -13,6 +13,8 @@ import SwiftUI
 struct TrackList: View {
     let songs: [Song]
     var subtitleShowsAlbum = false
+    /// A line under a song's row, by song ID.
+    var captions: [String: AttributedString] = [:]
 
     @Environment(ServerSession.self) private var session
     @State private var selection = RowSelection()
@@ -50,7 +52,8 @@ struct TrackList: View {
             subtitleShowsAlbum: subtitleShowsAlbum,
             isCurrent: isCurrent,
             isStarred: session.stars.isStarred(song),
-            download: TrackDownloadMark.of(song, in: session.downloads)
+            download: TrackDownloadMark.of(song, in: session.downloads),
+            caption: captions[song.id]
         )
         .padding(.horizontal, Theme.Spacing.small)
         .frame(minHeight: Theme.Size.trackRow)

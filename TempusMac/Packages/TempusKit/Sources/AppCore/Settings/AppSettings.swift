@@ -3,8 +3,8 @@ import Observation
 import os
 
 /// Settings outside playback (which `PlaybackSettingsStore` keeps): scrobbling, queue sync, the
-/// library in use, Home's and the sidebar's layout, sorting, downloads, the update channel, the theme
-/// and Discord. Kept in UserDefaults; nothing here is secret.
+/// library in use, Home's and the sidebar's layout, sorting, downloads, the update channel, the theme,
+/// Discord and lyrics search. Kept in UserDefaults; nothing here is secret.
 @MainActor
 @Observable
 public final class AppSettings {
@@ -89,6 +89,12 @@ public final class AppSettings {
         didSet { defaults.set(sharesNowPlayingOnDiscord, forKey: Self.prefix + "sharesNowPlayingOnDiscord") }
     }
 
+    /// Lets search find songs by their lyrics. Off by default: on, Tempus fetches every song's
+    /// lyrics from the server once and keeps them up to date (see `LyricsSearch`).
+    public var searchesLyrics: Bool {
+        didSet { defaults.set(searchesLyrics, forKey: Self.prefix + "searchesLyrics") }
+    }
+
     /// - Parameter isPrereleaseBuild: whether the app running is a beta, which makes beta updates
     ///   the default, so a beta tester keeps getting betas.
     public init(defaults: UserDefaults = .standard, isPrereleaseBuild: Bool = UpdateChannel.isRunningPrerelease) {
@@ -105,6 +111,7 @@ public final class AppSettings {
         syncsStarredTracks = bool("syncsStarredTracks", false)
         receivesBetaUpdates = bool("receivesBetaUpdates", isPrereleaseBuild)
         sharesNowPlayingOnDiscord = bool("sharesNowPlayingOnDiscord", false)
+        searchesLyrics = bool("searchesLyrics", false)
         theme = Self.storedTheme(in: defaults)
         homeLayout = HomeLayout(stored: defaults.stringArray(forKey: Self.prefix + "homeSections"))
         sidebarLayout = SidebarLayout(

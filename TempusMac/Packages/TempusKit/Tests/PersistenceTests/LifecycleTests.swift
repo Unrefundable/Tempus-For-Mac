@@ -206,6 +206,6 @@ struct LifecycleTests {
         let reopened = try AppDatabase.open(at: file)
 
         #expect(try await ServerStore(database: reopened).all().map(\.id) == ["a"])
-        #expect(try reopened.appliedMigrations() == ["v1", "v2"])
+        #expect(try reopened.appliedMigrations() == ["v1", "v2", "v3", "v4"])
     }
 }

@@ -32,7 +32,7 @@ private struct StorageForm: View {
                         bytes: viewer.usage?.bytes(for: category),
                         isClearing: viewer.clearing.contains(category)
                     ) {
-                        Task { await viewer.clear([category]) }
+                        Task { await clear([category]) }
                     }
                 }
                 LabeledContent("Total") { ByteCount(bytes: viewer.usage?.totalBytes) }
@@ -49,7 +49,7 @@ private struct StorageForm: View {
             }
             .confirmationDialog("Clear all caches?", isPresented: $confirmsClearAll) {
                 Button("Clear All Caches", role: .destructive) {
-                    Task { await viewer.clear(Set(CacheCategory.allCases)) }
+                    Task { await clear(Set(CacheCategory.allCases)) }
                 }
             } message: {
                 Text("""
@@ -78,6 +78,16 @@ private struct StorageForm: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// Clearing lyrics also empties the lyrics search index, so syncing pauses meanwhile and, with
+    /// lyrics search on, starts over once the index is empty.
+    private func clear(_ categories: Set<CacheCategory>) async {
+        guard categories.contains(.lyrics), let lyricsSearch = model.session?.lyricsSearch else {
+            await viewer.clear(categories)
+            return
+        }
+        await lyricsSearch.pausing { await viewer.clear(categories) }
     }
 }
 

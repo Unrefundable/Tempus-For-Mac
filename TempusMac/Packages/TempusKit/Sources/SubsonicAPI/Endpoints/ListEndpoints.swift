@@ -126,4 +126,10 @@ public extension SubsonicRequest where Response == SearchResult {
             elementPath: ["searchResult3"]
         )
     }
+
+    /// One page of every song in the library: OpenSubsonic servers answer an empty `search3`
+    /// query with all songs in a stable order. Counts of zero skip the artist and album searches.
+    static func allSongs(offset: Int, count: Int) -> Self {
+        search("", artistCount: 0, albumCount: 0, songCount: count, songOffset: offset)
+    }
 }

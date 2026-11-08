@@ -3,12 +3,14 @@ import DesignSystem
 import SubsonicAPI
 import SwiftUI
 
-/// search3 across artists, albums and songs, with recent searches while the field is empty.
+/// search3 across artists, albums and songs, with recent searches while the field is empty. With
+/// lyrics search on, songs whose lyrics match come from this Mac's index as each key is typed.
 struct SearchView: View {
     @Environment(ServerSession.self) private var session
     @Environment(Navigator.self) private var navigator
     @State private var text = ""
     @State private var result: SearchResult?
+    @State private var lyricMatches: [LyricsSearchMatch] = []
     @State private var recent: [String] = []
     @State private var errorMessage: String?
     @FocusState private var isFocused: Bool
@@ -19,7 +21,8 @@ struct SearchView: View {
         ZStack {
             if text.trimmingCharacters(in: .whitespaces).isEmpty {
                 recentList
-            } else if let result {
+            } else if result != nil || !lyricMatches.isEmpty {
+                // Lyric matches show at once, before the server's results arrive.
                 results(result)
             } else if let errorMessage {
                 EmptyState(art: .illustration(.emptyResponse), title: "Search failed", message: Text(errorMessage))
@@ -31,18 +34,36 @@ struct SearchView: View {
         // In the page rather than the toolbar, where it floated apart from everything else at
         // the window's far corner.
         .safeAreaInset(edge: .top, spacing: 0) {
-            SearchField(text: $text, isFocused: $isFocused) { Task { await remember(text) } }
-                .padding(.horizontal, Theme.Spacing.xLarge)
-                .padding(.vertical, Theme.Spacing.medium)
-                // Opaque, so results scrolling under the bar don't show through the query.
-                .themedBackground(.background)
-                .background(.background)
+            VStack(alignment: .leading, spacing: Theme.Spacing.xSmall) {
+                SearchField(
+                    text: $text,
+                    isFocused: $isFocused,
+                    prompt: session.lyricsSearch.isEnabled
+                        ? "Artists, albums, songs and lyrics"
+                        : "Artists, albums and songs"
+                ) { Task { await remember(text) } }
+                if session.lyricsSearch.isEnabled, let progress = session.lyricsSearch.progress {
+                    LyricsIndexingNote(progress: progress)
+                }
+            }
+            .padding(.horizontal, Theme.Spacing.xLarge)
+            .padding(.vertical, Theme.Spacing.medium)
+            // Opaque, so results scrolling under the bar don't show through the query.
+            .themedBackground(.background)
+            .background(.background)
         }
         .task(id: text) {
             // Waits for typing to pause, as upstream's search bar.
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
             await search(text)
+        }
+        // The index is on this Mac and answers in milliseconds, so no pause for typing.
+        .task(id: LyricsQuery(text: text, isEnabled: session.lyricsSearch.isEnabled)) {
+            let matches = await session.lyricsSearch.search(text)
+            // A search overtaken by more typing must not replace the newer one's results.
+            guard !Task.isCancelled else { return }
+            lyricMatches = matches
         }
         .task(id: navigator.searchFocusRequest) {
             // ⌘F from another page switches here and asks for focus in the same update; wait a
@@ -75,27 +96,46 @@ struct SearchView: View {
         }
     }
 
-    @ViewBuilder private func results(_ result: SearchResult) -> some View {
-        if result.artists.isEmpty, result.albums.isEmpty, result.songs.isEmpty {
+    /// `result` is nil while the server's answer is on its way.
+    @ViewBuilder private func results(_ result: SearchResult?) -> some View {
+        let artists = result?.artists ?? []
+        let albums = result?.albums ?? []
+        let songs = result?.songs ?? []
+        if result != nil, artists.isEmpty, albums.isEmpty, songs.isEmpty, lyricMatches.isEmpty {
             ContentUnavailableView.search(text: text)
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.xLarge) {
-                    if !result.artists.isEmpty {
-                        CoverRow(title: "Artists", items: result.artists) { ArtistTile(artist: $0) }
+                    if !artists.isEmpty {
+                        CoverRow(title: "Artists", items: artists) { ArtistTile(artist: $0) }
                     }
-                    if !result.albums.isEmpty {
-                        CoverRow(title: "Albums", items: result.albums) { AlbumTile(album: $0) }
+                    if !albums.isEmpty {
+                        CoverRow(title: "Albums", items: albums) { AlbumTile(album: $0) }
                     }
-                    if !result.songs.isEmpty {
-                        Text("Songs").font(.inter(.title2, weight: .bold)).padding(.horizontal, Theme.Spacing.xLarge)
-                        TrackList(songs: result.songs)
+                    if !songs.isEmpty {
+                        sectionTitle("Songs")
+                        TrackList(songs: songs)
                             .padding(.horizontal, Theme.Spacing.large)
+                    }
+                    if !lyricMatches.isEmpty {
+                        sectionTitle("Lyrics")
+                        TrackList(
+                            songs: lyricMatches.map(\.song),
+                            captions: Dictionary(
+                                lyricMatches.map { ($0.song.id, $0.caption) },
+                                uniquingKeysWith: { first, _ in first }
+                            )
+                        )
+                        .padding(.horizontal, Theme.Spacing.large)
                     }
                 }
                 .padding(.bottom, Theme.Spacing.xLarge)
             }
         }
+    }
+
+    private func sectionTitle(_ title: String) -> some View {
+        Text(title).font(.inter(.title2, weight: .bold)).padding(.horizontal, Theme.Spacing.xLarge)
     }
 
     private func search(_ query: String) async {
@@ -124,10 +164,50 @@ struct SearchView: View {
     }
 }
 
+/// What the lyrics search depends on: a change to either searches again.
+private struct LyricsQuery: Equatable {
+    let text: String
+    let isEnabled: Bool
+}
+
+/// The line a song's lyrics matched, the typed words in bold.
+private extension LyricsSearchMatch {
+    var caption: AttributedString {
+        var caption = AttributedString(line)
+        for range in highlights {
+            guard let lower = AttributedString.Index(range.lowerBound, within: caption),
+                  let upper = AttributedString.Index(range.upperBound, within: caption)
+            else { continue }
+            caption[lower ..< upper].inlinePresentationIntent = .stronglyEmphasized
+        }
+        return caption
+    }
+}
+
+/// Shown under the search field while lyrics are being fetched for lyrics search.
+private struct LyricsIndexingNote: View {
+    let progress: LyricsIndexProgress
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.small) {
+            ProgressView(value: Double(progress.done), total: Double(max(progress.total, 1)))
+                .progressViewStyle(.circular)
+                .controlSize(.mini)
+            Text("Getting lyrics for search: \(progress.done.formatted()) of \(progress.total.formatted()) songs")
+                .font(.inter(.caption))
+                .foregroundStyle(Theme.secondaryText)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, Theme.Spacing.medium)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 /// The search page's own field: icon, text and a clear button, as one rounded bar.
 private struct SearchField: View {
     @Binding var text: String
     var isFocused: FocusState<Bool>.Binding
+    let prompt: LocalizedStringKey
     let onSubmit: () -> Void
 
     var body: some View {
@@ -135,7 +215,7 @@ private struct SearchField: View {
             TempusIconImage(.search, accessibilityName: Text("Search"))
                 .tempusIconSize(Self.iconSize)
                 .foregroundStyle(Theme.secondaryText)
-            TextField("Artists, albums and songs", text: $text)
+            TextField(prompt, text: $text)
                 .textFieldStyle(.plain)
                 .font(.inter(.title3))
                 .focused(isFocused)

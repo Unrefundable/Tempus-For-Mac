@@ -63,6 +63,28 @@ struct CacheStorageTests {
     }
 
     @Test
+    func `lyrics count the lyrics search index, and clearing lyrics empties it too`() async throws {
+        // Arrange
+        let artwork = TemporaryArtwork()
+        let (storage, database) = try await Self.filledStorage(artwork: artwork)
+        let index = LyricsIndexStore(database: database)
+        try await index.save(
+            [LyricsIndexEntry(song: TestData.song("1"), fingerprint: "f", lyrics: "La la", checkedAt: Date())],
+            server: "server-1"
+        )
+        let before = try await storage.usage().bytes(for: .lyrics)
+
+        // Act
+        try await storage.clear([.lyrics])
+
+        // Assert
+        #expect(before > 7)
+        #expect(try await storage.usage().bytes(for: .lyrics) == 0)
+        #expect(try await index.indexedSongs(server: "server-1").isEmpty)
+        #expect(try await storage.usage().bytes(for: .library) == 2000)
+    }
+
+    @Test
     func `clearing everything empties every cache`() async throws {
         // Arrange
         let artwork = TemporaryArtwork()

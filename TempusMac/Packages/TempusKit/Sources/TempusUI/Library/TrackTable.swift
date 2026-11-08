@@ -106,6 +106,8 @@ struct TrackRow: View {
     let isCurrent: Bool
     let isStarred: Bool
     let download: DownloadMark?
+    /// A line under the subtitle, such as the lyric a search matched.
+    var caption: AttributedString?
 
     var body: some View {
         HStack(spacing: Theme.Spacing.medium) {
@@ -120,6 +122,12 @@ struct TrackRow: View {
                     Text(subtitle)
                         .font(.inter(.subheadline))
                         .foregroundStyle(Theme.secondaryText)
+                }
+                if let caption {
+                    Text(caption)
+                        .font(.inter(.subheadline))
+                        .foregroundStyle(Theme.secondaryText)
+                        .truncationMode(.tail)
                 }
             }
             .lineLimit(1)

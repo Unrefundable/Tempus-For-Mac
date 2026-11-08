@@ -300,6 +300,16 @@ struct ModelDecodingTests {
         #expect(scan == ScanStatus(isScanning: true, count: 1234))
     }
 
+    @Test("Scan status carries the server's last scan time when it sends one")
+    func scanStatusLastScan() async throws {
+        let scan = try await decode(
+            .scanStatus,
+            body: ok(#""scanStatus":{"scanning":false,"count":5360,"lastScan":"2026-11-07T17:10:04.123Z"}"#)
+        )
+
+        #expect(scan == ScanStatus(isScanning: false, count: 5360, lastScan: "2026-11-07T17:10:04.123Z"))
+    }
+
     @Test("A null container is treated like a missing one")
     func nullContainer() async throws {
         let albums = try await decode(.albumList(.newest), body: ok(#""albumList2":null"#))
